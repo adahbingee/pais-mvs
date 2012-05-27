@@ -76,10 +76,10 @@ namespace PAIS {
 		const Vec3b& getColor()            const { return color;     }
 	    const MVS&   getMVS()              const { return *mvs;      }
 		int getLOD()                       const { return LOD; }
-		// const Camera& getReferenceCamera() const { return mvs->getCameras()[refCamIdx]; }
 		int getReferenceCameraIndex()      const { return refCamIdx; }
 		int getCameraNumber()              const { return (int) camIdx.size(); }
 		const vector<int>& getCameraIndices() const { return camIdx;  }
+		const Camera& getReferenceCamera() const;
 	};
 
 	double getFitness(const Particle &p, void *obj);

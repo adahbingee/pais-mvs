@@ -31,6 +31,10 @@ Patch::~Patch(void) {
 
 }
 
+const Camera& Patch::getReferenceCamera() const {
+	return mvs->getCameras()[refCamIdx];
+}
+
 void Patch::refineSeed() {
 	bool pass = true;
 	pass &= setEstimatedNormal();
@@ -44,15 +48,15 @@ void Patch::refineSeed() {
 	}
 
 	// PSO parameter range (theta, phi, depth)
-	double rangeL [] = {0.0 , normalS[1] - M_PI/2.0, depth-0.01};
-	double rangeU [] = {M_PI, normalS[1] + M_PI/2.0, depth+0.01};
+	double rangeL [] = {0.0 , normalS[1] - M_PI/2.0};
+	double rangeU [] = {M_PI, normalS[1] + M_PI/2.0};
 
 	// initial guess particle
-	double init   [] = {normalS[0], normalS[1], depth};
+	double init   [] = {normalS[0], normalS[1]};
 
-	PsoSolver solver(3, rangeL, rangeU, getFitness, this, 1000, 30);
+	PsoSolver solver(2, rangeL, rangeU, getFitness, this, 200, 15);
 	solver.setParticle(init);
-	solver.run();
+	solver.run(true);
 	
 	// set fitness
 	fitness = solver.getGbestFitness();
@@ -60,9 +64,9 @@ void Patch::refineSeed() {
 	// set refined patch information
 	const double *gBest = solver.getGbest();
 	setNormal(Vec2d(gBest[0], gBest[1]));
-	center = ray * gBest[2] + mvs->getCameras()[refCamIdx].getCenter();
+	//center = ray * gBest[2] + mvs->getCameras()[refCamIdx].getCenter();
 
-	printf("LOD: %d\t%f\n", LOD, fitness);
+	printf("LOD: %d\titeration: %d\t%f\n", LOD, solver.getIteration(), fitness);
 }
 
 /* setters */
@@ -182,7 +186,6 @@ bool Patch::setLOD() {
 	
 	delete [] textures;
 
-	printf("v %f\n", variance);
 	return true;
 }
 
@@ -230,7 +233,7 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 	const int patchRadius = mvs.getPatchRadius();
 
 	// camera parameters
-	const Camera &refCam  = mvs.getCameras()[patch.getReferenceCameraIndex()];
+	const Camera &refCam  = patch.getReferenceCamera();
 	const Mat_<double> &KRF = refCam.getKR();
 	const Mat_<double> &KTF = refCam.getKT();
 	const int camNum = patch.getCameraNumber();
@@ -244,13 +247,16 @@ double PAIS::getFitness(const Particle &p, void *obj) {
         return DBL_MAX;
     }
 
+	/*
 	// skip negative depth
 	if (p.pos[2] <= 0) {
 		return DBL_MAX;
 	}
+	*/
 
 	// given patch center
-	Vec3d center = patch.getRay() * p.pos[2] + refCam.getCenter();
+	// Vec3d center = patch.getRay() * p.pos[2] + refCam.getCenter();
+	const Vec3d &center = patch.getCenter();
 
 	// plane equation (distance form plane to origin)
 	const double d = -patch.getCenter().ddot(normal);          
@@ -270,23 +276,26 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 
 	// projected point on reference image
 	Vec2d pt;
-	refCam.project(patch.getCenter(), pt);
+	if ( !refCam.project(patch.getCenter(), pt) ) {
+		return DBL_MAX;
+	}
 
 	// level of detail
 	int LOD = patch.getLOD();
 
 	// warping (get pixel-wised variance)
-	double mean, variance;
-	double w, ix, iy;
-	int px[4]; // neighbor x
-	int py[4]; // neighbor y
-	double *c = new double [camNum]; // color
-	double fitness = 0;
-	
+	double mean, variance;           // pixel-wised mean, variance
+	double w, ix, iy;                // position on target image
+	int px[4];                       // neighbor x
+	int py[4];                       // neighbor y
+	double *c = new double [camNum]; // bilinear color
+	double fitness = 0;              // result of normalized fitness
+	Mat_<double>::const_iterator it = mvs.getPatchDistanceWeighting().begin();
+
 	for (double x = pt[0]-patchRadius; x <= pt[0]+patchRadius; x++) {
 		for (double y = pt[1]-patchRadius; y <= pt[1]+patchRadius; y++) {
 			// clear
-			mean     = 0;
+			mean = 0;
 			variance = 0;
 
 			for (int i = 0; i < camNum; i++) {
@@ -331,7 +340,7 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 				variance += abs(c[i]-mean);
 			}
 
-			fitness += variance;
+			fitness += variance * (*it++);
 		} // end of warping y
 	} // end of warping x
 

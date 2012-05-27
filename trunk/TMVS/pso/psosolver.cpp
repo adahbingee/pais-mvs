@@ -1,6 +1,6 @@
 #include "psosolver.h"
 
-inline bool PsoSolver::sortLocalParticle (const LocalParticle &i, const LocalParticle &j) {
+bool PsoSolver::sortLocalParticle (const LocalParticle &i, const LocalParticle &j) {
     return (i.dist < j.dist); 
 }
 
@@ -67,7 +67,7 @@ inline double PsoSolver::random() {
 	return ((double) rand()) / ((double) RAND_MAX);
 }
 
-inline double PsoSolver::getDispersionIDX() const {
+double PsoSolver::getDispersionIDX() const {
 	double index = 0;
 	for (int i = 0; i < particleNum; i++) {
 		const Particle &p = particles[i];
@@ -79,7 +79,7 @@ inline double PsoSolver::getDispersionIDX() const {
 	return index;
 }
 
-inline double PsoSolver::getVelocityIDX()   const {
+double PsoSolver::getVelocityIDX()   const {
 	double index = 0;
 	for (int i = 0; i < particleNum; i++) {
 		const Particle &p = particles[i];
@@ -109,7 +109,7 @@ void PsoSolver::initParticles() {
 	}
 }
 
-inline void PsoSolver::initFitness() {
+void PsoSolver::initFitness() {
 	#pragma omp parallel for
 	for (int i = 0; i < particleNum; i++) {
 		Particle &p    = particles[i];
@@ -118,7 +118,7 @@ inline void PsoSolver::initFitness() {
 	}
 }
 
-inline void PsoSolver::updateFitness() {
+void PsoSolver::updateFitness() {
 	#pragma omp parallel for
 	for (int i = 0; i < particleNum; i++) {
 		Particle &p    = particles[i];
@@ -134,7 +134,7 @@ inline void PsoSolver::updateFitness() {
 	} // end of update particles
 }
 
-inline void PsoSolver::updateGbest() {
+void PsoSolver::updateGbest() {
 	for (int j = 0; j < particleNum; j++) {
         // current particle
         const Particle &p = particles[j];
@@ -148,7 +148,7 @@ inline void PsoSolver::updateGbest() {
     }
 }
 
-inline const double* PsoSolver::getLocalBest(const int idx) const {
+const double* PsoSolver::getLocalBest(const int idx) const {
 	// local particle container
 	vector<LocalParticle> container(particleNum);
 
@@ -190,7 +190,7 @@ inline const double* PsoSolver::getLocalBest(const int idx) const {
 	return lBest;
 }
 
-inline void PsoSolver::setNearNeighborBest(const int idx) {
+void PsoSolver::setNearNeighborBest(const int idx) {
 	// current fitness
 	const double fitness = particles[idx].fitness;
 	// current position
@@ -217,12 +217,11 @@ inline void PsoSolver::setNearNeighborBest(const int idx) {
 	}
 }
 
-inline void PsoSolver::moveParticles() {
-	#pragma omp parallel
-	for (int i = 0; i < particleNum; i++) {
-		// velocity weighting
-		double pVecW, gVecW, lVecW, nVecW;
+void PsoSolver::moveParticles() {
+	// velocity weighting
+	double pVecW, gVecW, lVecW, nVecW;
 
+	for (int i = 0; i < particleNum; i++) {
 		// current particle
 		Particle &p = particles[i];
 

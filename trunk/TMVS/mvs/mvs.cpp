@@ -7,6 +7,7 @@ MVS::MVS(const int cellSize, const int patchRadius, const double textureVariatio
 	this->patchRadius      = patchRadius;
 	this->textureVariation = textureVariation;
 	this->patchSize        = (patchRadius<<1)+1;
+	initPatchDistanceWeighting();
 }
 
 MVS::~MVS(void) {
@@ -26,6 +27,28 @@ bool MVS::initCellMaps() {
 	}
 
 	return true;
+}
+
+void MVS::initPatchDistanceWeighting() {
+	patchDistWeight = Mat_<double>(patchSize, patchSize);
+	double sigma = patchRadius / 2;
+	double s2 = 1.0/(2.0*sigma*sigma);
+    double s = 1.0/(2.0*M_PI*sigma*sigma);
+
+	double e, g;
+	for (int x = 0; x < patchSize; ++x) {
+		for (int y = 0; y < patchSize; ++y) {
+			e = -( pow((double)(x-patchRadius), 2)+ pow((double)(y-patchRadius), 2))*s2;
+			g = s*exp(e);
+			patchDistWeight.at<double>(y,x) = g;
+		}
+	}
+
+	// normalize [0 1]
+	patchDistWeight = patchDistWeight / s;
+
+	//imshow("", patchDistWeight);
+	//waitKey();
 }
 
 void MVS::loadNVM(const char* fileName) {
