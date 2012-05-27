@@ -21,9 +21,13 @@ namespace PAIS {
 		map<int, Patch> patches;
 		// cell map container
 		vector<CellMap> cellMaps;
-		
+		// pixel-wised distance weighting of patch
+		Mat_<double> patchDistWeight;
+
 		// initialize cell map using given cell size
 		bool initCellMaps();
+		// initial pixel-wised distance weighting of patch
+		void initPatchDistanceWeighting();
 
 	public:
 		// constructor
@@ -39,6 +43,7 @@ namespace PAIS {
 		const vector<Camera>&  getCameras()  const { return cameras;  }
 		const map<int, Patch>& getPatches()  const { return patches;  }
 		const vector<CellMap>& getCellMaps() const { return cellMaps; }
+		const Mat_<double>& getPatchDistanceWeighting() const { return patchDistWeight; }
 
 		int    getCellSize()         const { return cellSize;         }
 		int    getPatchRadius()      const { return patchRadius;      }

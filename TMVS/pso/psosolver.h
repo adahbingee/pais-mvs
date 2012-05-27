@@ -25,7 +25,7 @@ namespace PAIS {
 	class PsoSolver {
 	private:
 		// sorter for using Local Best
-        inline static bool sortLocalParticle (const LocalParticle &i, const LocalParticle &j);
+        static bool sortLocalParticle (const LocalParticle &i, const LocalParticle &j);
 
 		// dimension of problem space
 		int dim;
@@ -79,27 +79,27 @@ namespace PAIS {
         inline double random();
 
 		// PSO convergence index
-		inline double getDispersionIDX() const;
-		inline double getVelocityIDX()   const;
+		double getDispersionIDX() const;
+		double getVelocityIDX()   const;
 
 		// set initial particle position and velocity
-		inline void initParticles();
+		void initParticles();
 
 		// set initial particle fitness
-		inline void initFitness();
+		void initFitness();
 
 		// update particle fitness
-		inline void updateFitness();
+		void updateFitness();
 
 		// move particle
-		inline void moveParticles();
+		void moveParticles();
 
 		// update gbest
-		inline void updateGbest();
+		void updateGbest();
 
-		inline const double* getLocalBest(const int idx) const;
+		const double* getLocalBest(const int idx) const;
 
-		inline void setNearNeighborBest(const int idx);
+		void setNearNeighborBest(const int idx);
 	public:
 		PsoSolver(const int dim, 
 			      const double *rangeL, const double *rangeU, 
@@ -115,20 +115,20 @@ namespace PAIS {
 		bool setParticle(const double *pos, const double *vec = NULL, const int idx = 0);
 		void run(const bool enableGLNPSO = false, const double minIw = 0.4);
 
-		inline int           getDimension()      const { return dim; }
-		inline int           getParticleNum()    const { return particleNum; }
-        inline int           getMaxIteration()   const { return maxIteration; }
-        inline double        getInertiaWeight()  const { return iw; }
-        inline double        getPbestWeight()    const { return pw; }
-        inline double        getGbestWeight()    const { return gw; }
-		inline double        getLbestWeight()    const { return lw; }
-		inline double        getNbestWeight()    const { return nw; }
-        inline const double* getGbest()          const { return gBest; }
-        inline const double* getRangeL()         const { return rangeL; }
-        inline const double* getRangeU()         const { return rangeU; }
-		inline double        getGbestFitness()   const { return gBestFitness; }
-        inline int           getGbestIteration() const { return gBestIteration; }
-		inline int           getIteration()      const { return iteration; }
+		int           getDimension()      const { return dim; }
+		int           getParticleNum()    const { return particleNum; }
+        int           getMaxIteration()   const { return maxIteration; }
+        double        getInertiaWeight()  const { return iw; }
+        double        getPbestWeight()    const { return pw; }
+        double        getGbestWeight()    const { return gw; }
+		double        getLbestWeight()    const { return lw; }
+		double        getNbestWeight()    const { return nw; }
+        const double* getGbest()          const { return gBest; }
+        const double* getRangeL()         const { return rangeL; }
+        const double* getRangeU()         const { return rangeU; }
+		double        getGbestFitness()   const { return gBestFitness; }
+        int           getGbestIteration() const { return gBestIteration; }
+		int           getIteration()      const { return iteration; }
 	};
 };
 
