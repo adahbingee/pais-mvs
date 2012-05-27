@@ -1,0 +1,120 @@
+2012/05/24
+* Add MVS viewer and loader
+2012/05/19
+* Add patch refinement with LOD
+2012/05/15
+* Add PSO solver
+2012/05/11
+* To Do:
+    1. add fitness function epipolar constrain
+    2. add fitness function color weighting
+2012/05/05
+* prepared for rebuild project.
+2012/05/02
+* viewer color toggle
+2012/05/01
+* add Viewer point color.
+* add single seed expansion.
+2012/04/30
+* expansion with visible cameras.
+* Add viewer pick point function.
+* expansion filtering with visible cameras normal.
+2012/04/28
+* fix priority queue bug.
+2012/04/27
+* add feature to write PLY file
+* add point color.
+2012/04/24
+* Update cell projection + priority (add visibility test to all seeds)
+2012/04/19
+* Add an experiment version of depth test
+* re-activate neighbor cell fail loops
+2012/04/18
+* remove patch sampling information saved
+2012/04/16
+* To Do:
+    1. Gaussian init for PSO
+    2. Z-Test
+2012/04/13
+* Add a CPU register optimized warping function
+* Fix PSO init particle bug.
+2012/04/12
+* A PSO fitness CUDA version (Fail&fixed homography not test)
+2012/04/11 - 2
+* CUDA avaliable with 2D layered texture!
+2012/04/11
+* a stable version
+2012/04/10 - 2
+* Seed refinement works
+2012/04/10
+* change PSO to 0326 version (Not work), changed back
+* Add CUDA texture function.
+* Add CUDA warping test function.
+2012/04/09
+* Integrate warping function of seed fitness function and expansion fitness function
+2012/04/07
+* Seed refinement only normal.
+* Tried Huber loss function in seed fitness, but not work. (0326 version works)
+2012/04/05
+* Enhance viewer functions.
+2012/03/28
+* A experiment version of expansion
+2012/03/27
+* Giveup CUDA 4.1 Orz
+* 3D vector quantization and filtering in parameter space
+2012/03/24
+* Move to 64bit platform
+* Integrate CUDA 4.1
+2012/03/22
+* To Do:
+    1. sparse point initialization and refinement
+    2. seed point filtering
+    3. point expansion
+2012/03/21
+* add cell maps
+2012/03/17
+* patch filtering in parameter space
+2012/03/16
+* mvs file read/write
+2012/03/14
+* add depth adjustment range
+* GLN-PSO add depth dimension
+* fix gaussian weighting (normalize)
+2012/03/13
+* point filter (re-projection error and epipolar line distance)
+2012/03/12
+* Add full search in GLN-PSO
+* Advanced GLN-PSO visualization
+* Fix GLN-PSO localK bug
+2012/03/10
+* Fundamental matrix
+2012/03/08
+* GLN-PSO bug fixed
+2012/03/07
+* GLN-PSO still buggy
+2012/03/06
+* add background mask to std filtering
+* performance fix for filtering
+2012/03/05
+* start editing expansion and filtering
+2012/03/04
+* Threshold std image
+2012/03/03
+* Faster image warping
+2012/03/02
+* intersetion full pixel-wised std (Geometric Bound)
+2012/03/01
+* full image pixel-wised std
+2012/02/29
+* PSO performance enhancement
+2012/02/25
+* PCL Visualizer (press "H" for help)
+2012/02/24
+* Fix random number gereration problem.
+* Project 3D plane point.
+* To Do:
+  1. Reduce normal range (phi theda)
+  2. PSO memory optimization (Local Best & Near Best)
+  3. openMP sync problem in GLN-PSO (need check!)
+  4. PSO parameter space and particle movement visualization
+  5. Faster reference camera desicion
