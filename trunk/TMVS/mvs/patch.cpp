@@ -189,7 +189,7 @@ void Patch::showError() const {
 	refCam.project(center, pt);
 
 	// warping (get pixel-wised variance)
-	double mean, variance;           // pixel-wised mean, variance
+	double mean, avgSad;             // pixel-wised mean, avgSad
 	double w, ix, iy;                // position on target image
 	int px[4];                       // neighbor x
 	int py[4];                       // neighbor y
@@ -200,7 +200,7 @@ void Patch::showError() const {
 		for (double y = pt[1]-patchRadius, ey = 0; y <= pt[1]+patchRadius; y++, ey++) {
 			// clear
 			mean = 0;
-			variance = 0;
+			avgSad = 0;
 
 			for (int i = 0; i < camNum; i++) {
 				const Mat_<uchar> &img = cameras[camIdx[i]].getPyramidImage()[LOD];
@@ -237,14 +237,17 @@ void Patch::showError() const {
 			mean /= camNum;
 
 			for (int i = 0; i < camNum; i++) {
-				variance += abs(c[i]-mean);
+				avgSad += abs(c[i]-mean);
 			}
-			variance /= camNum;
+			avgSad /= camNum;
 
-			error.at<double>(ey, ex) = variance;
+			error.at<double>(ey, ex) = avgSad;
 		} // end of warping y
 	} // end of warping x
 
+	double minE ,maxE;
+	minMaxLoc(error, &minE, &maxE);
+	error = (error - minE) / (maxE - minE) * 255;
 	imwrite("img.png", error);
 }
 
@@ -527,16 +530,10 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 			for (int i = 0; i < camNum; i++) {
 				const Mat_<uchar> &img = cameras[cameraIdx[i]].getPyramidImage()[LOD];
 
-				// homography projection
-				w  =   H[i].at<double>(2, 0) * x + H[i].at<double>(2, 1) * y + H[i].at<double>(2, 2);
+				// homography projection (with LOD transform)
+				w  = ( H[i].at<double>(2, 0) * x + H[i].at<double>(2, 1) * y + H[i].at<double>(2, 2) ) * (1<<LOD);
 				ix = ( H[i].at<double>(0, 0) * x + H[i].at<double>(0, 1) * y + H[i].at<double>(0, 2) ) / w;
 				iy = ( H[i].at<double>(1, 0) * x + H[i].at<double>(1, 1) * y + H[i].at<double>(1, 2) ) / w;
-				
-				// apply LOD transform
-				if (LOD > 0) {
-					ix /= 1<<LOD;
-					iy /= 1<<LOD;
-				}
 
 				// skip overflow cases
 				if (ix < 0 || ix >= img.cols-1 || iy < 0 || iy >= img.rows-1 || w == 0) {
@@ -553,11 +550,13 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 				py[2] = py[0] + 1;
 				px[3] = px[0] + 1;
 				py[3] = py[0] + 1;
-
+				
 				c[i] = (double) img.at<uchar>(py[0], px[0])*(px[1]-ix)*(py[2]-iy) + 
 					   (double) img.at<uchar>(py[1], px[1])*(ix-px[0])*(py[3]-iy) + 
 					   (double) img.at<uchar>(py[2], px[2])*(iy-py[0])*(px[3]-ix) + 
 					   (double) img.at<uchar>(py[3], px[3])*(ix-px[2])*(iy-py[1]);
+				
+				// c[i] = img.at<uchar>(cvRound(iy), cvRound(ix));
 
 				mean += c[i];
 			} // end of camera
