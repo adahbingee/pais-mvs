@@ -14,7 +14,6 @@ namespace PAIS {
 	class Patch {
 	private:
 		static int globalId;
-		static int getNextId() { return globalId++; }
 		
 		// patch identifier
 		int id;
