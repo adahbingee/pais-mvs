@@ -4,18 +4,21 @@ using namespace PAIS;
 
 int Patch::globalId = 0;
 
+/* constructors & descructor */
+
 Patch::Patch(const MVS *mvs, const Vec3d &center, const Vec3b &color, const vector<int> &camIdx, const vector<Vec2d> &imgPoint, const int id) {
-	this->mvs       = mvs;
-	this->center    = center;
-	this->color     = color;
-	this->camIdx    = camIdx;
-	this->imgPoint  = imgPoint;
-	this->normalS   = Vec2d(0.0, 0.0);
-	this->normal    = Vec3d(0.0, 0.0, 0.0);
-	this->depth     = -1;
-	this->refCamIdx = -1;
-	this->fitness   = DBL_MAX;
-	this->LOD = -1;
+	this->mvs        = mvs;
+	this->center     = center;
+	this->color      = color;
+	this->camIdx     = camIdx;
+	this->imgPoint   = imgPoint;
+	this->normalS    = Vec2d(0.0, 0.0);
+	this->normal     = Vec3d(0.0, 0.0, 0.0);
+	this->depth      = -1;
+	this->refCamIdx  = -1;
+	this->fitness    = DBL_MAX;
+	this->LOD        = -1;
+	this->depthRange = Vec2d(0.0, 0.0);
 	
 	if (id < 0) {
 		#pragma omp critical
@@ -31,16 +34,15 @@ Patch::~Patch(void) {
 
 }
 
-const Camera& Patch::getReferenceCamera() const {
-	return mvs->getCameras()[refCamIdx];
-}
+/* public functions */
 
 void Patch::refineSeed() {
 	bool pass = true;
 	pass &= setEstimatedNormal();
 	pass &= setReferenceCameraIndex();
 	pass &= setDepth();
-	if (LOD < 0) LOD = 3;//pass &= setLOD();
+	pass &= setDepthRange();
+	if (LOD < 0) pass &= setLOD();
 
 	if ( !pass ) {
 		printf("fail during setting\n");
@@ -48,13 +50,13 @@ void Patch::refineSeed() {
 	}
 
 	// PSO parameter range (theta, phi, depth)
-	double rangeL [] = {0.0 , normalS[1] - M_PI/2.0, depth/LOD_DEPTH_DIVIDE};
-	double rangeU [] = {M_PI, normalS[1] + M_PI/2.0, depth*(1.0+1.0/LOD_DEPTH_DIVIDE)};
+	double rangeL [] = {0.0 , normalS[1] - M_PI/2.0, depthRange[0]};
+	double rangeU [] = {M_PI, normalS[1] + M_PI/2.0, depthRange[1]};
 
 	// initial guess particle
 	double init   [] = {normalS[0], normalS[1], depth};
 
-	PsoSolver solver(3, rangeL, rangeU, getFitness, this, 1000/(LOD+1), 15);
+	PsoSolver solver(3, rangeL, rangeU, getFitness, this, 200/(LOD+1), 15);
 	solver.setParticle(init);
 	solver.run(true);
 	
@@ -67,16 +69,20 @@ void Patch::refineSeed() {
 	depth  = gBest[2];
 	center = ray * depth + getReferenceCamera().getCenter();
 
-	printf("ID: %d\tLOD: %d\titeration: %d\t%f\n", id, LOD, solver.getIteration(), fitness);
+	printf("ID: %d\tLOD: %d\tit: %d\tfit: %.2f\n", id, LOD, solver.getIteration(), fitness);
+	
+	// LOD down refinement
 	if (LOD > 0) {
 		LOD = max(LOD-1, 0);
 		refineSeed();
 	} else {
-		showError();
-		showRefinedResult();
+		//showError();
+		//showRefinedResult();
 		printf("\n");
 	}
 }
+
+/* for debug used */
 
 void Patch::showRefinedResult() const {
 	static const vector<Camera> &cameras = mvs->getCameras();
@@ -242,6 +248,11 @@ void Patch::showError() const {
 	imwrite("img.png", error);
 }
 
+/* getters */
+const Camera& Patch::getReferenceCamera() const {
+	return mvs->getCameras()[refCamIdx];
+}
+
 /* setters */
 
 void Patch::setNormal(const Vec3d &n) {
@@ -261,6 +272,44 @@ bool Patch::setDepth() {
 	depth = norm(ray);
 	ray = ray * (1.0 / depth);
 	
+	return true;
+}
+
+bool Patch::setDepthRange() {
+	const int camNum = getCameraNumber();
+
+	if (camNum <= 0 || depth < 0) return false;
+
+	const Camera &refCam = getReferenceCamera();
+
+	const double cellSize = mvs->getCellSize();
+
+	// center shift
+	Vec3d c2 = ray * (depth+1.0) + refCam.getCenter();
+	// projected point
+	Vec2d p1, p2;
+
+	double imgDist, worldDist;
+	double maxWorldDist = -DBL_MAX;
+	for (int i = 0; i < camNum; i++) {
+
+		if (camIdx[i] == refCamIdx) continue;
+		
+		const Camera &cam = mvs->getCameras()[camIdx[i]];
+
+		cam.project(c2, p2);
+		cam.project(center, p1);
+
+		imgDist = norm(p1-p2);
+		worldDist = max(cellSize, 5.0) / imgDist;
+
+		if (worldDist > maxWorldDist) {
+			maxWorldDist = worldDist;
+		}
+	}
+
+	depthRange[0] = depth - maxWorldDist;
+	depthRange[1] = depth + maxWorldDist;
 	return true;
 }
 
@@ -400,6 +449,8 @@ bool Patch::setReferenceCameraIndex() {
 	return true;
 }
 
+/* fitness function */
+
 double PAIS::getFitness(const Particle &p, void *obj) {
 	// current patch
 	const Patch  &patch   = *((Patch *)obj);
@@ -454,7 +505,7 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 	int LOD = patch.getLOD();
 
 	// warping (get pixel-wised variance)
-	double mean, variance;           // pixel-wised mean, variance
+	double mean, avgSad;           // pixel-wised mean, average sad
 	double w, ix, iy;                // position on target image
 	int px[4];                       // neighbor x
 	int py[4];                       // neighbor y
@@ -470,8 +521,8 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 	for (double x = pt[0]-patchRadius; x <= pt[0]+patchRadius; x++) {
 		for (double y = pt[1]-patchRadius; y <= pt[1]+patchRadius; y++) {
 			// clear
-			mean = 0;
-			variance = 0;
+			mean   = 0;
+			avgSad = 0;
 
 			for (int i = 0; i < camNum; i++) {
 				const Mat_<uchar> &img = cameras[cameraIdx[i]].getPyramidImage()[LOD];
@@ -514,13 +565,13 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 			mean /= camNum;
 
 			for (int i = 0; i < camNum; i++) {
-				variance += abs(c[i]-mean);
+				avgSad += abs(c[i]-mean);
 			}
-			variance /= camNum;
+			avgSad /= camNum;
 
-			weight = (*it++) * exp(-(variance*variance)/16384.0);
+			weight = (*it++) * exp(-(avgSad*avgSad)/16384.0);
 			sumWeight += weight;
-			fitness += variance * weight;
+			fitness += avgSad * weight;
 		} // end of warping y
 	} // end of warping x
 

@@ -7,9 +7,6 @@
 #include "utility.h"
 #include "../pso/psosolver.h"
 
-#define DEPTH_DIVIDE 10.0
-#define LOD_DEPTH_DIVIDE (DEPTH_DIVIDE/(LOD+1))
-
 using namespace cv;
 
 namespace PAIS {
@@ -35,6 +32,8 @@ namespace PAIS {
 		Vec3d normal;
 		// depth from reference camera
 		double depth;
+		// depth range
+		Vec2d depthRange;
 		// depth unit ray from reference camera
 		Vec3d ray;
 		// visible camera index
@@ -49,17 +48,16 @@ namespace PAIS {
 		// normal setters
 		void setNormal(const Vec3d &n);
 		void setNormal(const Vec2d &n);
-
 		// depth setters
 		bool setDepth();
-
 		// set level of detail
 		bool setLOD();
-
 		// set estimated normal using sum of unit vector from point to camera
 		bool setEstimatedNormal();
 		// set reference camera index using normal
 		bool setReferenceCameraIndex();
+		// set depth range
+		bool setDepthRange();
 
 		// show refined projection
 		void showRefinedResult() const;
