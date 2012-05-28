@@ -7,12 +7,16 @@
 #include "utility.h"
 #include "../pso/psosolver.h"
 
+#define DEPTH_DIVIDE 10.0
+#define LOD_DEPTH_DIVIDE (DEPTH_DIVIDE/(LOD+1))
+
 using namespace cv;
 
 namespace PAIS {
 
 	class Patch {
 	private:
+		// global patch id counter
 		static int globalId;
 		
 		// patch identifier
@@ -57,6 +61,10 @@ namespace PAIS {
 		// set reference camera index using normal
 		bool setReferenceCameraIndex();
 
+		// show refined projection
+		void showRefinedResult() const;
+		// show multi-view error
+		void showError() const;
 	public:
 		// constructors
 		Patch(const MVS *mvs, const Vec3d &center, const vector<int> &camIdx, const int id = -1);

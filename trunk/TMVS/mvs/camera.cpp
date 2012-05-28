@@ -93,6 +93,9 @@ Camera::Camera(const char *fileName, const double focal, const Vec4d &quaternion
 	// set projection matrix
 	this->KR = intrinsic * rotation;
 	this->KT = intrinsic * translation;
+	this->P  = Mat_<double>(3, 4);
+	KR.copyTo(P(Rect(0,0,3,3)));
+    KT.copyTo(P(Rect(3,0,1,3)));
 
 	// set camera optical normal
 	double dir_data [] = {0.0, 0.0, 1.0};

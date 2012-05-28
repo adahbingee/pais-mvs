@@ -55,6 +55,7 @@ namespace PAIS {
 		// projection matrix
 		Mat_<double> KR;
 		Mat_<double> KT;
+		Mat_<double> P;
 
 		// camera center in world coordinate
 		Vec3d center;
@@ -93,8 +94,9 @@ namespace PAIS {
 		const Vec3d& getOpticalNormal()                 const { return opticalNormal;    }
 
 		// get projection matrix
-		const Mat_<double> getKR()                      const { return KR;               }
-		const Mat_<double> getKT()                      const { return KT;               }
+		const Mat_<double>& getKR()                      const { return KR;               }
+		const Mat_<double>& getKT()                      const { return KT;               }
+		const Mat_<double>& getP()                       const { return P;                }
 
 		// check camera status is avaliable
 		bool isAvaliable()                              const { return _isAvaliable;     }
