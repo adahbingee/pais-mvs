@@ -20,7 +20,7 @@ Patch::Patch(const MVS *mvs, const Vec3d &center, const Vec3b &color, const vect
 	if (id < 0) {
 		#pragma omp critical
 		{
-			this->id = getNextId();
+			this->id = globalId++;
 		}
 	} else {
 		this->id = id;
@@ -48,18 +48,19 @@ void Patch::refineSeed() {
 	}
 
 	// PSO parameter range (theta, phi, depth)
-	double rangeL [] = {0.0 , normalS[1] - M_PI/2.0};
-	double rangeU [] = {M_PI, normalS[1] + M_PI/2.0};
+	double rangeL [] = {0.0 , normalS[1] - M_PI/2.0, depth/5.0};
+	double rangeU [] = {M_PI, normalS[1] + M_PI/2.0, depth*1.2};
 
 	// initial guess particle
-	double init   [] = {normalS[0], normalS[1]};
+	double init   [] = {normalS[0], normalS[1], depth};
 
-	PsoSolver solver(2, rangeL, rangeU, getFitness, this, 200, 15);
-	solver.setParticle(init);
-	solver.run(true);
+	PSOSolver solver(3, rangeL, rangeU, getFitness, this, 200, 15);
+	solver.setGLNPSO(true);
+	solver.setParticle(0, init);
+	solver.run();
 	
 	// set fitness
-	fitness = solver.getGbestFitness();
+	fitness = solver.getGbestScore();
 
 	// set refined patch information
 	const double *gBest = solver.getGbest();
@@ -229,8 +230,10 @@ bool Patch::setReferenceCameraIndex() {
 
 double PAIS::getFitness(const Particle &p, void *obj) {
 	const Patch  &patch   = *((Patch *)obj);
-	const MVS    &mvs     = patch.getMVS();
-	const int patchRadius = mvs.getPatchRadius();
+	static const MVS    &mvs     = patch.getMVS();
+	static const int patchRadius = mvs.getPatchRadius();
+	static const vector<Camera> &cameras = mvs.getCameras();
+	const vector<int> &cameraIdx = patch.getCameraIndices();
 
 	// camera parameters
 	const Camera &refCam  = patch.getReferenceCamera();
@@ -247,26 +250,23 @@ double PAIS::getFitness(const Particle &p, void *obj) {
         return DBL_MAX;
     }
 
-	/*
 	// skip negative depth
 	if (p.pos[2] <= 0) {
 		return DBL_MAX;
 	}
-	*/
 
 	// given patch center
-	// Vec3d center = patch.getRay() * p.pos[2] + refCam.getCenter();
-	const Vec3d &center = patch.getCenter();
+	const Vec3d center = patch.getRay() * p.pos[2] + refCam.getCenter();
 
 	// plane equation (distance form plane to origin)
-	const double d = -patch.getCenter().ddot(normal);          
+	const double d = -center.ddot(normal);          
 	const Mat_<double> normalM(normal);
 
 	// Homographies to visible camera
 	vector<Mat_<double> > H(camNum);
 	for (int i = 0; i < camNum; i++) {
 		// visible camera
-		const Camera &cam = mvs.getCameras()[patch.getCameraIndices()[i]];
+		const Camera &cam = cameras[cameraIdx[i]];
 
 		// get homography matrix
 		const Mat_<double> &KRT = cam.getKR();        // K*R of to camera
@@ -276,7 +276,7 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 
 	// projected point on reference image
 	Vec2d pt;
-	if ( !refCam.project(patch.getCenter(), pt) ) {
+	if ( !refCam.project(center, pt) ) {
 		return DBL_MAX;
 	}
 
@@ -290,7 +290,8 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 	int py[4];                       // neighbor y
 	double *c = new double [camNum]; // bilinear color
 	double fitness = 0;              // result of normalized fitness
-	Mat_<double>::const_iterator it = mvs.getPatchDistanceWeighting().begin();
+	static const Mat_<double> &distWeight = mvs.getPatchDistanceWeighting();
+	Mat_<double>::const_iterator it = distWeight.begin();
 
 	for (double x = pt[0]-patchRadius; x <= pt[0]+patchRadius; x++) {
 		for (double y = pt[1]-patchRadius; y <= pt[1]+patchRadius; y++) {
@@ -299,7 +300,7 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 			variance = 0;
 
 			for (int i = 0; i < camNum; i++) {
-				const Mat_<uchar> &img = mvs.getCameras()[patch.getCameraIndices()[i]].getPyramidImage()[LOD];
+				const Mat_<uchar> &img = cameras[cameraIdx[i]].getPyramidImage()[LOD];
 
 				// homography projection
 				w  =   H[i].at<double>(2, 0) * x + H[i].at<double>(2, 1) * y + H[i].at<double>(2, 2);
@@ -307,15 +308,18 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 				iy = ( H[i].at<double>(1, 0) * x + H[i].at<double>(1, 1) * y + H[i].at<double>(1, 2) ) / w;
 				
 				// apply LOD transform
-				ix /= 1<<LOD;
-				iy /= 1<<LOD;
+				if (LOD > 0) {
+					ix /= 1<<LOD;
+					iy /= 1<<LOD;
+				}
 
 				// skip overflow cases
 				if ((ix < 0) | (ix >= img.cols-1) | (iy < 0) | (iy >= img.rows-1) | (w == 0)) {
 					delete [] c;
 					return DBL_MAX;
 				}
-
+				
+				/*
 				// interpolation neighbor points
 				px[0] = (int) ix;
 				py[0] = (int) iy;
@@ -330,6 +334,8 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 					   (double) img.at<uchar>(py[1], px[1])*(ix-px[0])*(py[3]-iy) + 
 					   (double) img.at<uchar>(py[2], px[2])*(iy-py[0])*(px[3]-ix) + 
 					   (double) img.at<uchar>(py[3], px[3])*(ix-px[2])*(iy-py[1]);
+				*/
+				c[i] = img.at<uchar>(cvRound(iy), cvRound(ix));
 
 				mean += c[i];
 			} // end of camera
