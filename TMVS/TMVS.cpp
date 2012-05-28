@@ -12,7 +12,7 @@ int _tmain(int argc, _TCHAR* argv[])
 {
 	clock_t start_t, end_t;
 	
-	MVS mvs(5, 15, 36);
+	MVS mvs(5, 30, 1500);
 	mvs.loadNVM("../../../TMVS_data/pawn/pawn.nvm");
 
 	start_t = clock();

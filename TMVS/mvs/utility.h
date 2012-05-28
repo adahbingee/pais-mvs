@@ -24,6 +24,24 @@ namespace PAIS {
             out[1] = sin(in[0])*sin(in[1]);
             out[2] = cos(in[0]);
         }
+
+		// get fundamental matrix xT'*F*xF = 0
+		inline static Mat getFundamental(const Camera &camFrom, const Camera &camTo) {
+			// F = eTx * pT * pF^-1;
+			// eT = pT * C;
+			const Mat &pF   = camFrom.getP();
+			const Mat &pT   = camTo.getP();
+			const Vec3d &cF = camFrom.getCenter();
+			double cFData [] = {cF[0], cF[1], cF[2], 1.0};
+		    const Mat cFM(4, 1, CV_64FC1, cFData);
+			const Mat eT = pT * cFM;
+			double exTData [] = {0, -eT.at<double>(2, 0), eT.at<double>(1, 0),
+				                 eT.at<double>(2, 0), 0, -eT.at<double>(0, 0),
+								 -eT.at<double>(1, 0), eT.at<double>(0, 0), 0};
+			const Mat exT(3, 3, CV_64FC1, exTData);
+			const Mat pFinv = pF.inv(DECOMP_SVD);
+			return exT*pT*pFinv;
+		}
 	};
 };
 
