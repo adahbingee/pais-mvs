@@ -42,7 +42,7 @@ void Patch::refineSeed() {
 	pass &= setReferenceCameraIndex();
 	pass &= setDepth();
 	pass &= setDepthRange();
-	if (LOD < 0) pass &= setLOD();
+	pass &= setLOD();
 
 	if ( !pass ) {
 		printf("fail during setting\n");
@@ -56,7 +56,7 @@ void Patch::refineSeed() {
 	// initial guess particle
 	double init   [] = {normalS[0], normalS[1], depth};
 
-	PsoSolver solver(3, rangeL, rangeU, getFitness, this, 200/(LOD+1), 15);
+	PsoSolver solver(3, rangeL, rangeU, getFitness, this, 200, 15);
 	solver.setParticle(init);
 	solver.run(true);
 	
@@ -68,18 +68,127 @@ void Patch::refineSeed() {
 	setNormal(Vec2d(gBest[0], gBest[1]));
 	depth  = gBest[2];
 	center = ray * depth + getReferenceCamera().getCenter();
-
-	printf("ID: %d\tLOD: %d\tit: %d\tfit: %.2f\n", id, LOD, solver.getIteration(), fitness);
 	
-	// LOD down refinement
-	if (LOD > 0) {
-		LOD = max(LOD-1, 0);
-		refineSeed();
-	} else {
-		//showError();
-		//showRefinedResult();
-		printf("\n");
+	removeInvisibleCamera();
+	printf("ID: %d\tLOD: %d\tit: %d\tfit: %.2f\n", id, LOD, solver.getIteration(), fitness);
+}
+
+bool Patch::removeInvisibleCamera() {
+	static const vector<Camera> &cameras = mvs->getCameras();
+
+	// camera parameters
+	const int camNum        = getCameraNumber();
+	const Camera &refCam    = getReferenceCamera();
+	const Mat_<double> &KRF = refCam.getKR();
+	const Mat_<double> &KTF = refCam.getKT();
+
+	// plane equation (distance form plane to origin)
+	const double d = -center.ddot(normal);          
+	const Mat_<double> normalM(normal);
+
+	// Homographies to visible camera
+	vector<Mat_<double> > H(camNum);
+	for (int i = 0; i < camNum; i++) {
+		// visible camera
+		const Camera &cam = cameras[camIdx[i]];
+
+		// get homography matrix
+		const Mat_<double> &KRT = cam.getKR();        // K*R of to camera
+		const Mat_<double> &KTT = cam.getKT();        // K*T of to camera
+		H[i] = ( d*KRT - KTT*normalM.t() ) * ( d*KRF - KTF*normalM.t() ).inv();
 	}
+
+	// 2D image point on reference image
+	Vec2d pt;
+	refCam.project(center, pt);
+
+	// get normalized homography patch column vector
+	vector<Mat_<double> > HP(camNum);
+	char title[30];
+	for (int i = 0; i < camNum; i++) {
+		getHomographyPatch(pt, cameras[camIdx[i]], H[i], HP[i]);
+		//sprintf(title, "patch%d.png", i);
+		//printf("file: %s\n", title);
+		//imwrite(title, HP[i]);
+	}
+
+	// correlation table
+	Mat_<double> corrTable(camNum, camNum);
+	for (int i = 0; i < camNum; ++i) {
+		corrTable.at<double>(i, i) = 0;
+		for (int j = i+1; j < camNum; ++j) {
+			Mat_<double> corr = HP[i].t() * HP[j];
+			corrTable.at<double>(i, j) = corr.at<double>(0, 0);
+			corrTable.at<double>(j, i) = corrTable.at<double>(i, j);
+		}
+	}
+
+	// sum correlation
+	vector<double> corrSum(camNum);
+	double maxCorr = -DBL_MAX;
+	int maxIdx;
+	for (int i = 0; i < camNum; ++i) {
+		corrSum[i] = 0;
+		for (int j = 0; j < camNum; ++j) {
+			corrSum[i] += corrTable.at<double>(i, j);
+		}
+
+		if (corrSum[i] > maxCorr) {
+			maxIdx = i;
+			maxCorr = corrSum[i];
+		}
+	}
+
+	for (int i = 0; i < camNum; ++i) {
+		if (i == maxIdx) continue;
+		if (corrTable.at<double>(maxIdx, i) < 0.7) {
+			printf("remove %f \n", corrTable.at<double>(maxIdx, i));
+			system("pause");
+		}
+	}
+
+	return true;
+}
+
+bool Patch::getHomographyPatch(const Vec2d &pt, const Camera &cam, const Mat_<double> &H, Mat_<double> &hp) const {
+	static const int patchRadius = mvs->getPatchRadius();
+	static const int patchSize   = mvs->getPatchSize();
+	const Mat_<uchar> &img = cam.getPyramidImage()[LOD];
+	hp = Mat_<double>(patchSize*patchSize, 1);
+
+	double w, ix, iy;                // position on target image
+	int px[4];                       // neighbor x
+	int py[4];                       // neighbor y
+	int count = 0;
+	double sum = 0;
+	for (double x = pt[0]-patchRadius; x <= pt[0]+patchRadius; ++x) {
+		for (double y = pt[1]-patchRadius; y <= pt[1]+patchRadius; ++y) {
+			// homography projection (with LOD transform)
+			w  = ( H.at<double>(2, 0) * x + H.at<double>(2, 1) * y + H.at<double>(2, 2) ) * (1<<LOD);
+			ix = ( H.at<double>(0, 0) * x + H.at<double>(0, 1) * y + H.at<double>(0, 2) ) / w;
+			iy = ( H.at<double>(1, 0) * x + H.at<double>(1, 1) * y + H.at<double>(1, 2) ) / w;
+
+			// interpolation neighbor points
+			px[0] = (int) ix;
+			py[0] = (int) iy;
+			px[1] = px[0] + 1;
+			py[1] = py[0];
+			px[2] = px[0];
+			py[2] = py[0] + 1;
+			px[3] = px[0] + 1;
+			py[3] = py[0] + 1;
+				
+			hp.at<double>(count, 0) = (double) img.at<uchar>(py[0], px[0])*(px[1]-ix)*(py[2]-iy) + 
+					                  (double) img.at<uchar>(py[1], px[1])*(ix-px[0])*(py[3]-iy) + 
+					                  (double) img.at<uchar>(py[2], px[2])*(iy-py[0])*(px[3]-ix) + 
+					                  (double) img.at<uchar>(py[3], px[3])*(ix-px[2])*(iy-py[1]);
+			sum += hp.at<double>(count, 0)*hp.at<double>(count, 0);
+			++count;
+		}
+	}
+
+	hp /= sqrt(sum);
+	return true;
 }
 
 /* for debug used */
@@ -89,11 +198,11 @@ void Patch::showRefinedResult() const {
 	static const int patchRadius = mvs->getPatchRadius();
 
 	// camera parameters
-	const Camera &refCam  = getReferenceCamera();
+	const int camNum        = getCameraNumber();
+	const Camera &refCam    = getReferenceCamera();
 	const Mat_<double> &KRF = refCam.getKR();
 	const Mat_<double> &KTF = refCam.getKT();
-	const int camNum = getCameraNumber();
-
+	
 	// plane equation (distance form plane to origin)
 	const double d = -center.ddot(normal);          
 	const Mat_<double> normalM(normal);
@@ -151,8 +260,9 @@ void Patch::showRefinedResult() const {
 		line(img, Point(ix[3],iy[3]), Point(ix[2],iy[2]), Scalar(0,0,255));
 		circle(img, Point(ix[4], iy[4]), 1, Scalar(0,0,255));
 
-		sprintf(title, "img %d", camIdx[i]);
+		sprintf(title, "img%d_%d.png", id, camIdx[i]);
 		imshow(title, img);
+		imwrite(title, img);
 	}
 	waitKey();
 	destroyAllWindows();
@@ -248,7 +358,9 @@ void Patch::showError() const {
 	double minE ,maxE;
 	minMaxLoc(error, &minE, &maxE);
 	error = (error - minE) / (maxE - minE) * 255;
-	imwrite("img.png", error);
+	char title[30];
+	sprintf(title, "error%d.png", id);
+	imwrite(title, error);
 }
 
 /* getters */
@@ -521,8 +633,8 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 	double sumWeight = 0;
 	double weight;
 
-	for (double x = pt[0]-patchRadius; x <= pt[0]+patchRadius; x++) {
-		for (double y = pt[1]-patchRadius; y <= pt[1]+patchRadius; y++) {
+	for (double x = pt[0]-patchRadius; x <= pt[0]+patchRadius; ++x) {
+		for (double y = pt[1]-patchRadius; y <= pt[1]+patchRadius; ++y) {
 			// clear
 			mean   = 0;
 			avgSad = 0;

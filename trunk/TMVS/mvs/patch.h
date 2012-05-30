@@ -58,6 +58,10 @@ namespace PAIS {
 		bool setReferenceCameraIndex();
 		// set depth range
 		bool setDepthRange();
+		// remove invisible camera using texture correlation
+		bool removeInvisibleCamera();
+		// get normalized homography patch column vector
+		bool getHomographyPatch(const Vec2d &pt, const Camera &cam, const Mat_<double> &H, Mat_<double> &hp) const;
 
 		// show refined projection
 		void showRefinedResult() const;
