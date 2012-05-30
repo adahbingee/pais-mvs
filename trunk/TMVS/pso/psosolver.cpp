@@ -219,7 +219,7 @@ void PsoSolver::setNearNeighborBest(const int idx) {
 
 void PsoSolver::moveParticles() {
 	
-	//#pragma omp parallel for
+	#pragma omp parallel for
 	for (int i = 0; i < particleNum; i++) {
 		// velocity weighting
 		double pVecW, gVecW, lVecW, nVecW;
