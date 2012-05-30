@@ -105,6 +105,7 @@ bool Patch::removeInvisibleCamera() {
 	// get normalized homography patch column vector
 	vector<Mat_<double> > HP(camNum);
 	char title[30];
+	#pragma omp parallel for
 	for (int i = 0; i < camNum; i++) {
 		getHomographyPatch(pt, cameras[camIdx[i]], H[i], HP[i]);
 		//sprintf(title, "patch%d.png", i);
