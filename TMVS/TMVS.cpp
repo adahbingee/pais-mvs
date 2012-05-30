@@ -12,8 +12,8 @@ int _tmain(int argc, _TCHAR* argv[])
 {
 	clock_t start_t, end_t;
 	
-	MVS mvs(5, 30, 36);
-	mvs.loadNVM("../../TMVS_data/box/pmvs.nvm");
+	MVS mvs(5, 15, 36);
+	mvs.loadNVM("../../../TMVS_data/box/pmvs.nvm");
 
 	start_t = clock();
 	mvs.refineSeedPatches();
