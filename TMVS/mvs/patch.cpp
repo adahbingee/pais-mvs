@@ -85,7 +85,7 @@ void Patch::refineSeed() {
 	// set patch priority
 	setPriority();
 
-	printf("ID: %d\tLOD: %d\tit: %d\tfit: %.2f\n", id, LOD, solver.getIteration(), fitness);
+	printf("ID: %d\tLOD: %d\tit: %d\tfit: %.2f \tpri: %.2f\n", id, LOD, solver.getIteration(), fitness, priority);
 }
 
 /* main functions */
@@ -591,15 +591,20 @@ bool Patch::setCorrelationTable() {
 }
 
 bool Patch::setPriority() {
+	static const int totalCamNum = (int) mvs->getCameras().size();
+	const int camNum = getCameraNumber();
+
 	double corr = 0;
 	for (int i = 0; i < corrTable.rows; ++i) {
 		for (int j = 0; j < corrTable.cols; ++j) {
 			corr += corrTable.at<double>(i,j);
 		}
 	}
-	corr /= (corrTable.rows*corrTable.cols);
+	corr /= (camNum*camNum);
 
-	priority = (1.0-corr) * fitness;
+	double camRatio = 1.0 - ((double) camNum) / ((double) totalCamNum);
+
+	priority = fitness * exp(-corr) * camRatio;
 	return true;
 }
 
@@ -609,7 +614,7 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 	// current patch
 	const Patch  &patch   = *((Patch *)obj);
 	// visible camera indices
-	const vector<int> &cameraIdx = patch.getCameraIndices();
+	const vector<int> &camIdx = patch.getCameraIndices();
 	// static instances
 	static const MVS  &mvs               = patch.getMVS();
 	static const int patchRadius         = mvs.getPatchRadius();
@@ -641,7 +646,7 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 	vector<Mat_<double> > H(camNum);
 	for (int i = 0; i < camNum; i++) {
 		// visible camera
-		const Camera &cam = cameras[cameraIdx[i]];
+		const Camera &cam = cameras[camIdx[i]];
 
 		// get homography matrix
 		const Mat_<double> &KRT = cam.getKR();        // K*R of to camera
@@ -679,7 +684,7 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 			avgSad = 0;
 
 			for (int i = 0; i < camNum; i++) {
-				const Mat_<uchar> &img = cameras[cameraIdx[i]].getPyramidImage()[LOD];
+				const Mat_<uchar> &img = cameras[camIdx[i]].getPyramidImage(LOD);
 
 				// homography projection (with LOD transform)
 				w  = ( H[i].at<double>(2, 0) * x + H[i].at<double>(2, 1) * y + H[i].at<double>(2, 2) ) * (1<<LOD);
