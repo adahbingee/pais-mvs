@@ -77,3 +77,19 @@ bool MVS::refineSeedPatches() {
 
 	return true;
 }
+
+int MVS::geTopPriorityPatchId() const {
+	map<int, Patch>::const_iterator it;
+	double topPriority = DBL_MAX;
+	int topId;
+
+	for (it = patches.begin(); it != patches.end(); ++it) { 
+		const Patch &pth = (*it).second;
+		if (pth.getPriority() < topPriority) {
+			topPriority = pth.getPriority();
+			topId = pth.getId();
+		}
+	}
+
+	return topId;
+}

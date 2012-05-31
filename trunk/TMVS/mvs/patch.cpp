@@ -19,6 +19,8 @@ Patch::Patch(const MVS *mvs, const Vec3d &center, const Vec3b &color, const vect
 	this->fitness    = DBL_MAX;
 	this->LOD        = -1;
 	this->depthRange = Vec2d(0.0, 0.0);
+	this->priority   = DBL_MAX;
+	this->expanded   = false;
 	
 	if (id < 0) {
 		#pragma omp critical

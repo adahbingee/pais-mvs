@@ -54,6 +54,8 @@ namespace PAIS {
 		Mat_<double> corrTable;
 		// patch priority ((1-correlation) * fitness)
 		double priority;
+		// is expanded
+		bool expanded;
 
 		// normal setters
 		void setNormal(const Vec3d &n);
@@ -102,6 +104,8 @@ namespace PAIS {
 		int getLOD()                       const { return LOD; }
 		int getReferenceCameraIndex()      const { return refCamIdx; }
 		int getCameraNumber()              const { return (int) camIdx.size(); }
+		double getPriority()               const { return priority;  }
+		bool isExpanded()                  const { return expanded;  }
 		const vector<int>& getCameraIndices() const { return camIdx;  }
 		const Camera& getReferenceCamera() const;
 	};
