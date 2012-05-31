@@ -63,9 +63,16 @@ bool MVS::refineSeedPatches() {
 	}
 
 	map<int, Patch>::iterator it;
-	for (it = patches.begin(); it != patches.end(); it++) {
+	for (it = patches.begin(); it != patches.end(); ++it) {
 		Patch &pth = (*it).second;
 		pth.refineSeed();
+
+		// remove patch with few visible camera
+		if (pth.getCameraNumber() < 3) {
+			it = patches.erase(it);
+			--it;
+			printf("remove patch\n");
+		}
 	}
 
 	return true;

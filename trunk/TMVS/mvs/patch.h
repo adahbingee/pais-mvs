@@ -44,6 +44,10 @@ namespace PAIS {
 		vector<Vec2d> imgPoint;
 		// fitness
 		double fitness;
+		// normalized homography patch correlation table
+		Mat_<double> corrTable;
+		// patch priority ((1-correlation) * fitness)
+		double priority;
 
 		// normal setters
 		void setNormal(const Vec3d &n);
@@ -58,11 +62,16 @@ namespace PAIS {
 		bool setReferenceCameraIndex();
 		// set depth range
 		bool setDepthRange();
+		// set normalized homography patch correlation table
+		bool setCorrelationTable();
+		// set priority
+        bool setPriority();
+
 		// remove invisible camera using texture correlation
 		bool removeInvisibleCamera();
 		// get normalized homography patch column vector
 		bool getHomographyPatch(const Vec2d &pt, const Camera &cam, const Mat_<double> &H, Mat_<double> &hp) const;
-
+		
 		// show refined projection
 		void showRefinedResult() const;
 		// show multi-view error

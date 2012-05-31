@@ -68,63 +68,30 @@ void Patch::refineSeed() {
 	setNormal(Vec2d(gBest[0], gBest[1]));
 	depth  = gBest[2];
 	center = ray * depth + getReferenceCamera().getCenter();
+
+	// set normalized homography patch correlation table
+	setCorrelationTable();
 	
+	// remove insvisible camera
+	int beforeCamNum = getCameraNumber();
 	removeInvisibleCamera();
+	int afterCamNum = getCameraNumber();
+	if (beforeCamNum != afterCamNum && afterCamNum >= 3) {
+		refineSeed();
+	}
+
+	// set patch priority
+	setPriority();
+
 	printf("ID: %d\tLOD: %d\tit: %d\tfit: %.2f\n", id, LOD, solver.getIteration(), fitness);
 }
 
+/* main functions */
+
 bool Patch::removeInvisibleCamera() {
-	static const vector<Camera> &cameras = mvs->getCameras();
+	const int camNum = getCameraNumber();
 
-	// camera parameters
-	const int camNum        = getCameraNumber();
-	const Camera &refCam    = getReferenceCamera();
-	const Mat_<double> &KRF = refCam.getKR();
-	const Mat_<double> &KTF = refCam.getKT();
-
-	// plane equation (distance form plane to origin)
-	const double d = -center.ddot(normal);          
-	const Mat_<double> normalM(normal);
-
-	// Homographies to visible camera
-	vector<Mat_<double> > H(camNum);
-	for (int i = 0; i < camNum; i++) {
-		// visible camera
-		const Camera &cam = cameras[camIdx[i]];
-
-		// get homography matrix
-		const Mat_<double> &KRT = cam.getKR();        // K*R of to camera
-		const Mat_<double> &KTT = cam.getKT();        // K*T of to camera
-		H[i] = ( d*KRT - KTT*normalM.t() ) * ( d*KRF - KTF*normalM.t() ).inv();
-	}
-
-	// 2D image point on reference image
-	Vec2d pt;
-	refCam.project(center, pt);
-
-	// get normalized homography patch column vector
-	vector<Mat_<double> > HP(camNum);
-	char title[30];
-	#pragma omp parallel for
-	for (int i = 0; i < camNum; i++) {
-		getHomographyPatch(pt, cameras[camIdx[i]], H[i], HP[i]);
-		//sprintf(title, "patch%d.png", i);
-		//printf("file: %s\n", title);
-		//imwrite(title, HP[i]);
-	}
-
-	// correlation table
-	Mat_<double> corrTable(camNum, camNum);
-	for (int i = 0; i < camNum; ++i) {
-		corrTable.at<double>(i, i) = 0;
-		for (int j = i+1; j < camNum; ++j) {
-			Mat_<double> corr = HP[i].t() * HP[j];
-			corrTable.at<double>(i, j) = corr.at<double>(0, 0);
-			corrTable.at<double>(j, i) = corrTable.at<double>(i, j);
-		}
-	}
-
-	// sum correlation
+	// sum correlation and find max correlation index
 	vector<double> corrSum(camNum);
 	double maxCorr = -DBL_MAX;
 	int maxIdx;
@@ -140,12 +107,18 @@ bool Patch::removeInvisibleCamera() {
 		}
 	}
 
+	// remove invisible camera
+	vector<int> removeIdx;
 	for (int i = 0; i < camNum; ++i) {
 		if (i == maxIdx) continue;
 		if (corrTable.at<double>(maxIdx, i) < 0.7) {
-			printf("remove %f \n", corrTable.at<double>(maxIdx, i));
-			system("pause");
+			removeIdx.push_back(camIdx[i]);
 		}
+	}
+	vector<int>::iterator it;
+	for (int i = 0; i < (int) removeIdx.size(); i++) {
+		it = find(camIdx.begin(), camIdx.end(), removeIdx[i]);
+		camIdx.erase(it);
 	}
 
 	return true;
@@ -562,6 +535,69 @@ bool Patch::setReferenceCameraIndex() {
 			refCamIdx = camIdx[i];
 		}
 	}
+	return true;
+}
+
+bool Patch::setCorrelationTable() {
+	static const vector<Camera> &cameras = mvs->getCameras();
+
+	// camera parameters
+	const int camNum        = getCameraNumber();
+	const Camera &refCam    = getReferenceCamera();
+	const Mat_<double> &KRF = refCam.getKR();
+	const Mat_<double> &KTF = refCam.getKT();
+
+	// plane equation (distance form plane to origin)
+	const double d = -center.ddot(normal);          
+	const Mat_<double> normalM(normal);
+
+	// Homographies to visible camera
+	vector<Mat_<double> > H(camNum);
+	for (int i = 0; i < camNum; i++) {
+		// visible camera
+		const Camera &cam = cameras[camIdx[i]];
+
+		// get homography matrix
+		const Mat_<double> &KRT = cam.getKR();        // K*R of to camera
+		const Mat_<double> &KTT = cam.getKT();        // K*T of to camera
+		H[i] = ( d*KRT - KTT*normalM.t() ) * ( d*KRF - KTF*normalM.t() ).inv();
+	}
+
+	// 2D image point on reference image
+	Vec2d pt;
+	refCam.project(center, pt);
+
+	// get normalized homography patch column vector
+	vector<Mat_<double> > HP(camNum);
+	#pragma omp parallel for
+	for (int i = 0; i < camNum; i++) {
+		getHomographyPatch(pt, cameras[camIdx[i]], H[i], HP[i]);
+	}
+
+	// correlation table
+	corrTable = Mat_<double>(camNum, camNum);
+	for (int i = 0; i < camNum; ++i) {
+		corrTable.at<double>(i, i) = 0;
+		for (int j = i+1; j < camNum; ++j) {
+			Mat_<double> corr = HP[i].t() * HP[j];
+			corrTable.at<double>(i, j) = corr.at<double>(0, 0);
+			corrTable.at<double>(j, i) = corrTable.at<double>(i, j);
+		}
+	}
+	
+	return true;
+}
+
+bool Patch::setPriority() {
+	double corr = 0;
+	for (int i = 0; i < corrTable.rows; ++i) {
+		for (int j = 0; j < corrTable.cols; ++j) {
+			corr += corrTable.at<double>(i,j);
+		}
+	}
+	corr /= (corrTable.rows*corrTable.cols);
+
+	priority = (1.0-corr) * fitness;
 	return true;
 }
 
