@@ -29,6 +29,9 @@ namespace PAIS {
 		// initial pixel-wised distance weighting of patch
 		void initPatchDistanceWeighting();
 
+		// get top priority patch id to expansion
+		int geTopPriorityPatchId() const;
+
 	public:
 		// constructor
 		MVS(const int cellSize = 2, const int patchRadius = 15, const double textureVariation = 36);
