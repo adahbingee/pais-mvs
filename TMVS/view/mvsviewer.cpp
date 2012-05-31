@@ -29,9 +29,7 @@ void keyBoardEvent(const pcl::visualization::KeyboardEvent &event, void* viewer_
 
 void pointPickEvent(const pcl::visualization::PointPickingEvent &event, void* viewer_void) {
 	MvsViewer &viewer = *((MvsViewer *) viewer_void);
-	const int idx = event.getPointIndex();
-	printf("picked: %d\n", idx);
-	viewer.showPickedPoint(idx);
+	viewer.showPickedPoint(event.getPointIndex());
 }
 
 MvsViewer::MvsViewer(const MVS &mvs, bool show) {
@@ -213,15 +211,15 @@ void MvsViewer::showPickedPoint(const int idx) {
 	normal->push_back(nt);
 
 	// remove old points
-	pclViewer.removePointCloud("picked point");
-	pclViewer.removePointCloud("picked point normal");
+	pclViewer.removePointCloud(NAME_PICKED_PATCH);
+	pclViewer.removePointCloud(NAME_PICKED_NORMAL);
 
 	// add new points
-    pclViewer.addPointCloud(cloud, "picked point");
+    pclViewer.addPointCloud(cloud, NAME_PICKED_PATCH);
 	// add point normals
-	pclViewer.addPointCloudNormals<pcl::PointXYZ, pcl::Normal>(cloud, normal, 1, 0.1, "picked point normal");
+	pclViewer.addPointCloudNormals<pcl::PointXYZ, pcl::Normal>(cloud, normal, 1, 0.1, NAME_PICKED_NORMAL);
 	// set color
-    pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 1.0, 0.0, "picked point");
+    pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 1.0, 0.0, NAME_PICKED_PATCH);
 	// set point size
-	pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 5, "picked point");
+	pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 5, NAME_PICKED_PATCH);
 }

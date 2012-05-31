@@ -1,8 +1,10 @@
 #ifndef __PAIS_MVS_VIEWER_H__
 #define __PAIS_MVS_VIEWER_H__
 
-#define NAME_PATCH "patch"
-#define NAME_NORMAL "normal"
+#define NAME_PATCH         "patch"
+#define NAME_NORMAL        "normal"
+#define NAME_PICKED_PATCH  "picked patch"
+#define NAME_PICKED_NORMAL "picked normal"
 
 // include PCL
 #include <boost/thread/thread.hpp>
