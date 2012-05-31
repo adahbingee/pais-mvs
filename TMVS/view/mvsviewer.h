@@ -1,6 +1,9 @@
 #ifndef __PAIS_MVS_VIEWER_H__
 #define __PAIS_MVS_VIEWER_H__
 
+#define NAME_PATCH "patch"
+#define NAME_NORMAL "normal"
+
 // include PCL
 #include <boost/thread/thread.hpp>
 #include <pcl\common\common_headers.h>
@@ -27,7 +30,7 @@ namespace PAIS {
 
 		void init();
 		void addCameras();
-		void addPatches(const char *name);
+		void addPatches();
 	public:
 		// constructor
 		MvsViewer(const MVS &mvs, bool show = false);
@@ -40,6 +43,9 @@ namespace PAIS {
 
 		// viewer params
 		void toggleBackground();
+		void toggleNormal();
+		void toggleColor();
+		void showPickedPoint(const int idx);
 
 		// start rendering
 		void open();

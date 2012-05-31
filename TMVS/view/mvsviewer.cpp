@@ -6,16 +6,32 @@ void keyBoardEvent(const pcl::visualization::KeyboardEvent &event, void* viewer_
 	MvsViewer &viewer = *((MvsViewer *) viewer_void);
 	
 	switch (event.getKeyCode()) {
+	case 'H':
+	case 'h':
+		printf("\tA, a toggle point color\n");
+		printf("\tB, b toggle background color\n");
+		printf("\tN, n toggle normal display\n");
+		break;
+	case 'A':
+	case 'a':
+		viewer.toggleColor();
+		break;
 	case 'B':
 	case 'b':
 		viewer.toggleBackground();
 		break;
+	case 'N':
+	case 'n':
+		viewer.toggleNormal();
+		break;
 	}
-
 }
 
 void pointPickEvent(const pcl::visualization::PointPickingEvent &event, void* viewer_void) {
-	
+	MvsViewer &viewer = *((MvsViewer *) viewer_void);
+	const int idx = event.getPointIndex();
+	printf("picked: %d\n", idx);
+	viewer.showPickedPoint(idx);
 }
 
 MvsViewer::MvsViewer(const MVS &mvs, bool show) {
@@ -28,7 +44,7 @@ MvsViewer::MvsViewer(const MVS &mvs, bool show) {
 	// add MVS cameras
 	addCameras();
 	// add MVS patches
-	addPatches("MVS Patches");
+	addPatches();
 
 	if (show) open();
 }
@@ -50,7 +66,7 @@ void MvsViewer::init() {
 	// set viewer flags
 	normalEnable    = false;
 	backgroundColor = false;
-	colorEnable     = false;
+	colorEnable     = true;
 }
 
 void MvsViewer::addCameras() {
@@ -90,7 +106,7 @@ void MvsViewer::addCameras() {
     pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, 0.5, "cameraNormals");
 }
 
-void MvsViewer::addPatches(const char *name) {
+void MvsViewer::addPatches() {
 	const map<int, Patch> &patches = mvs->getPatches();
 	map<int, Patch>::const_iterator it;
 
@@ -120,16 +136,16 @@ void MvsViewer::addPatches(const char *name) {
 	}
 
 	// remove old points
-    pclViewer.removePointCloud(name);
-	pclViewer.removePointCloud(string(name).append("normals"));
+	pclViewer.removePointCloud(NAME_PATCH);
+	pclViewer.removePointCloud(NAME_NORMAL);
 
 	// add new points
-    pclViewer.addPointCloud(centers, name);
-	pclViewer.addPointCloudNormals<pcl::PointXYZRGB, pcl::Normal>(centers, normals, 1, 0.1, string(name).append("normals"));
+    pclViewer.addPointCloud(centers, NAME_PATCH);
+	pclViewer.addPointCloudNormals<pcl::PointXYZRGB, pcl::Normal>(centers, normals, 1, 0.1, NAME_NORMAL);
 	
 	// set normal color
-	pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1.0, 1.0, 0.0, string(name).append("normals"));
-    pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, 0.2, string(name).append("normals"));
+	pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1.0, 1.0, 0.0, NAME_NORMAL);
+    pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, 0.0, NAME_NORMAL);
 }
 
 void MvsViewer::open() {
@@ -148,4 +164,64 @@ void MvsViewer::toggleBackground() {
 	}
 
 	pclViewer.spinOnce(1, true);
+}
+
+void MvsViewer::toggleNormal() {
+	if (normalEnable) {
+		pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, 0.0, NAME_NORMAL);
+		normalEnable = false;
+	} else {
+		pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, 0.2, NAME_NORMAL);
+		normalEnable = true;
+	}
+
+	pclViewer.spinOnce(1, true);
+}
+
+void MvsViewer::toggleColor() {
+	if (colorEnable) {
+		pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.5, 0, 0, NAME_PATCH);
+		colorEnable = false;
+	} else {
+		addPatches();
+		colorEnable = true;
+	}
+
+	pclViewer.spinOnce(1, true);
+}
+
+void MvsViewer::showPickedPoint(const int idx) {
+	map<int, Patch>::const_iterator it;
+	it = mvs->getPatches().begin();
+	for (int i = 0; i < idx; ++it, ++i);
+
+	// patch center
+	const Vec3d &p = it->second.getCenter();
+	// patch normal
+	const Vec3d &n = it->second.getNormal();
+
+	PointCloud<PointXYZ>::Ptr cloud(new PointCloud<PointXYZ>);
+	PointCloud<pcl::Normal>::Ptr normal(new PointCloud<pcl::Normal>);
+
+	PointXYZ pt;
+	pt.x = p[0];
+	pt.y = p[1];
+	pt.z = p[2];
+	pcl::Normal nt(n[0], n[1], n[2]);
+
+	cloud->push_back(pt);
+	normal->push_back(nt);
+
+	// remove old points
+	pclViewer.removePointCloud("picked point");
+	pclViewer.removePointCloud("picked point normal");
+
+	// add new points
+    pclViewer.addPointCloud(cloud, "picked point");
+	// add point normals
+	pclViewer.addPointCloudNormals<pcl::PointXYZ, pcl::Normal>(cloud, normal, 1, 0.1, "picked point normal");
+	// set color
+    pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 1.0, 0.0, "picked point");
+	// set point size
+	pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 5, "picked point");
 }
