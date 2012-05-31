@@ -1,5 +1,11 @@
 #ifndef __PAIS_PATCH__H__
 #define __PAIS_PATCH__H__
+
+// homography patch correlation threshold
+#define CORRELATION_THRESHOLD 0.7
+// minimul camera number threshold
+#define MIN_CAMERA_NUMBER 3
+
 #define _USE_MATH_DEFINES
 #include <math.h>
 
@@ -78,8 +84,8 @@ namespace PAIS {
 		void showError() const;
 	public:
 		// constructors
-		Patch(const MVS *mvs, const Vec3d &center, const vector<int> &camIdx, const int id = -1);
 		Patch(const MVS *mvs, const Vec3d &center, const Vec3b &color, const vector<int> &camIdx, const vector<Vec2d> &imgPoint, const int id = -1);
+		Patch(const MVS *mvs, const Patch &parent, const int id = -1);
 
 		// descructor
 		~Patch(void);

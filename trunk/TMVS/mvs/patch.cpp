@@ -76,7 +76,7 @@ void Patch::refineSeed() {
 	int beforeCamNum = getCameraNumber();
 	removeInvisibleCamera();
 	int afterCamNum = getCameraNumber();
-	if (beforeCamNum != afterCamNum && afterCamNum >= 3) {
+	if (beforeCamNum != afterCamNum && afterCamNum >= MIN_CAMERA_NUMBER) {
 		refineSeed();
 	}
 
@@ -111,7 +111,7 @@ bool Patch::removeInvisibleCamera() {
 	vector<int> removeIdx;
 	for (int i = 0; i < camNum; ++i) {
 		if (i == maxIdx) continue;
-		if (corrTable.at<double>(maxIdx, i) < 0.7) {
+		if (corrTable.at<double>(maxIdx, i) < CORRELATION_THRESHOLD) {
 			removeIdx.push_back(camIdx[i]);
 		}
 	}
