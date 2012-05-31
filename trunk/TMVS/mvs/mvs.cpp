@@ -86,7 +86,7 @@ bool MVS::refineSeedPatches() {
 	return true;
 }
 
-int MVS::geTopPriorityPatchId() const {
+int MVS::getTopPriorityPatchId() const {
 	map<int, Patch>::const_iterator it;
 	double topPriority = DBL_MAX;
 	int topId;

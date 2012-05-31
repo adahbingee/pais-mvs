@@ -30,7 +30,7 @@ namespace PAIS {
 		void initPatchDistanceWeighting();
 
 		// get top priority patch id to expansion
-		int geTopPriorityPatchId() const;
+		int getTopPriorityPatchId() const;
 
 	public:
 		// constructor

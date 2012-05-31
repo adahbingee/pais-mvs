@@ -1,3 +1,7 @@
+2012/05/31
+* Add remove invisible camera.
+* Add toggle viewer normal.
+* Add point pick function.
 2012/05/30
 * Add remove invisible camera check.
 2012/05/28
