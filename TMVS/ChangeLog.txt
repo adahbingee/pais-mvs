@@ -1,3 +1,5 @@
+2012/06/01
+* Fix boot bug (static variable)
 2012/05/31
 * Add remove invisible camera.
 * Add toggle viewer normal.

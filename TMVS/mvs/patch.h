@@ -74,6 +74,8 @@ namespace PAIS {
 		bool setCorrelationTable();
 		// set priority
         bool setPriority();
+		// set image point and color
+		bool setImagePoint();
 
 		// remove invisible camera using texture correlation
 		bool removeInvisibleCamera();
