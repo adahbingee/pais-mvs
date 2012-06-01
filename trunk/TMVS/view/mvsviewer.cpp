@@ -189,6 +189,11 @@ void MvsViewer::toggleColor() {
 }
 
 void MvsViewer::showPickedPoint(const int idx) {
+	// skip out of index boundary
+	if (idx > mvs->getPatches().size() || idx < 0) {
+		return;
+	}
+
 	map<int, Patch>::const_iterator it;
 	it = mvs->getPatches().begin();
 	for (int i = 0; i < idx; ++it, ++i);

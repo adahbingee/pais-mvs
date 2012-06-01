@@ -85,6 +85,7 @@ void Patch::refineSeed() {
 	// set patch priority
 	setPriority();
 
+	printf("norm normal: %f\n", norm(normal));
 	printf("ID: %d\tLOD: %d\tit: %d\tfit: %.2f \tpri: %.2f\n", id, LOD, solver.getIteration(), fitness, priority);
 }
 
@@ -127,8 +128,8 @@ bool Patch::removeInvisibleCamera() {
 }
 
 bool Patch::getHomographyPatch(const Vec2d &pt, const Camera &cam, const Mat_<double> &H, Mat_<double> &hp) const {
-	static const int patchRadius = mvs->getPatchRadius();
-	static const int patchSize   = mvs->getPatchSize();
+	const int patchRadius = mvs->getPatchRadius();
+	const int patchSize   = mvs->getPatchSize();
 	const Mat_<uchar> &img = cam.getPyramidImage()[LOD];
 	hp = Mat_<double>(patchSize*patchSize, 1);
 
@@ -170,8 +171,8 @@ bool Patch::getHomographyPatch(const Vec2d &pt, const Camera &cam, const Mat_<do
 /* for debug used */
 
 void Patch::showRefinedResult() const {
-	static const vector<Camera> &cameras = mvs->getCameras();
-	static const int patchRadius = mvs->getPatchRadius();
+	const vector<Camera> &cameras = mvs->getCameras();
+	const int patchRadius = mvs->getPatchRadius();
 
 	// camera parameters
 	const int camNum        = getCameraNumber();
@@ -245,9 +246,9 @@ void Patch::showRefinedResult() const {
 }
 
 void Patch::showError() const {
-	static const vector<Camera> &cameras = mvs->getCameras();
-	static const int patchRadius = mvs->getPatchRadius();
-	static const int patchSize   = mvs->getPatchSize();
+	const vector<Camera> &cameras = mvs->getCameras();
+	const int patchRadius = mvs->getPatchRadius();
+	const int patchSize   = mvs->getPatchSize();
 
 	// camera parameters
 	const Camera &refCam  = getReferenceCamera();
@@ -541,7 +542,7 @@ bool Patch::setReferenceCameraIndex() {
 }
 
 bool Patch::setCorrelationTable() {
-	static const vector<Camera> &cameras = mvs->getCameras();
+	const vector<Camera> &cameras = mvs->getCameras();
 
 	// camera parameters
 	const int camNum        = getCameraNumber();
@@ -591,7 +592,7 @@ bool Patch::setCorrelationTable() {
 }
 
 bool Patch::setPriority() {
-	static const int totalCamNum = (int) mvs->getCameras().size();
+	const int totalCamNum = (int) mvs->getCameras().size();
 	const int camNum = getCameraNumber();
 
 	double corr = 0;
@@ -608,6 +609,11 @@ bool Patch::setPriority() {
 	return true;
 }
 
+bool Patch::setImagePoint() {
+	
+	return true;
+}
+
 /* fitness function */
 
 double PAIS::getFitness(const Particle &p, void *obj) {
@@ -616,9 +622,9 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 	// visible camera indices
 	const vector<int> &camIdx = patch.getCameraIndices();
 	// static instances
-	static const MVS  &mvs               = patch.getMVS();
-	static const int patchRadius         = mvs.getPatchRadius();
-	static const vector<Camera> &cameras = mvs.getCameras();
+	const MVS  &mvs               = patch.getMVS();
+	const int patchRadius         = mvs.getPatchRadius();
+	const vector<Camera> &cameras = mvs.getCameras();
 
 	// camera parameters
 	const Camera &refCam  = patch.getReferenceCamera();
@@ -671,7 +677,7 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 	double *c = new double [camNum]; // bilinear color
 	double fitness = 0;              // result of normalized fitness
 	// distance weighting
-	static const Mat_<double> &distWeight = mvs.getPatchDistanceWeighting();
+	const Mat_<double> &distWeight = mvs.getPatchDistanceWeighting();
 	Mat_<double>::const_iterator it = distWeight.begin();
 	// sum of weighting
 	double sumWeight = 0;

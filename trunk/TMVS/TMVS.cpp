@@ -13,7 +13,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	clock_t start_t, end_t;
 	
 	MVS mvs(5, 15, 36);
-	mvs.loadNVM("../../../TMVS_data/face/face.nvm");
+	mvs.loadNVM("../../../TMVS_data/pawn/pawn.nvm");
 
 	start_t = clock();
 	mvs.refineSeedPatches();
