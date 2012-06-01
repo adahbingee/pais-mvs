@@ -21,7 +21,9 @@ namespace PAIS {
 	private:
 		// global patch id counter
 		static int globalId;
-		
+		// check neighbor patch
+		static bool isNeighbor(const Patch &pth1, const Patch &pth2);
+
 		// patch identifier
 		int id;
 		// MVS
@@ -54,6 +56,8 @@ namespace PAIS {
 		Mat_<double> corrTable;
 		// patch priority ((1-correlation) * fitness)
 		double priority;
+		// patch average correlation
+		double correlation;
 		// is expanded
 		bool expanded;
 
@@ -86,6 +90,7 @@ namespace PAIS {
 		void showRefinedResult() const;
 		// show multi-view error
 		void showError() const;
+
 	public:
 		// constructors
 		Patch(const MVS *mvs, const Vec3d &center, const Vec3b &color, const vector<int> &camIdx, const vector<Vec2d> &imgPoint, const int id = -1);
@@ -95,20 +100,22 @@ namespace PAIS {
 		~Patch(void);
 
 		void refineSeed();
+		void expand() const;
 	
-		int getId()                        const { return id;        }
-		const Vec2d& getSphericalNormal()  const { return normalS;   }
-		const Vec3d& getNormal()           const { return normal;    }
-		const Vec3d& getCenter()           const { return center;    }
-		const Vec3d& getRay()              const { return ray;       }
-		const Vec3b& getColor()            const { return color;     }
-	    const MVS&   getMVS()              const { return *mvs;      }
-		int getLOD()                       const { return LOD; }
-		int getReferenceCameraIndex()      const { return refCamIdx; }
-		int getCameraNumber()              const { return (int) camIdx.size(); }
-		double getPriority()               const { return priority;  }
-		bool isExpanded()                  const { return expanded;  }
-		const vector<int>& getCameraIndices() const { return camIdx;  }
+		int getId()                        const    { return id;                  }
+		const Vec2d& getSphericalNormal()  const    { return normalS;             }
+		const Vec3d& getNormal()           const    { return normal;              }
+		const Vec3d& getCenter()           const    { return center;              }
+		const Vec3d& getRay()              const    { return ray;                 }
+		const Vec3b& getColor()            const    { return color;               }
+	    const MVS&   getMVS()              const    { return *mvs;                }
+		int getLOD()                       const    { return LOD;                 }
+		int getReferenceCameraIndex()      const    { return refCamIdx;           }
+		int getCameraNumber()              const    { return (int) camIdx.size(); }
+		double getPriority()               const    { return priority;            }
+		double getCorrelation()            const    { return correlation;         }
+		bool isExpanded()                  const    { return expanded;            }
+		const vector<int>& getCameraIndices() const { return camIdx;              }
 		const Camera& getReferenceCamera() const;
 	};
 

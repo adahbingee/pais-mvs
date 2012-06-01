@@ -93,6 +93,9 @@ int MVS::getTopPriorityPatchId() const {
 
 	for (it = patches.begin(); it != patches.end(); ++it) { 
 		const Patch &pth = (*it).second;
+		// skip expanded
+		if (pth.isExpanded()) continue;
+		// update top priority
 		if (pth.getPriority() < topPriority) {
 			topPriority = pth.getPriority();
 			topId = pth.getId();
