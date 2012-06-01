@@ -103,7 +103,7 @@ namespace PAIS {
 
 		// project a 3D point to image using a specified level of detail image (0 for original size)
 		// and return is in image or not
-		bool project(const Vec3d &in3D, Vec2d &out2D, const int LOD = 0) const;
+		bool project(const Vec3d &in3D, Vec2d &out2D, const int LOD = 0, const bool applyDistortion = false) const;
 		
 		// get 2d point is in image or not using a specified level of detail image (0 for original size) 
 		bool inImage(const Vec2d &in2D, const int LOD) const {

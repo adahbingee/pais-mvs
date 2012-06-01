@@ -4,6 +4,22 @@ using namespace PAIS;
 
 int Patch::globalId = 0;
 
+bool Patch::isNeighbor(const Patch& pth1, const Patch &pth2) {
+	const Vec3d &c1 = pth1.getCenter();
+	const Vec3d &c2 = pth2.getCenter();
+	const Vec3d &n1 = pth1.getNormal();
+	const Vec3d &n2 = pth2.getNormal();
+
+	double dist = 0;
+	dist += abs((c1-c2).ddot(n1));
+	dist += abs((c1-c2).ddot(n2));
+
+	if (dist < 0.1)
+		return true;
+	else 
+		return false;
+}
+
 /* constructors & descructor */
 
 Patch::Patch(const MVS *mvs, const Vec3d &center, const Vec3b &color, const vector<int> &camIdx, const vector<Vec2d> &imgPoint, const int id) {
@@ -58,7 +74,7 @@ void Patch::refineSeed() {
 	// initial guess particle
 	double init   [] = {normalS[0], normalS[1], depth};
 
-	PsoSolver solver(3, rangeL, rangeU, getFitness, this, 200, 15);
+	PsoSolver solver(3, rangeL, rangeU, getFitness, this, 60, 15);
 	solver.setParticle(init);
 	solver.run(true);
 	
@@ -85,8 +101,46 @@ void Patch::refineSeed() {
 	// set patch priority
 	setPriority();
 
-	printf("norm normal: %f\n", norm(normal));
 	printf("ID: %d\tLOD: %d\tit: %d\tfit: %.2f \tpri: %.2f\n", id, LOD, solver.getIteration(), fitness, priority);
+}
+
+void Patch::expand() const {
+	const int camNum = getCameraNumber();
+	const int cellSize = mvs->getCellSize();
+	const vector<CellMap> &cellMaps = mvs->getCellMaps();
+
+	int cx, cy;
+	for (int i = 0; i < camNum; ++i) {
+		// image cell map
+		const CellMap &map = cellMaps[camIdx[i]];
+
+		// position on cell map
+		cx = imgPoint[i][0] / cellSize;
+		cy = imgPoint[i][1] / cellSize;
+
+		// check neighbor cells
+		int nx [] = {cx, cx-1, cx-1, cx+1, cx+1};
+		int ny [] = {cy, cy-1, cy+1, cy-1, cy+1};
+		for (int j = 0; j < 5; ++j) {
+			// skip out of map
+			if ( !map.inMap(nx[j], ny[j]) ) continue;
+
+			// skip exist neighbor patch & discontinous
+			const vector<int> &cell = map.getCell(nx[j], ny[j]);
+			const int pthNum = (int) cell.size();
+			bool skip = false;
+			for (int k = 0; k < pthNum; k++) {
+				const Patch &pth = mvs->getPatch(cell[k]);
+				if ( Patch::isNeighbor(*this, pth) || pth.getCorrelation() > 0.9) {
+					skip = true;
+					break;
+				}
+			}
+			if (skip) continue;
+
+
+		}
+	}
 }
 
 /* main functions */
@@ -156,9 +210,10 @@ bool Patch::getHomographyPatch(const Vec2d &pt, const Camera &cam, const Mat_<do
 			py[3] = py[0] + 1;
 				
 			hp.at<double>(count, 0) = (double) img.at<uchar>(py[0], px[0])*(px[1]-ix)*(py[2]-iy) + 
-					                  (double) img.at<uchar>(py[1], px[1])*(ix-px[0])*(py[3]-iy) + 
-					                  (double) img.at<uchar>(py[2], px[2])*(iy-py[0])*(px[3]-ix) + 
-					                  (double) img.at<uchar>(py[3], px[3])*(ix-px[2])*(iy-py[1]);
+					                  (double) img.at<uchar>(py[1], px[1])*(ix-px[0])*(py[2]-iy) + 
+					                  (double) img.at<uchar>(py[2], px[2])*(px[1]-ix)*(iy-py[0]) + 
+					                  (double) img.at<uchar>(py[3], px[3])*(ix-px[0])*(iy-py[0]);
+
 			sum += hp.at<double>(count, 0)*hp.at<double>(count, 0);
 			++count;
 		}
@@ -225,9 +280,7 @@ void Patch::showRefinedResult() const {
 			Mat epiLine = F*pF;
 			double yStart = -epiLine.at<double>(0, 2)/epiLine.at<double>(0, 1);
 			double yEnd   = (-epiLine.at<double>(0, 2)-epiLine.at<double>(0, 0)*img.cols) / epiLine.at<double>(0, 1);
-			yStart = cvRound(yStart);
-			yEnd   = cvRound(yEnd);
-			line(img, Point(0, yStart), Point( img.cols, yEnd), Scalar(0,255,0, 0.5));
+			line(img, Point(0, cvRound(yStart)), Point( img.cols, cvRound(yEnd)), Scalar(0,255,0, 0.5));
 		}
 
 		// draw patch
@@ -595,22 +648,38 @@ bool Patch::setPriority() {
 	const int totalCamNum = (int) mvs->getCameras().size();
 	const int camNum = getCameraNumber();
 
-	double corr = 0;
+	correlation = 0;
 	for (int i = 0; i < corrTable.rows; ++i) {
 		for (int j = 0; j < corrTable.cols; ++j) {
-			corr += corrTable.at<double>(i,j);
+			correlation += corrTable.at<double>(i,j);
 		}
 	}
-	corr /= (camNum*camNum);
+	correlation /= (camNum*camNum);
 
 	double camRatio = 1.0 - ((double) camNum) / ((double) totalCamNum);
 
-	priority = fitness * exp(-corr) * camRatio;
+	priority = fitness * exp(-correlation) * camRatio;
 	return true;
 }
 
 bool Patch::setImagePoint() {
-	
+	const int camNum              = getCameraNumber();
+	const vector<Camera> &cameras = mvs->getCameras();
+	const Camera &refCam          = cameras[refCamIdx];
+	const Mat_<Vec3b> &img        = refCam.getPyramidImage(0);
+
+	// set image points
+	imgPoint.resize(camNum);
+	for (int i = 0; i < camNum; ++i) {
+		const Camera &cam = cameras[camIdx[i]];
+		cam.project(center, imgPoint[i]);
+	}
+
+	// set point color
+	Vec2d pt;
+	refCam.project(center, pt);
+	center = img.at<Vec3b>(cvRound(pt[1]), cvRound(pt[0]));
+
 	return true;
 }
 
@@ -670,7 +739,7 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 	int LOD = patch.getLOD();
 
 	// warping (get pixel-wised variance)
-	double mean, avgSad;           // pixel-wised mean, average sad
+	double mean, avgSad;             // pixel-wised mean, average sad
 	double w, ix, iy;                // position on target image
 	int px[4];                       // neighbor x
 	int py[4];                       // neighbor y
@@ -714,9 +783,9 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 				py[3] = py[0] + 1;
 				
 				c[i] = (double) img.at<uchar>(py[0], px[0])*(px[1]-ix)*(py[2]-iy) + 
-					   (double) img.at<uchar>(py[1], px[1])*(ix-px[0])*(py[3]-iy) + 
-					   (double) img.at<uchar>(py[2], px[2])*(iy-py[0])*(px[3]-ix) + 
-					   (double) img.at<uchar>(py[3], px[3])*(ix-px[2])*(iy-py[1]);
+					   (double) img.at<uchar>(py[1], px[1])*(ix-px[0])*(py[2]-iy) + 
+					   (double) img.at<uchar>(py[2], px[2])*(px[1]-ix)*(iy-py[0]) + 
+					   (double) img.at<uchar>(py[3], px[3])*(ix-px[0])*(iy-py[0]);
 				
 				// c[i] = img.at<uchar>(cvRound(iy), cvRound(ix));
 

@@ -47,6 +47,7 @@ namespace PAIS {
 		const map<int, Patch>& getPatches()  const { return patches;  }
 		const vector<CellMap>& getCellMaps() const { return cellMaps; }
 		const Mat_<double>& getPatchDistanceWeighting() const { return patchDistWeight; }
+		const Patch& getPatch(const int id) const { return patches.at(id); }
 
 		int    getCellSize()         const { return cellSize;         }
 		int    getPatchRadius()      const { return patchRadius;      }
