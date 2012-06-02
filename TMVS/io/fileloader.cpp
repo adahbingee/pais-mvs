@@ -107,7 +107,7 @@ Patch FileLoader::loadNvmPatch(ifstream &file, const MVS &mvs) {
 		imgPoint.push_back(p);
 	}
 
-	return Patch(&mvs, center, color, camIdx, imgPoint);
+	return Patch(mvs, center, color, camIdx, imgPoint);
 }
 
 void FileLoader::loadNVM(const char *fileName, MVS &mvs) {
