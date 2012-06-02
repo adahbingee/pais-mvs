@@ -2,6 +2,10 @@
 
 using namespace PAIS;
 
+const Camera& AbstractPatch::getReferenceCamera() const {
+	return mvs->getCameras()[refCamIdx];
+}
+
 int Patch::globalId = 0;
 
 bool Patch::isNeighbor(const Patch& pth1, const Patch &pth2) {
@@ -88,7 +92,7 @@ void Patch::refineSeed() {
 	// initial guess particle
 	double init   [] = {normalS[0], normalS[1], depth};
 
-	PsoSolver solver(3, rangeL, rangeU, getFitness, this, 60, 15);
+	PsoSolver solver(3, rangeL, rangeU, PAIS::getFitness, this, 60, 15);
 	solver.setParticle(init);
 	solver.run(true);
 	
@@ -262,7 +266,7 @@ bool Patch::expandCell(const Camera &cam, const int cx, const int cy) const {
 	p3d = cam.getRotation().t() * (p3d - cam.getTranslation());
 
 	// get intersection point on patch plane
-	const Vec3d v13 = p - camCenter;
+	const Vec3d v13 = center - camCenter;
 	const Vec3d v12(p3d.at<double>(0, 0) - camCenter[0], 
 			        p3d.at<double>(1, 0) - camCenter[1],
 			        p3d.at<double>(2, 0) - camCenter[2]);
@@ -443,11 +447,6 @@ void Patch::showError() const {
 	char title[30];
 	sprintf(title, "error%d.png", id);
 	imwrite(title, error);
-}
-
-/* getters */
-const Camera& Patch::getReferenceCamera() const {
-	return mvs->getCameras()[refCamIdx];
 }
 
 /* setters */

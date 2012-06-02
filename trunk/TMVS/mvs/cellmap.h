@@ -3,7 +3,6 @@
 
 #include <map>
 #include "camera.h"
-#include "patch.h"
 
 namespace PAIS {
 
