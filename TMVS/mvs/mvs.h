@@ -1,10 +1,12 @@
 #ifndef __PAIS_MVS_H__
 #define __PAIS_MVS_H__
 
+#include "patch.h"
 #include "../io/fileloader.h"
-#include "cellmap.h"
 
 namespace PAIS {
+	class Patch;
+
 	class MVS {
 	private:
 		// image cell size (pixel*pixel)

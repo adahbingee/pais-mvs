@@ -2,8 +2,12 @@
 #define __PAIS_FILE_WRITER_H__
 
 #include <fstream>
+#include <opencv2\opencv.hpp>
 
-#include "../mvs/mvs.h"
+#include "../mvs/patch.h"
+
+using namespace PAIS;
+using namespace cv;
 
 namespace PAIS {
 	class FileWriter {

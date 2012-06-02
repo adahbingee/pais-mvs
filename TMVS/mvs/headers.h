@@ -8,6 +8,11 @@ namespace PAIS {
 	class Camera;
 #endif
 
+#ifndef __PAIS_ABSTRACT_PATCH__
+#define __PAIS_ABSTRACT_PATCH__
+	class AbstractPatch;
+#endif
+
 #ifndef __PAIS_PATCH__
 #define __PAIS_PATCH__
 	class Patch;

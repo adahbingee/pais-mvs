@@ -7,13 +7,19 @@
 #include <map>
 #include <fstream>
 
-#include "../mvs/headers.h"
+#include <opencv2\opencv.hpp>
+
 #include "../mvs/camera.h"
 #include "../mvs/patch.h"
+#include "../mvs/mvs.h"
 
 using namespace PAIS;
+using namespace cv;
 
 namespace PAIS {
+	class MVS;
+	class Patch;
+
 	class FileLoader {
 	private: 
 		FileLoader(void);

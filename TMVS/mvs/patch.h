@@ -9,57 +9,88 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
+#include "../pso/psosolver.h"
+#include "cellmap.h"
 #include "mvs.h"
 #include "utility.h"
-#include "../pso/psosolver.h"
 
+using namespace PAIS;
 using namespace cv;
 
 namespace PAIS {
+	class MVS;
 
-	class Patch {
-	private:
-		// global patch id counter
-		static int globalId;
-		// check neighbor patch
-		static bool isNeighbor(const Patch &pth1, const Patch &pth2);
-
-		// patch identifier
-		int id;
+	class AbstractPatch {
+	protected:
 		// MVS
 		const MVS *mvs;
+		// patch identifier
+		int id;
+		// patch center
+		Vec3d center;
 		// visible camera index
 		vector<int> camIdx;
 		// reference camera index
 		int refCamIdx;
-		// patch center
-		Vec3d center;
 		// normal in spherical coordinate
 		Vec2d normalS;
 		// normal
 		Vec3d normal;
+		// depth unit ray from reference camera
+		Vec3d ray;
 		// depth from reference camera
 		double depth;
 		// depth range
 		Vec2d depthRange;
-		// color
-		Vec3b color;
 		// patch radius in reference image
 		int LOD;
-		// depth unit ray from reference camera
-		Vec3d ray;
+		// color
+		Vec3b color;
 		// image point
 		vector<Vec2d> imgPoint;
-		// fitness
-		double fitness;
+
 		// normalized homography patch correlation table
 		Mat_<double> corrTable;
+		// fitness
+		double fitness;
 		// patch priority ((1-correlation) * fitness)
 		double priority;
 		// patch average correlation
 		double correlation;
 		// is expanded
 		bool expanded;
+
+	public:
+		AbstractPatch(void){};
+		~AbstractPatch(void){};
+
+		const MVS&   getMVS()              const    { return *mvs;                }
+		int getId()                        const    { return id;                  }
+		const Vec3d& getCenter()           const    { return center;              }
+		const vector<int>& getCameraIndices() const { return camIdx;              }
+		int getReferenceCameraIndex()      const    { return refCamIdx;           }
+		const Vec2d& getSphericalNormal()  const    { return normalS;             }
+		const Vec3d& getNormal()           const    { return normal;              }
+		const Vec3d& getRay()              const    { return ray;                 }
+		const double getDepth()            const    { return depth;               }
+		const Vec2d& getDepthRange()       const    { return depthRange;          }
+		int getLOD()                       const    { return LOD;                 }
+		const Vec3b& getColor()            const    { return color;               }
+		const vector<Vec2d>& getImagePoints() const { return imgPoint;            }
+		double getFitness()                const    { return fitness;             }
+		double getPriority()               const    { return priority;            }
+		double getCorrelation()            const    { return correlation;         }
+		bool isExpanded()                  const    { return expanded;            }
+		int getCameraNumber()              const    { return (int) camIdx.size(); }
+		const Camera& getReferenceCamera() const;
+	};
+
+	class Patch : public AbstractPatch {
+	private:
+		// global patch id counter
+		static int globalId;
+		// check neighbor patch
+		static bool isNeighbor(const Patch &pth1, const Patch &pth2);
 
 		// normal setters
 		void setNormal(const Vec3d &n);
@@ -105,22 +136,6 @@ namespace PAIS {
 
 		void refineSeed();
 		void expand() const;
-	
-		int getId()                        const    { return id;                  }
-		const Vec2d& getSphericalNormal()  const    { return normalS;             }
-		const Vec3d& getNormal()           const    { return normal;              }
-		const Vec3d& getCenter()           const    { return center;              }
-		const Vec3d& getRay()              const    { return ray;                 }
-		const Vec3b& getColor()            const    { return color;               }
-	    const MVS&   getMVS()              const    { return *mvs;                }
-		int getLOD()                       const    { return LOD;                 }
-		int getReferenceCameraIndex()      const    { return refCamIdx;           }
-		int getCameraNumber()              const    { return (int) camIdx.size(); }
-		double getPriority()               const    { return priority;            }
-		double getCorrelation()            const    { return correlation;         }
-		bool isExpanded()                  const    { return expanded;            }
-		const vector<int>& getCameraIndices() const { return camIdx;              }
-		const Camera& getReferenceCamera() const;
 	};
 
 	double getFitness(const Particle &p, void *obj);
