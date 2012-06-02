@@ -132,7 +132,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
@@ -151,6 +151,7 @@
   <ItemGroup>
     <ClInclude Include="io\fileloader.h" />
     <ClInclude Include="io\filewriter.h" />
+    <ClInclude Include="mvs\abstractpatch.h" />
     <ClInclude Include="mvs\camera.h" />
     <ClInclude Include="mvs\cellmap.h" />
     <ClInclude Include="mvs\headers.h" />
