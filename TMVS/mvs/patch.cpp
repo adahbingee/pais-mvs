@@ -27,14 +27,14 @@ Patch::Patch(const MVS *mvs, const Vec3d &center, const Vec3b &color, const vect
 	this->center     = center;
 	this->color      = color;
 	this->camIdx     = camIdx;
+	this->refCamIdx  = -1;
 	this->imgPoint   = imgPoint;
 	this->normalS    = Vec2d(0.0, 0.0);
 	this->normal     = Vec3d(0.0, 0.0, 0.0);
-	this->depth      = -1;
-	this->refCamIdx  = -1;
-	this->fitness    = DBL_MAX;
 	this->LOD        = -1;
+	this->depth      = -1;
 	this->depthRange = Vec2d(0.0, 0.0);
+	this->fitness    = DBL_MAX;
 	this->priority   = DBL_MAX;
 	this->expanded   = false;
 	
@@ -46,6 +46,20 @@ Patch::Patch(const MVS *mvs, const Vec3d &center, const Vec3b &color, const vect
 	} else {
 		this->id = id;
 	}
+}
+
+Patch::Patch(const Patch &parent, const Vec3d &center) {
+	this->mvs = &parent.getMVS();
+	this->center = center;
+	this->camIdx = parent.getCameraIndices();
+	this->refCamIdx = parent.getReferenceCameraIndex();
+	this->LOD = -1;
+	this->depth = -1;
+	this->depthRange = Vec2d(0.0, 0.0);
+	this->priority = DBL_MAX;
+	this->fitness = DBL_MAX;
+	setNormal(parent.getNormal());
+
 }
 
 Patch::~Patch(void) {
@@ -105,13 +119,16 @@ void Patch::refineSeed() {
 }
 
 void Patch::expand() const {
+	const vector<Camera> &cameras = mvs->getCameras();
 	const int camNum = getCameraNumber();
 	const int cellSize = mvs->getCellSize();
 	const vector<CellMap> &cellMaps = mvs->getCellMaps();
 
 	int cx, cy;
 	for (int i = 0; i < camNum; ++i) {
-		// image cell map
+		// camera
+		const Camera &cam = cameras[camIdx[i]];
+		// cell map
 		const CellMap &map = cellMaps[camIdx[i]];
 
 		// position on cell map
@@ -122,25 +139,13 @@ void Patch::expand() const {
 		int nx [] = {cx, cx-1, cx-1, cx+1, cx+1};
 		int ny [] = {cy, cy-1, cy+1, cy-1, cy+1};
 		for (int j = 0; j < 5; ++j) {
-			// skip out of map
-			if ( !map.inMap(nx[j], ny[j]) ) continue;
+			// skip neighbor cell with exist neighbor patch or discontinuous
+			if ( !checkNeighborCell(map, nx[j], ny[j]) ) continue;
+			// expand neighbor cell (create expansion patch)
+			expandCell(cam, nx[j], ny[j]);
+		} // end of neighbor cell
+	} // end of cameras
 
-			// skip exist neighbor patch & discontinous
-			const vector<int> &cell = map.getCell(nx[j], ny[j]);
-			const int pthNum = (int) cell.size();
-			bool skip = false;
-			for (int k = 0; k < pthNum; k++) {
-				const Patch &pth = mvs->getPatch(cell[k]);
-				if ( Patch::isNeighbor(*this, pth) || pth.getCorrelation() > 0.9) {
-					skip = true;
-					break;
-				}
-			}
-			if (skip) continue;
-
-
-		}
-	}
 }
 
 /* main functions */
@@ -220,6 +225,53 @@ bool Patch::getHomographyPatch(const Vec2d &pt, const Camera &cam, const Mat_<do
 	}
 
 	hp /= sqrt(sum);
+	return true;
+}
+
+bool Patch::checkNeighborCell(const CellMap &map, const int cx, const int cy) const {
+	// skip out of map
+	if ( !map.inMap(cx, cy) ) return false;
+
+	// skip exist neighbor patch & discontinuous
+	const vector<int> &cell = map.getCell(cx, cy);
+	const int pthNum = (int) cell.size();
+	for (int k = 0; k < pthNum; k++) {
+		const Patch &pth = mvs->getPatch(cell[k]);
+		if ( Patch::isNeighbor(*this, pth) || pth.getCorrelation() > 0.9) {
+			return false;
+		}
+	}
+	return true;
+}
+
+bool Patch::expandCell(const Camera &cam, const int cx, const int cy) const {
+	const int cellSize     = mvs->getCellSize();
+	const int focal        = cam.getFocalLength();
+	const Vec2d &imgCenter = cam.getPrinciplePoint();
+	const Vec3d &camCenter = cam.getCenter();
+
+	// get center pixel position of cell on reference image
+	const double px = cx*cellSize + cellSize / 2.0;
+	const double py = cy*cellSize + cellSize / 2.0;
+
+	// get center pixel position of cell in world coordinate
+	Mat p3d(3, 1, CV_64FC1);
+	p3d.at<double>(0, 0) = (px - imgCenter[0])/focal;
+	p3d.at<double>(1, 0) = (py - imgCenter[1])/focal;
+	p3d.at<double>(2, 0) = 1.0;
+	p3d = cam.getRotation().t() * (p3d - cam.getTranslation());
+
+	// get intersection point on patch plane
+	const Vec3d v13 = p - camCenter;
+	const Vec3d v12(p3d.at<double>(0, 0) - camCenter[0], 
+			        p3d.at<double>(1, 0) - camCenter[1],
+			        p3d.at<double>(2, 0) - camCenter[2]);
+	const double u = normal.ddot(v13) / normal.ddot(v12);
+
+
+	// expansion patch information
+	Vec3d eCenter = camCenter + u*v12;
+
 	return true;
 }
 
