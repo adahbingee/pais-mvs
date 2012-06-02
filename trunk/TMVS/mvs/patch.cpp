@@ -2,11 +2,30 @@
 
 using namespace PAIS;
 
-const Camera& AbstractPatch::getReferenceCamera() const {
-	return mvs->getCameras()[refCamIdx];
+/********************* 
+    AbstractPatch 
+**********************/
+
+int AbstractPatch::globalId = 0;
+
+AbstractPatch::AbstractPatch(const MVS &mvsn, const int id) : mvs(mvsn) {
+	if (id < 0) {
+		#pragma omp critical
+		{
+			this->id = globalId++;
+		}
+	} else {
+		this->id = id;
+	}
 }
 
-int Patch::globalId = 0;
+const Camera& AbstractPatch::getReferenceCamera() const {
+	return mvs.getCameras()[refCamIdx];
+}
+
+/*********************
+    Patch 
+**********************/
 
 bool Patch::isNeighbor(const Patch& pth1, const Patch &pth2) {
 	const Vec3d &c1 = pth1.getCenter();
@@ -24,10 +43,9 @@ bool Patch::isNeighbor(const Patch& pth1, const Patch &pth2) {
 		return false;
 }
 
-/* constructors & descructor */
+/* constructors */
 
-Patch::Patch(const MVS *mvs, const Vec3d &center, const Vec3b &color, const vector<int> &camIdx, const vector<Vec2d> &imgPoint, const int id) {
-	this->mvs        = mvs;
+Patch::Patch(const MVS &mvs, const Vec3d &center, const Vec3b &color, const vector<int> &camIdx, const vector<Vec2d> &imgPoint, const int id) : AbstractPatch(mvs, id) {
 	this->center     = center;
 	this->color      = color;
 	this->camIdx     = camIdx;
@@ -41,19 +59,9 @@ Patch::Patch(const MVS *mvs, const Vec3d &center, const Vec3b &color, const vect
 	this->fitness    = DBL_MAX;
 	this->priority   = DBL_MAX;
 	this->expanded   = false;
-	
-	if (id < 0) {
-		#pragma omp critical
-		{
-			this->id = globalId++;
-		}
-	} else {
-		this->id = id;
-	}
 }
 
-Patch::Patch(const Patch &parent, const Vec3d &center) {
-	this->mvs = &parent.getMVS();
+Patch::Patch(const Patch &parent, const Vec3d &center) : AbstractPatch(parent.getMVS()) {
 	this->center = center;
 	this->camIdx = parent.getCameraIndices();
 	this->refCamIdx = parent.getReferenceCameraIndex();
@@ -63,11 +71,6 @@ Patch::Patch(const Patch &parent, const Vec3d &center) {
 	this->priority = DBL_MAX;
 	this->fitness = DBL_MAX;
 	setNormal(parent.getNormal());
-
-}
-
-Patch::~Patch(void) {
-
 }
 
 /* public functions */
@@ -119,14 +122,14 @@ void Patch::refineSeed() {
 	// set patch priority
 	setPriority();
 
-	printf("ID: %d\tLOD: %d\tit: %d\tfit: %.2f \tpri: %.2f\n", id, LOD, solver.getIteration(), fitness, priority);
+	printf("ID: %d\tLOD: %d\tit: %d\tfit: %.2f \tpri: %.2f\n", getId(), LOD, solver.getIteration(), fitness, priority);
 }
 
 void Patch::expand() const {
-	const vector<Camera> &cameras = mvs->getCameras();
+	const vector<Camera> &cameras = mvs.getCameras();
 	const int camNum = getCameraNumber();
-	const int cellSize = mvs->getCellSize();
-	const vector<CellMap> &cellMaps = mvs->getCellMaps();
+	const int cellSize = mvs.getCellSize();
+	const vector<CellMap> &cellMaps = mvs.getCellMaps();
 
 	int cx, cy;
 	for (int i = 0; i < camNum; ++i) {
@@ -191,8 +194,8 @@ bool Patch::removeInvisibleCamera() {
 }
 
 bool Patch::getHomographyPatch(const Vec2d &pt, const Camera &cam, const Mat_<double> &H, Mat_<double> &hp) const {
-	const int patchRadius = mvs->getPatchRadius();
-	const int patchSize   = mvs->getPatchSize();
+	const int patchRadius = mvs.getPatchRadius();
+	const int patchSize   = mvs.getPatchSize();
 	const Mat_<uchar> &img = cam.getPyramidImage()[LOD];
 	hp = Mat_<double>(patchSize*patchSize, 1);
 
@@ -240,7 +243,7 @@ bool Patch::checkNeighborCell(const CellMap &map, const int cx, const int cy) co
 	const vector<int> &cell = map.getCell(cx, cy);
 	const int pthNum = (int) cell.size();
 	for (int k = 0; k < pthNum; k++) {
-		const Patch &pth = mvs->getPatch(cell[k]);
+		const Patch &pth = mvs.getPatch(cell[k]);
 		if ( Patch::isNeighbor(*this, pth) || pth.getCorrelation() > 0.9) {
 			return false;
 		}
@@ -249,7 +252,7 @@ bool Patch::checkNeighborCell(const CellMap &map, const int cx, const int cy) co
 }
 
 bool Patch::expandCell(const Camera &cam, const int cx, const int cy) const {
-	const int cellSize     = mvs->getCellSize();
+	const int cellSize     = mvs.getCellSize();
 	const int focal        = cam.getFocalLength();
 	const Vec2d &imgCenter = cam.getPrinciplePoint();
 	const Vec3d &camCenter = cam.getCenter();
@@ -282,8 +285,8 @@ bool Patch::expandCell(const Camera &cam, const int cx, const int cy) const {
 /* for debug used */
 
 void Patch::showRefinedResult() const {
-	const vector<Camera> &cameras = mvs->getCameras();
-	const int patchRadius = mvs->getPatchRadius();
+	const vector<Camera> &cameras = mvs.getCameras();
+	const int patchRadius = mvs.getPatchRadius();
 
 	// camera parameters
 	const int camNum        = getCameraNumber();
@@ -316,7 +319,7 @@ void Patch::showRefinedResult() const {
 	double w, ix[5], iy[5];
 	char title[30];
 	for (int i = 0; i < camNum; i++) {
-		const Camera &cam = mvs->getCameras()[camIdx[i]];
+		const Camera &cam = mvs.getCameras()[camIdx[i]];
 		Mat_<Vec3b> img = cam.getRgbImage().clone();
 
 		// homography projection
@@ -346,7 +349,7 @@ void Patch::showRefinedResult() const {
 		line(img, Point(ix[3],iy[3]), Point(ix[2],iy[2]), Scalar(0,0,255));
 		circle(img, Point(ix[4], iy[4]), 1, Scalar(0,0,255));
 
-		sprintf(title, "img%d_%d.png", id, camIdx[i]);
+		sprintf(title, "img%d_%d.png", getId(), camIdx[i]);
 		imshow(title, img);
 		imwrite(title, img);
 	}
@@ -355,9 +358,9 @@ void Patch::showRefinedResult() const {
 }
 
 void Patch::showError() const {
-	const vector<Camera> &cameras = mvs->getCameras();
-	const int patchRadius = mvs->getPatchRadius();
-	const int patchSize   = mvs->getPatchSize();
+	const vector<Camera> &cameras = mvs.getCameras();
+	const int patchRadius = mvs.getPatchRadius();
+	const int patchSize   = mvs.getPatchSize();
 
 	// camera parameters
 	const Camera &refCam  = getReferenceCamera();
@@ -445,7 +448,7 @@ void Patch::showError() const {
 	minMaxLoc(error, &minE, &maxE);
 	error = (error - minE) / (maxE - minE) * 255;
 	char title[30];
-	sprintf(title, "error%d.png", id);
+	sprintf(title, "error%d.png", getId());
 	imwrite(title, error);
 }
 
@@ -464,7 +467,7 @@ void Patch::setNormal(const Vec2d &n) {
 bool Patch::setDepth() {
 	if (refCamIdx < 0)       return false;
 	
-	ray = center - mvs->getCameras()[refCamIdx].getCenter();
+	ray = center - getReferenceCamera().getCenter();
 	depth = norm(ray);
 	ray = ray * (1.0 / depth);
 	
@@ -478,7 +481,7 @@ bool Patch::setDepthRange() {
 
 	const Camera &refCam = getReferenceCamera();
 
-	const double cellSize = mvs->getCellSize();
+	const double cellSize = mvs.getCellSize();
 
 	// center shift
 	Vec3d c2 = ray * (depth+1.0) + refCam.getCenter();
@@ -491,7 +494,7 @@ bool Patch::setDepthRange() {
 
 		if (camIdx[i] == refCamIdx) continue;
 		
-		const Camera &cam = mvs->getCameras()[camIdx[i]];
+		const Camera &cam = mvs.getCameras()[camIdx[i]];
 
 		cam.project(c2, p2);
 		cam.project(center, p1);
@@ -516,11 +519,11 @@ bool Patch::setLOD() {
 	}
 
 	// patch size
-	int patchRadius = mvs->getPatchRadius();
-	int size        = mvs->getPatchSize();
+	int patchRadius = mvs.getPatchRadius();
+	int size        = mvs.getPatchSize();
 
 	// reference camera
-	const Camera &refCam = mvs->getCameras()[refCamIdx];
+	const Camera &refCam = getReferenceCamera();
 	// image pyramid of reference image
 	const vector<Mat_<uchar> > &pyramid = refCam.getPyramidImage();
 
@@ -539,7 +542,7 @@ bool Patch::setLOD() {
 	LOD = -1;
 
 	// find LOD
-	while (variance < mvs->getTextureVariation()) {
+	while (variance < mvs.getTextureVariation()) {
 		// goto next LOD
 		LOD++;
 
@@ -614,7 +617,7 @@ bool Patch::setEstimatedNormal() {
 	Vec3d dir;
 	normal = Vec3d(0.0, 0.0, 0.0);
 	for (int i = 0; i < camNum; i++) {
-		const Camera &cam = mvs->getCameras()[camIdx[i]];
+		const Camera &cam = mvs.getCameras()[camIdx[i]];
 		dir = cam.getCenter() - center;
 		dir *= (1.0 / norm(dir));
 		normal += dir;
@@ -634,7 +637,7 @@ bool Patch::setReferenceCameraIndex() {
 	double maxCorr = -DBL_MAX;
 	double corr;
 	for (int i = 0; i < camNum; i++) {
-		const Camera &cam = mvs->getCameras()[camIdx[i]];
+		const Camera &cam = mvs.getCameras()[camIdx[i]];
 		corr = normal.ddot(-cam.getOpticalNormal());
 
 		if (corr > maxCorr) {
@@ -646,7 +649,7 @@ bool Patch::setReferenceCameraIndex() {
 }
 
 bool Patch::setCorrelationTable() {
-	const vector<Camera> &cameras = mvs->getCameras();
+	const vector<Camera> &cameras = mvs.getCameras();
 
 	// camera parameters
 	const int camNum        = getCameraNumber();
@@ -696,7 +699,7 @@ bool Patch::setCorrelationTable() {
 }
 
 bool Patch::setPriority() {
-	const int totalCamNum = (int) mvs->getCameras().size();
+	const int totalCamNum = (int) mvs.getCameras().size();
 	const int camNum = getCameraNumber();
 
 	correlation = 0;
@@ -715,7 +718,7 @@ bool Patch::setPriority() {
 
 bool Patch::setImagePoint() {
 	const int camNum              = getCameraNumber();
-	const vector<Camera> &cameras = mvs->getCameras();
+	const vector<Camera> &cameras = mvs.getCameras();
 	const Camera &refCam          = cameras[refCamIdx];
 	const Mat_<Vec3b> &img        = refCam.getPyramidImage(0);
 

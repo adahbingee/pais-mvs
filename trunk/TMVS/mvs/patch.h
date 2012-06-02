@@ -21,11 +21,15 @@ namespace PAIS {
 	class MVS;
 
 	class AbstractPatch {
-	protected:
-		// MVS
-		const MVS *mvs;
+	private:
+		// global patch id counter
+		static int globalId;
 		// patch identifier
 		int id;
+
+	protected:
+		// MVS
+		const MVS &mvs;
 		// patch center
 		Vec3d center;
 		// visible camera index
@@ -61,10 +65,10 @@ namespace PAIS {
 		bool expanded;
 
 	public:
-		AbstractPatch(void){};
-		~AbstractPatch(void){};
+		AbstractPatch(const MVS &mvs, const int id = -1);
+		~AbstractPatch(void) {};
 
-		const MVS&   getMVS()              const    { return *mvs;                }
+		const MVS&   getMVS()              const    { return mvs;                 }
 		int getId()                        const    { return id;                  }
 		const Vec3d& getCenter()           const    { return center;              }
 		const vector<int>& getCameraIndices() const { return camIdx;              }
@@ -87,8 +91,6 @@ namespace PAIS {
 
 	class Patch : public AbstractPatch {
 	private:
-		// global patch id counter
-		static int globalId;
 		// check neighbor patch
 		static bool isNeighbor(const Patch &pth1, const Patch &pth2);
 
@@ -128,11 +130,11 @@ namespace PAIS {
 
 	public:
 		// constructors
-		Patch(const MVS *mvs, const Vec3d &center, const Vec3b &color, const vector<int> &camIdx, const vector<Vec2d> &imgPoint, const int id = -1);
+		Patch(const MVS &mvs, const Vec3d &center, const Vec3b &color, const vector<int> &camIdx, const vector<Vec2d> &imgPoint, const int id = -1);
 		Patch(const Patch &parent, const Vec3d &center);
 
 		// descructor
-		~Patch(void);
+		~Patch(void) {};
 
 		void refineSeed();
 		void expand() const;
