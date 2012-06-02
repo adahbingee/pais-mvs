@@ -5,7 +5,6 @@ using namespace PAIS;
 /********************* 
     AbstractPatch 
 **********************/
-
 int AbstractPatch::globalId = 0;
 
 AbstractPatch::AbstractPatch(const MVS &mvsn, const int id) : mvs(mvsn) {
@@ -22,6 +21,7 @@ AbstractPatch::AbstractPatch(const MVS &mvsn, const int id) : mvs(mvsn) {
 const Camera& AbstractPatch::getReferenceCamera() const {
 	return mvs.getCameras()[refCamIdx];
 }
+
 
 /*********************
     Patch 
