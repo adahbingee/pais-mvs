@@ -28,12 +28,12 @@ namespace PAIS {
 		int id;
 		// MVS
 		const MVS *mvs;
-		// patch radius in reference image
-		int LOD;
+		// visible camera index
+		vector<int> camIdx;
+		// reference camera index
+		int refCamIdx;
 		// patch center
 		Vec3d center;
-		// color
-		Vec3b color;
 		// normal in spherical coordinate
 		Vec2d normalS;
 		// normal
@@ -42,12 +42,12 @@ namespace PAIS {
 		double depth;
 		// depth range
 		Vec2d depthRange;
+		// color
+		Vec3b color;
+		// patch radius in reference image
+		int LOD;
 		// depth unit ray from reference camera
 		Vec3d ray;
-		// visible camera index
-		vector<int> camIdx;
-		// reference camera index
-		int refCamIdx;
 		// image point
 		vector<Vec2d> imgPoint;
 		// fitness
@@ -85,7 +85,11 @@ namespace PAIS {
 		bool removeInvisibleCamera();
 		// get normalized homography patch column vector
 		bool getHomographyPatch(const Vec2d &pt, const Camera &cam, const Mat_<double> &H, Mat_<double> &hp) const;
-		
+		// check neighbor cell to expand
+		bool checkNeighborCell(const CellMap &map, const int cx, const int cy) const;
+		// expand cell (create expansion patch)
+		bool expandCell(const Camera &cam, const int cx, const int cy) const;
+
 		// show refined projection
 		void showRefinedResult() const;
 		// show multi-view error
@@ -94,7 +98,7 @@ namespace PAIS {
 	public:
 		// constructors
 		Patch(const MVS *mvs, const Vec3d &center, const Vec3b &color, const vector<int> &camIdx, const vector<Vec2d> &imgPoint, const int id = -1);
-		Patch(const MVS *mvs, const Patch &parent, const int id = -1);
+		Patch(const Patch &parent, const Vec3d &center);
 
 		// descructor
 		~Patch(void);
