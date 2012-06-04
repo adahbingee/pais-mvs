@@ -22,7 +22,6 @@ const Camera& AbstractPatch::getReferenceCamera() const {
 	return mvs.getCameras()[refCamIdx];
 }
 
-
 /*********************
     Patch 
 **********************/
@@ -37,7 +36,7 @@ bool Patch::isNeighbor(const Patch& pth1, const Patch &pth2) {
 	dist += abs((c1-c2).ddot(n1));
 	dist += abs((c1-c2).ddot(n2));
 
-	if (dist < 0.1)
+	if (dist < 0.001)
 		return true;
 	else 
 		return false;
@@ -75,7 +74,7 @@ Patch::Patch(const Patch &parent, const Vec3d &center) : AbstractPatch(parent.ge
 
 /* public functions */
 
-void Patch::refineSeed() {
+void Patch::refine() {
 	bool pass = true;
 	pass &= setEstimatedNormal();
 	pass &= setReferenceCameraIndex();
@@ -116,7 +115,7 @@ void Patch::refineSeed() {
 	removeInvisibleCamera();
 	int afterCamNum = getCameraNumber();
 	if (beforeCamNum != afterCamNum && afterCamNum >= MIN_CAMERA_NUMBER) {
-		refineSeed();
+		refine();
 	}
 
 	// set patch priority
@@ -152,7 +151,6 @@ void Patch::expand() const {
 			expandCell(cam, nx[j], ny[j]);
 		} // end of neighbor cell
 	} // end of cameras
-
 }
 
 /* main functions */
