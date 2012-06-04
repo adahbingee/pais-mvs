@@ -15,6 +15,7 @@
 #include "utility.h"
 #include "abstractpatch.h"
 
+
 using namespace PAIS;
 using namespace cv;
 
@@ -68,7 +69,7 @@ namespace PAIS {
 		// descructor
 		~Patch(void) {};
 
-		void refineSeed();
+		void refine();
 		void expand() const;
 	};
 

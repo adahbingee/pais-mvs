@@ -2,8 +2,9 @@
 #define __PAIS_ABSTRACT_PATCH_H__
 
 #include <opencv2\opencv.hpp>
-#include "camera.h"
+
 #include "mvs.h"
+#include "camera.h"
 
 using namespace cv;
 using namespace PAIS;
@@ -56,7 +57,7 @@ namespace PAIS {
 		bool expanded;
 
 	public:
-		AbstractPatch(const MVS &mvs, const int id = -1);
+		AbstractPatch(const MVS &mvsn, const int id = -1);
 		~AbstractPatch(void) {};
 
 		const MVS&   getMVS()              const    { return mvs;                 }
@@ -79,8 +80,6 @@ namespace PAIS {
 		int getCameraNumber()              const    { return (int) camIdx.size(); }
 		const Camera& getReferenceCamera() const;
 	};
-
-	
 };
 
 #endif
