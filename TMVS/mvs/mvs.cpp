@@ -72,7 +72,7 @@ bool MVS::refineSeedPatches() {
 			continue;
 		}
 
-		pth.refine();
+		pth.refineSeed();
 
 		// remove patch with few visible camera
 		if (pth.getCameraNumber() < MIN_CAMERA_NUMBER) {
