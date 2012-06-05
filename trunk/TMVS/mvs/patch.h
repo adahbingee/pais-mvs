@@ -69,7 +69,8 @@ namespace PAIS {
 		// descructor
 		~Patch(void) {};
 
-		void refine();
+		void refineSeed();
+		void refineExpand();
 		void expand() const;
 	};
 

@@ -45,36 +45,47 @@ bool Patch::isNeighbor(const Patch& pth1, const Patch &pth2) {
 /* constructors */
 
 Patch::Patch(const MVS &mvs, const Vec3d &center, const Vec3b &color, const vector<int> &camIdx, const vector<Vec2d> &imgPoint, const int id) : AbstractPatch(mvs, id) {
-	this->center     = center;
-	this->color      = color;
-	this->camIdx     = camIdx;
-	this->refCamIdx  = -1;
-	this->imgPoint   = imgPoint;
-	this->normalS    = Vec2d(0.0, 0.0);
-	this->normal     = Vec3d(0.0, 0.0, 0.0);
-	this->LOD        = -1;
-	this->depth      = -1;
-	this->depthRange = Vec2d(0.0, 0.0);
-	this->fitness    = DBL_MAX;
-	this->priority   = DBL_MAX;
-	this->expanded   = false;
+	this->center      = center;
+	this->camIdx      = camIdx;
+	this->refCamIdx   = -1;
+	this->normalS     = Vec2d(0.0, 0.0);
+	this->normal      = Vec3d(0.0, 0.0, 0.0);
+	this->ray         = Vec3d(0.0, 0.0, 0.0);
+	this->depth       = -1;
+	this->depthRange  = Vec2d(0.0, 0.0);
+	this->LOD         = -1;
+	this->color       = color;
+	this->imgPoint    = imgPoint;
+	
+	this->corrTable   = Mat_<double>(0, 0);
+	this->fitness     = DBL_MAX;
+	this->priority    = DBL_MAX;
+	this->correlation = 0;
+	this->expanded    = false;
 }
 
 Patch::Patch(const Patch &parent, const Vec3d &center) : AbstractPatch(parent.getMVS()) {
-	this->center = center;
-	this->camIdx = parent.getCameraIndices();
-	this->refCamIdx = parent.getReferenceCameraIndex();
-	this->LOD = -1;
-	this->depth = -1;
-	this->depthRange = Vec2d(0.0, 0.0);
-	this->priority = DBL_MAX;
-	this->fitness = DBL_MAX;
+	this->center     = center;
+	this->camIdx     = parent.getCameraIndices();
+	this->refCamIdx  = parent.getReferenceCameraIndex();
 	setNormal(parent.getNormal());
+	this->ray        = Vec3d(0.0, 0.0, 0.0);
+	this->depth      = -1;
+	this->depthRange = Vec2d(0.0, 0.0);
+	this->LOD        = -1;
+	this->color      = Vec3b(0, 0, 0);
+	this->imgPoint.clear();
+
+	this->corrTable   = Mat_<double>(0, 0);
+	this->fitness     = DBL_MAX;
+	this->priority    = DBL_MAX;
+	this->correlation = 0;
+	this->expanded    = false;
 }
 
 /* public functions */
 
-void Patch::refine() {
+void Patch::refineSeed() {
 	bool pass = true;
 	pass &= setEstimatedNormal();
 	pass &= setReferenceCameraIndex();
@@ -115,13 +126,60 @@ void Patch::refine() {
 	removeInvisibleCamera();
 	int afterCamNum = getCameraNumber();
 	if (beforeCamNum != afterCamNum && afterCamNum >= MIN_CAMERA_NUMBER) {
-		refine();
+		refineSeed();
 	}
 
 	// set patch priority
 	setPriority();
 
 	printf("ID: %d\tLOD: %d\tit: %d\tfit: %.2f \tpri: %.2f\n", getId(), LOD, solver.getIteration(), fitness, priority);
+}
+
+void Patch::refineExpand() {
+	bool pass = true;
+	pass &= setReferenceCameraIndex();
+	pass &= setDepth();
+	pass &= setDepthRange();
+	pass &= setLOD();
+
+	if ( !pass ) {
+		printf("fail during setting\n");
+		return;
+	}
+
+	// PSO parameter range (theta, phi, depth)
+	double rangeL [] = {0.0 , normalS[1] - M_PI/2.0, depthRange[0]};
+	double rangeU [] = {M_PI, normalS[1] + M_PI/2.0, depthRange[1]};
+
+	// initial guess particle
+	double init   [] = {normalS[0], normalS[1], depth};
+
+	PsoSolver solver(3, rangeL, rangeU, PAIS::getFitness, this, 60, 15);
+	solver.setParticle(init);
+	solver.run(true);
+	
+	// set fitness
+	fitness = solver.getGbestFitness();
+
+	// set refined patch information
+	const double *gBest = solver.getGbest();
+	setNormal(Vec2d(gBest[0], gBest[1]));
+	depth  = gBest[2];
+	center = ray * depth + getReferenceCamera().getCenter();
+
+	// set normalized homography patch correlation table
+	setCorrelationTable();
+	
+	// remove insvisible camera
+	int beforeCamNum = getCameraNumber();
+	removeInvisibleCamera();
+	int afterCamNum = getCameraNumber();
+	if (beforeCamNum != afterCamNum && afterCamNum >= MIN_CAMERA_NUMBER) {
+		refineSeed();
+	}
+
+	// set patch priority
+	setPriority();
 }
 
 void Patch::expand() const {
@@ -276,6 +334,9 @@ bool Patch::expandCell(const Camera &cam, const int cx, const int cy) const {
 
 	// expansion patch information
 	Vec3d eCenter = camCenter + u*v12;
+
+	Patch expPatch(*this, eCenter);
+	expPatch.refineExpand();
 
 	return true;
 }
