@@ -166,7 +166,7 @@ void Patch::refineExpand() {
 	setNormal(Vec2d(gBest[0], gBest[1]));
 	depth  = gBest[2];
 	center = ray * depth + getReferenceCamera().getCenter();
-
+	
 	// set normalized homography patch correlation table
 	setCorrelationTable();
 	
