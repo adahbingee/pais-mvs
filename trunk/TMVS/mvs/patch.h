@@ -13,7 +13,7 @@ namespace PAIS {
 
 	class Patch : public AbstractPatch {
 	private:
-		void getHomographyPatch(const Vec2d &pt, const Camera &cam, const Mat_<double> &H, Mat_<double> &hp) const;
+		void getHomographyPatch(const Vec2d &pt, const Mat_<uchar> &img, const Mat_<double> &H, Mat_<double> &hp) const;
 	
 	protected:
 		void setEstimatedNormal();
@@ -27,6 +27,8 @@ namespace PAIS {
 		void removeInvisibleCamera();
 	
 	public:
+		static bool isNeighbor(const Patch &pth1, const Patch &pth2);
+		
 		// seed patch constructor
 		Patch(const Vec3d &center, Vec3b &color, vector<int> &camIdx, vector<Vec2d> &imgPoint, const int id = -1);
 		// expansion patch constructor

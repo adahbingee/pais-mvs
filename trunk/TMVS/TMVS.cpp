@@ -14,7 +14,7 @@ int _tmain(int argc, _TCHAR* argv[])
 {
 	clock_t start_t, end_t;
 	
-	MVS &mvs = MVS::getInstance(5, 15, 3, 36, 0.8, 15, 200);
+	MVS &mvs = MVS::getInstance(5, 15, 3, 36, 0.8, 15, 60);
 	mvs.loadNVM("../../../TMVS_data/pawn/pawn.nvm");
 
 	start_t = clock();

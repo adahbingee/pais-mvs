@@ -2,6 +2,23 @@
 
 using namespace PAIS;
 
+/* static functions */
+bool Patch::isNeighbor(const Patch &pth1, const Patch &pth2) {
+	const Vec3d &c1 = pth1.getCenter();
+	const Vec3d &c2 = pth2.getCenter();
+	const Vec3d &n1 = pth1.getNormal();
+	const Vec3d &n2 = pth2.getNormal();
+
+	double dist = 0;
+	dist += abs((c1-c2).ddot(n1));
+	dist += abs((c1-c2).ddot(n2));
+
+	if (dist < 0.001)
+		return true;
+	else 
+		return false;
+}
+
 /* constructor */
 Patch::Patch(const Vec3d &center, Vec3b &color, vector<int> &camIdx, vector<Vec2d> &imgPoint, const int id) : AbstractPatch(id) {
     this->center   = center;
@@ -68,12 +85,11 @@ void Patch::refine() {
 
 /* process */
 
-void Patch::getHomographyPatch(const Vec2d &pt, const Camera &cam, const Mat_<double> &H, Mat_<double> &hp) const {
+void Patch::getHomographyPatch(const Vec2d &pt, const Mat_<uchar> &img, const Mat_<double> &H, Mat_<double> &hp) const {
 	const MVS &mvs = MVS::getInstance();
 	const int patchRadius = mvs.patchRadius;
 	const int patchSize   = mvs.patchSize;
 
-	const Mat_<uchar> &img = cam.getPyramidImage()[LOD];
 	hp = Mat_<double>(patchSize*patchSize, 1);
 
 	double w, ix, iy;                // position on target image
@@ -321,7 +337,8 @@ void Patch::setCorrelationTable() {
 	vector<Mat_<double> > HP(camNum);
 	#pragma omp parallel for
 	for (int i = 0; i < camNum; i++) {
-		getHomographyPatch(pt, cameras[camIdx[i]], H[i], HP[i]);
+		const Mat_<uchar> &img = cameras[camIdx[i]].getPyramidImage(LOD);
+		getHomographyPatch(pt, img, H[i], HP[i]);
 	}
 
 	// correlation table
@@ -342,7 +359,7 @@ void Patch::setCorrelationTable() {
 			correlation += corrTable.at<double>(i,j);
 		}
 	}
-	correlation /= (camNum*camNum);
+	correlation /= (camNum*camNum-camNum);
 }
 
 void Patch::setPriority() {

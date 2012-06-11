@@ -95,6 +95,9 @@ namespace PAIS {
 		double getCorrelation()            const    { return correlation;         }
 		bool isExpanded()                  const    { return expanded;            }
 		int getCameraNumber()              const    { return (int) camIdx.size(); }
+	
+		// setters
+		void setExpanded() { expanded = true; }
 	};
 };
 
