@@ -1,22 +1,44 @@
 #ifndef __PAIS_MVS_H__
 #define __PAIS_MVS_H__
 
-#include "patch.h"
+#include <math.h>
+#define _USE_MATH_DEFINES
+
 #include "../io/fileloader.h"
+#include "patch.h"
+#include "cellmap.h"
 
 namespace PAIS {
 	class Patch;
 
 	class MVS {
 	private:
+		// instance holder
+		static MVS *instance;
+
+		// constructor
+		MVS(const int cellSize, const int patchRadius, const int minCamNum, const double textureVariation, const double minCorrelation, const int particleNum, const int maxIteration);
+		~MVS(void);
+
 		// image cell size (pixel*pixel)
 		int cellSize;
 		// patch radius in pixel
 		int patchRadius;
 		// patch size 2*radius+1
 		int patchSize;
+		// minimum visible camera number
+		int minCamNum;
 		// normalized intensity variation in patch
 		double textureVariation;
+		// minimum patch correlation when filtering patch visible camera
+		double minCorrelation;
+		// PSO parameter
+		// particle number
+		int particleNum;
+		// maximum iteration number
+		int maxIteration;
+
+
 		// camera container
 		vector<Camera>  cameras;
 		// patch container
@@ -35,21 +57,29 @@ namespace PAIS {
 		int getTopPriorityPatchId() const;
 
 	public:
-		// constructor
-		MVS(const int cellSize = 2, const int patchRadius = 15, const double textureVariation = 36);
-		~MVS(void);
+		friend class FileLoader;
+		friend class Patch;
 
-		// loader
+		inline static MVS& getInstance() {
+			if (instance==NULL) {
+				instance = new MVS(2, 15, 3, 36, 0.7, 15, 200);
+			}
+			return *instance;
+		}
+		inline static MVS& getInstance(const int cellSize, const int patchRadius, const int minCamNum, const double textureVariation, const double minCorrelation, const int particleNum, const int maxIteration);
+		inline static const Camera& getCamera(const int idx) {
+			return instance->cameras[idx];
+		}
+
 		void loadNVM(const char* fileName);
 
 		// getter
-		vector<Camera>&  getCameras() { return cameras;  }
-		map<int, Patch>& getPatches() { return patches;  }
 		const vector<Camera>&  getCameras()  const { return cameras;  }
 		const map<int, Patch>& getPatches()  const { return patches;  }
 		const vector<CellMap>& getCellMaps() const { return cellMaps; }
 		const Mat_<double>& getPatchDistanceWeighting() const { return patchDistWeight; }
 		const Patch& getPatch(const int id) const { return patches.at(id); }
+		const Patch& getTopPriorityPatch() { return getPatch(getTopPriorityPatchId()); }
 
 		int    getCellSize()         const { return cellSize;         }
 		int    getPatchRadius()      const { return patchRadius;      }
@@ -57,7 +87,7 @@ namespace PAIS {
 		double getTextureVariation() const { return textureVariation; }
 
 		// processor
-		bool refineSeedPatches();
+		void refineSeedPatches();
 	};
 };
 

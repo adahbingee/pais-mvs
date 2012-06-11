@@ -28,7 +28,13 @@
     <ClInclude Include="mvs\camera.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
-    <ClInclude Include="io\fileloader.h">
+    <ClInclude Include="mvs\utility.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="pso\psosolver.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="mvs\abstractpatch.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="mvs\patch.h">
@@ -40,25 +46,7 @@
     <ClInclude Include="mvs\cellmap.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
-    <ClInclude Include="mvs\headers.h">
-      <Filter>標頭檔</Filter>
-    </ClInclude>
-    <ClInclude Include="mvs\utility.h">
-      <Filter>標頭檔</Filter>
-    </ClInclude>
-    <ClInclude Include="pso\particle.h">
-      <Filter>標頭檔</Filter>
-    </ClInclude>
-    <ClInclude Include="pso\psosolver.h">
-      <Filter>標頭檔</Filter>
-    </ClInclude>
-    <ClInclude Include="view\mvsviewer.h">
-      <Filter>標頭檔</Filter>
-    </ClInclude>
-    <ClInclude Include="io\filewriter.h">
-      <Filter>標頭檔</Filter>
-    </ClInclude>
-    <ClInclude Include="mvs\abstractpatch.h">
+    <ClInclude Include="io\fileloader.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
   </ItemGroup>
@@ -72,28 +60,25 @@
     <ClCompile Include="mvs\camera.cpp">
       <Filter>原始程式檔</Filter>
     </ClCompile>
-    <ClCompile Include="io\fileloader.cpp">
-      <Filter>原始程式檔</Filter>
-    </ClCompile>
-    <ClCompile Include="mvs\patch.cpp">
-      <Filter>原始程式檔</Filter>
-    </ClCompile>
-    <ClCompile Include="mvs\mvs.cpp">
-      <Filter>原始程式檔</Filter>
-    </ClCompile>
-    <ClCompile Include="mvs\cellmap.cpp">
-      <Filter>原始程式檔</Filter>
-    </ClCompile>
     <ClCompile Include="pso\particle.cpp">
       <Filter>原始程式檔</Filter>
     </ClCompile>
     <ClCompile Include="pso\psosolver.cpp">
       <Filter>原始程式檔</Filter>
     </ClCompile>
-    <ClCompile Include="view\mvsviewer.cpp">
+    <ClCompile Include="mvs\abstractpatch.cpp">
       <Filter>原始程式檔</Filter>
     </ClCompile>
-    <ClCompile Include="io\filewriter.cpp">
+    <ClCompile Include="mvs\patch.cpp">
+      <Filter>原始程式檔</Filter>
+    </ClCompile>
+    <ClCompile Include="mvs\cellmap.cpp">
+      <Filter>原始程式檔</Filter>
+    </ClCompile>
+    <ClCompile Include="mvs\mvs.cpp">
+      <Filter>原始程式檔</Filter>
+    </ClCompile>
+    <ClCompile Include="io\fileloader.cpp">
       <Filter>原始程式檔</Filter>
     </ClCompile>
   </ItemGroup>

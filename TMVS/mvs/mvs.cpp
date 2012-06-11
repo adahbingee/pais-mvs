@@ -2,11 +2,24 @@
 
 using namespace PAIS;
 
-MVS::MVS(const int cellSize, const int patchRadius, const double textureVariation) {
+MVS* MVS::instance = NULL;
+
+MVS& MVS::getInstance(const int cellSize, const int patchRadius, const int minCamNum, const double textureVariation, const double minCorrelation, const int particleNum, const int maxIteration) {
+	if (instance==NULL) {
+		instance = new MVS(cellSize, patchRadius, minCamNum, textureVariation, minCorrelation, particleNum, maxIteration);
+	}
+	return *instance;
+}
+
+MVS::MVS(const int cellSize, const int patchRadius, const int minCamNum, const double textureVariation, const double minCorrelation, const int particleNum, const int maxIteration) {
 	this->cellSize         = cellSize;
 	this->patchRadius      = patchRadius;
+	this->minCamNum        = minCamNum;
 	this->textureVariation = textureVariation;
+	this->minCorrelation   = minCorrelation;
 	this->patchSize        = (patchRadius<<1)+1;
+	this->particleNum      = particleNum;
+	this->maxIteration     = maxIteration;
 	initPatchDistanceWeighting();
 }
 
@@ -56,10 +69,10 @@ void MVS::loadNVM(const char* fileName) {
 	initCellMaps();
 }
 
-bool MVS::refineSeedPatches() {
+void MVS::refineSeedPatches() {
 	if ( patches.empty() ) {
 		printf("No seed patches\n");
-		return false;
+		return;
 	}
 
 	map<int, Patch>::iterator it;
@@ -67,22 +80,22 @@ bool MVS::refineSeedPatches() {
 		Patch &pth = (*it).second;
 
 		// remove patch with few visible camera
-		if (pth.getCameraNumber() < MIN_CAMERA_NUMBER) {
+		if (pth.getCameraNumber() < minCamNum) {
 			it = patches.erase(it);
 			continue;
 		}
 
-		pth.refineSeed();
+		pth.refine();
 
 		// remove patch with few visible camera
-		if (pth.getCameraNumber() < MIN_CAMERA_NUMBER) {
+		if (pth.getCameraNumber() < minCamNum) {
 			it = patches.erase(it);
 		}
 
 		++it;
 	}
 
-	return true;
+	return;
 }
 
 int MVS::getTopPriorityPatchId() const {
@@ -93,7 +106,7 @@ int MVS::getTopPriorityPatchId() const {
 	for (it = patches.begin(); it != patches.end(); ++it) { 
 		const Patch &pth = (*it).second;
 		// skip expanded
-		if (pth.isExpanded()) continue;
+		if ( pth.isExpanded() ) continue;
 		// update top priority
 		if (pth.getPriority() < topPriority) {
 			topPriority = pth.getPriority();

@@ -11,7 +11,6 @@
 
 #include "../mvs/camera.h"
 #include "../mvs/patch.h"
-#include "../mvs/mvs.h"
 
 using namespace PAIS;
 using namespace cv;

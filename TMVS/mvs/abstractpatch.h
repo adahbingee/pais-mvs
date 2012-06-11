@@ -2,26 +2,22 @@
 #define __PAIS_ABSTRACT_PATCH_H__
 
 #include <opencv2\opencv.hpp>
-
-#include "mvs.h"
-#include "camera.h"
+#include "utility.h"
 
 using namespace cv;
 using namespace PAIS;
 
 namespace PAIS {
-	class MVS;
-
 	class AbstractPatch {
 	private:
 		// global patch id counter
 		static int globalId;
 		// patch identifier
 		int id;
+		// initialize patch
+		void init();
 
 	protected:
-		// MVS
-		const MVS &mvs;
 		// patch center
 		Vec3d center;
 		// visible camera index
@@ -38,7 +34,7 @@ namespace PAIS {
 		double depth;
 		// depth range
 		Vec2d depthRange;
-		// patch radius in reference image
+		// level of detail in reference image
 		int LOD;
 		// color
 		Vec3b color;
@@ -56,11 +52,32 @@ namespace PAIS {
 		// is expanded
 		bool expanded;
 
-	public:
-		AbstractPatch(const MVS &mvsn, const int id = -1);
-		~AbstractPatch(void) {};
+		// setters
+		void setNormal(const Vec3d &n);
+		void setNormal(const Vec2d &n);
+		
+		// set estimated normal using sum of unit vector from point to camera
+		virtual void setEstimatedNormal()      = 0;
+		// set reference camera index using normal
+		virtual void setReferenceCameraIndex() = 0;
+		// set depth and ray to reference camera
+		virtual void setDepthAndRay()          = 0;
+		// set depth range using projected pixel range
+		virtual void setDepthRange()           = 0;
+		// set patch correlation table
+		virtual void setCorrelationTable()     = 0;
+		// set patch priority
+		virtual void setPriority()             = 0;
+		// set center image points
+		virtual void setImagePoint()           = 0;
+		// remove invisible camera using patch correlation
+		virtual void removeInvisibleCamera()   = 0;
 
-		const MVS&   getMVS()              const    { return mvs;                 }
+	public:
+		AbstractPatch(const int id = -1);
+		~AbstractPatch(void);
+
+		// getters
 		int getId()                        const    { return id;                  }
 		const Vec3d& getCenter()           const    { return center;              }
 		const vector<int>& getCameraIndices() const { return camIdx;              }
@@ -78,7 +95,6 @@ namespace PAIS {
 		double getCorrelation()            const    { return correlation;         }
 		bool isExpanded()                  const    { return expanded;            }
 		int getCameraNumber()              const    { return (int) camIdx.size(); }
-		const Camera& getReferenceCamera() const;
 	};
 };
 
