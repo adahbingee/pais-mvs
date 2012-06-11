@@ -60,21 +60,21 @@ namespace PAIS {
 		friend class FileLoader;
 		friend class Patch;
 
-		inline static MVS& getInstance() {
+		static MVS& getInstance() {
 			if (instance==NULL) {
 				instance = new MVS(2, 15, 3, 36, 0.7, 15, 200);
 			}
 			return *instance;
 		}
-		inline static MVS& getInstance(const int cellSize, const int patchRadius, const int minCamNum, const double textureVariation, const double minCorrelation, const int particleNum, const int maxIteration);
-		inline static const Camera& getCamera(const int idx) {
-			return instance->cameras[idx];
-		}
+		static MVS& getInstance(const int cellSize, const int patchRadius, const int minCamNum, const double textureVariation, const double minCorrelation, const int particleNum, const int maxIteration);
+
+		
 
 		void loadNVM(const char* fileName);
 
 		// getter
 		const vector<Camera>&  getCameras()  const { return cameras;  }
+		const Camera& getCamera(const int idx) const { return cameras[idx]; }
 		const map<int, Patch>& getPatches()  const { return patches;  }
 		const vector<CellMap>& getCellMaps() const { return cellMaps; }
 		const Mat_<double>& getPatchDistanceWeighting() const { return patchDistWeight; }
