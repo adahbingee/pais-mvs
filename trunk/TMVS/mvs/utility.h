@@ -4,7 +4,10 @@
 
 #include <opencv2\opencv.hpp>
 
+#include "camera.h"
+
 using namespace cv;
+using namespace PAIS;
 
 namespace PAIS {
 

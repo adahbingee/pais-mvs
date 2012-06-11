@@ -107,12 +107,12 @@ Patch FileLoader::loadNvmPatch(ifstream &file, const MVS &mvs) {
 		imgPoint.push_back(p);
 	}
 
-	return Patch(mvs, center, color, camIdx, imgPoint);
+	return Patch(center, color, camIdx, imgPoint);
 }
 
 void FileLoader::loadNVM(const char *fileName, MVS &mvs) {
-	vector<Camera>  &cameras = mvs.getCameras();
-	map<int, Patch> &patches = mvs.getPatches();
+	vector<Camera>  &cameras = mvs.cameras;
+	map<int, Patch> &patches = mvs.patches;
 
 	// reset container
 	cameras.clear();

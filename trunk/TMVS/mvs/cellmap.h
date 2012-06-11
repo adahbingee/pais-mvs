@@ -4,6 +4,8 @@
 #include <map>
 #include "camera.h"
 
+using namespace PAIS;
+
 namespace PAIS {
 
 	typedef vector<vector<vector<int> > > Map;
