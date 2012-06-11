@@ -38,7 +38,6 @@ namespace PAIS {
 		// maximum iteration number
 		int maxIteration;
 
-
 		// camera container
 		vector<Camera>  cameras;
 		// patch container
@@ -53,9 +52,15 @@ namespace PAIS {
 		// initial pixel-wised distance weighting of patch
 		void initPatchDistanceWeighting();
 
+		void expandNeighborCell(const Patch &pth);
+		void expandCell(const Camera &cam, const Patch &parent, const int cx, const int cy);
+
 		// get top priority patch id to expansion
 		int getTopPriorityPatchId() const;
-
+		// check neighbor patches in cell
+		bool hasNeighborPatch(const vector<int> &cell, const Patch &refPth) const;
+		// get new expansion center
+		void getExpansionPatchCenter(const Camera &cam, const Patch &parent, const int cx, const int cy, Vec3d &center) const;
 	public:
 		friend class FileLoader;
 		friend class Patch;
@@ -68,8 +73,6 @@ namespace PAIS {
 		}
 		static MVS& getInstance(const int cellSize, const int patchRadius, const int minCamNum, const double textureVariation, const double minCorrelation, const int particleNum, const int maxIteration);
 
-		
-
 		void loadNVM(const char* fileName);
 
 		// getter
@@ -79,15 +82,14 @@ namespace PAIS {
 		const vector<CellMap>& getCellMaps() const { return cellMaps; }
 		const Mat_<double>& getPatchDistanceWeighting() const { return patchDistWeight; }
 		const Patch& getPatch(const int id) const { return patches.at(id); }
-		const Patch& getTopPriorityPatch() { return getPatch(getTopPriorityPatchId()); }
 
-		int    getCellSize()         const { return cellSize;         }
+		int    getCellSize()         const { return cellSize;        } 
 		int    getPatchRadius()      const { return patchRadius;      }
 		int    getPatchSize()        const { return patchSize;        }
 		double getTextureVariation() const { return textureVariation; }
 
-		// processor
 		void refineSeedPatches();
+		void expansionPatches();
 	};
 };
 
