@@ -187,8 +187,12 @@ void MVS::expandCell(const Camera &cam, const Patch &parent, const int cx, const
 	Vec3d center;
 	getExpansionPatchCenter(cam, parent, cx, cy, center);
 
+	// get expansion patch
 	Patch expPatch(center, parent);
 	expPatch.refine();
+
+	if (expPatch.getCameraNumber() < minCamNum) return;
+	patches.insert(pair<int, Patch>(expPatch.getId(), expPatch));
 }
 
 bool MVS::hasNeighborPatch(const vector<int> &cell, const Patch &refPth) const {
