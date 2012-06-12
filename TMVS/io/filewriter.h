@@ -4,7 +4,7 @@
 #include <fstream>
 #include <opencv2\opencv.hpp>
 
-#include "../mvs/patch.h"
+#include "../mvs/mvs.h"
 
 using namespace PAIS;
 using namespace cv;

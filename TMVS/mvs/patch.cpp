@@ -66,19 +66,22 @@ void Patch::refine() {
     depth  = gBest[2];
 	center = ray * depth + mvs.cameras[refCamIdx].getCenter();
 
+    int beforeCamNum = getCameraNumber();
 	// set normalized homography patch correlation table
     setCorrelationTable();
-
 	// remove insvisible camera
-    int beforeCamNum = getCameraNumber();
     removeInvisibleCamera();
     int afterCamNum = getCameraNumber();
 	if (beforeCamNum != afterCamNum && afterCamNum >= mvs.minCamNum) {
 		refine();
     }
 
-	// set patch priority
-    setPriority();
+	if (beforeCamNum == afterCamNum && afterCamNum >= mvs.minCamNum) {
+		// set patch priority
+		setPriority();
+		// set image point
+		setImagePoint();
+	}
 
 	printf("ID: %d\tLOD: %d\tit: %d\tfit: %.2f \tpri: %.2f\n", getId(), LOD, solver.getIteration(), fitness, priority);
 }
@@ -375,7 +378,7 @@ void Patch::setImagePoint() {
 	const int camNum              = getCameraNumber();
 	const vector<Camera> &cameras = mvs.getCameras();
 	const Camera &refCam          = cameras[refCamIdx];
-	const Mat_<Vec3b> &img        = refCam.getPyramidImage(0);
+	const Mat_<Vec3b> &img        = refCam.getRgbImage();
 
 	// set image points
 	imgPoint.resize(camNum);
@@ -386,8 +389,9 @@ void Patch::setImagePoint() {
 
 	// set point color
 	Vec2d pt;
-	refCam.project(center, pt);
-	center = img.at<Vec3b>(cvRound(pt[1]), cvRound(pt[0]));
+	if ( refCam.project(center, pt) ) {
+		color = img.at<Vec3b>(cvRound(pt[1]), cvRound(pt[0]));
+	}
 }
 
 void Patch::removeInvisibleCamera() {
@@ -395,18 +399,18 @@ void Patch::removeInvisibleCamera() {
 	const int camNum = getCameraNumber();
 
 	// sum correlation and find max correlation index
-	vector<double> corrSum(camNum);
+	double corrSum;
 	double maxCorr = -DBL_MAX;
 	int maxIdx;
 	for (int i = 0; i < camNum; ++i) {
-		corrSum[i] = 0;
+		corrSum = 0;
 		for (int j = 0; j < camNum; ++j) {
-			corrSum[i] += corrTable.at<double>(i, j);
+			corrSum += corrTable.at<double>(i, j);
 		}
 
-		if (corrSum[i] > maxCorr) {
+		if (corrSum > maxCorr) {
 			maxIdx = i;
-			maxCorr = corrSum[i];
+			maxCorr = corrSum;
 		}
 	}
 

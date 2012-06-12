@@ -153,6 +153,32 @@ void MVS::expandNeighborCell(const Patch &pth) {
 	} // end of cameras
 }
 
+void MVS::expandCell(const Camera &cam, const Patch &parent, const int cx, const int cy) {
+	// get expansion patch center
+	Vec3d center;
+	getExpansionPatchCenter(cam, parent, cx, cy, center);
+
+	// get expansion patch
+	Patch expPatch(center, parent);
+	expPatch.refine();
+
+	if (expPatch.getCameraNumber() < minCamNum) return;
+	patches.insert(pair<int, Patch>(expPatch.getId(), expPatch));
+}
+
+/* const function */
+
+bool MVS::hasNeighborPatch(const vector<int> &cell, const Patch &refPth) const {
+	const int pthNum = (int) cell.size();
+	for (int k = 0; k < pthNum; k++) {
+		const Patch &pth = getPatch(cell[k]);
+		if ( Patch::isNeighbor(refPth, pth) || pth.getCorrelation() > 0.9) {
+			return true;
+		}
+	}
+	return false;
+}
+
 void MVS::getExpansionPatchCenter(const Camera &cam, const Patch &parent, const int cx, const int cy, Vec3d &center) const {
 	const double focal     = cam.getFocalLength();
 	const Vec2d &imgCenter = cam.getPrinciplePoint();
@@ -180,30 +206,6 @@ void MVS::getExpansionPatchCenter(const Camera &cam, const Patch &parent, const 
 
 	// expansion patch information
 	center = camCenter + u*v12;
-}
-
-void MVS::expandCell(const Camera &cam, const Patch &parent, const int cx, const int cy) {
-	// get expansion patch center
-	Vec3d center;
-	getExpansionPatchCenter(cam, parent, cx, cy, center);
-
-	// get expansion patch
-	Patch expPatch(center, parent);
-	expPatch.refine();
-
-	if (expPatch.getCameraNumber() < minCamNum) return;
-	patches.insert(pair<int, Patch>(expPatch.getId(), expPatch));
-}
-
-bool MVS::hasNeighborPatch(const vector<int> &cell, const Patch &refPth) const {
-	const int pthNum = (int) cell.size();
-	for (int k = 0; k < pthNum; k++) {
-		const Patch &pth = getPatch(cell[k]);
-		if ( Patch::isNeighbor(refPth, pth) || pth.getCorrelation() > 0.9) {
-			return true;
-		}
-	}
-	return false;
 }
 
 int MVS::getTopPriorityPatchId() const {
