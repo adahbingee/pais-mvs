@@ -68,11 +68,20 @@ void MVS::initPatchDistanceWeighting() {
 	//waitKey();
 }
 
-/* loader */
+/* io */
 
 void MVS::loadNVM(const char* fileName) {
 	FileLoader::loadNVM(fileName, *this);
 	initCellMaps();
+}
+
+void MVS::loadMVS(const char* fileName) {
+	FileLoader::loadMVS(fileName, *this);
+	initCellMaps();
+}
+
+void MVS::wirteMVS(const char* fileName) {
+	FileWriter::writeMVS(fileName, *this);
 }
 
 /* main functions */
@@ -110,9 +119,10 @@ void MVS::expansionPatches() {
 	int pthId = getTopPriorityPatchId();
 	while ( pthId >= 0) {
 		// get top priority seed patch
-		const Patch &pth = getPatch(pthId);
+		Patch &pth = getPatch(pthId);
 		// expand patch
 		expandNeighborCell(pth);
+		pth.setExpanded();
 		// get next seed patch
 		pthId = getTopPriorityPatchId();
 	}
@@ -163,7 +173,26 @@ void MVS::expandCell(const Camera &cam, const Patch &parent, const int cx, const
 	expPatch.refine();
 
 	if (expPatch.getCameraNumber() < minCamNum) return;
-	patches.insert(pair<int, Patch>(expPatch.getId(), expPatch));
+	insertPatch(expPatch);
+}
+
+void MVS::insertPatch(const Patch &pth) {
+
+	printf("exp ID: %d\t fit: %f \t pri: %f\n", pth.getId(), pth.getFitness(), pth.getPriority());
+
+	// insert into patches container
+	patches.insert(pair<int, Patch>(pth.getId(), pth));
+	
+	// insert into cell maps
+	const int camNum = pth.getCameraNumber();
+	const vector<Vec2d> &imgPoints = pth.getImagePoints();
+	const vector<int>   &camIdx    = pth.getCameraIndices();
+	int cx, cy;
+	for (int i = 0; i < camNum; ++i) {
+		cx = (int) (imgPoints[i][0] / cellSize);
+		cy = (int) (imgPoints[i][1] / cellSize);
+		cellMaps[camIdx[i]].insert(cx, cy, pth.getId());
+	}
 }
 
 /* const function */

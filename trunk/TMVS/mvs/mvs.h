@@ -5,6 +5,7 @@
 #define _USE_MATH_DEFINES
 
 #include "../io/fileloader.h"
+#include "../io/filewriter.h"
 #include "patch.h"
 #include "cellmap.h"
 
@@ -30,6 +31,8 @@ namespace PAIS {
 		int minCamNum;
 		// normalized intensity variation in patch
 		double textureVariation;
+		// expand visible camera
+		double visibleCorrelation;
 		// minimum patch correlation when filtering patch visible camera
 		double minCorrelation;
 		// PSO parameter
@@ -54,6 +57,7 @@ namespace PAIS {
 
 		void expandNeighborCell(const Patch &pth);
 		void expandCell(const Camera &cam, const Patch &parent, const int cx, const int cy);
+		void insertPatch(const Patch &pth);
 
 		// get top priority patch id to expansion
 		int getTopPriorityPatchId() const;
@@ -74,6 +78,8 @@ namespace PAIS {
 		static MVS& getInstance(const int cellSize, const int patchRadius, const int minCamNum, const double textureVariation, const double minCorrelation, const int particleNum, const int maxIteration);
 
 		void loadNVM(const char* fileName);
+		void loadMVS(const char* fileName);
+		void wirteMVS(const char* fileName);
 
 		// getter
 		const vector<Camera>&  getCameras()  const { return cameras;  }
@@ -82,11 +88,13 @@ namespace PAIS {
 		const vector<CellMap>& getCellMaps() const { return cellMaps; }
 		const Mat_<double>& getPatchDistanceWeighting() const { return patchDistWeight; }
 		const Patch& getPatch(const int id) const { return patches.at(id); }
+		Patch& getPatch(const int id) { return patches.at(id); }
 
-		int    getCellSize()         const { return cellSize;        } 
-		int    getPatchRadius()      const { return patchRadius;      }
-		int    getPatchSize()        const { return patchSize;        }
-		double getTextureVariation() const { return textureVariation; }
+		int    getCellSize()           const { return cellSize;           } 
+		int    getPatchRadius()        const { return patchRadius;        }
+		int    getPatchSize()          const { return patchSize;          }
+		double getTextureVariation()   const { return textureVariation;   }
+		double getVisibleCorrelation() const { return visibleCorrelation; }
 
 		void refineSeedPatches();
 		void expansionPatches();

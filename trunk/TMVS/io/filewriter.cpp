@@ -39,12 +39,10 @@ void FileWriter::writeCamera(fstream &file, const Camera &camera) {
 }
 
 void FileWriter::writePatch(fstream &file, const Patch &patch) {
-	const int id = patch.getId();
 	const vector<int> &camIdx = patch.getCameraIndices();
 	const int camNum = (int) camIdx.size();
+	double fitness = patch.getFitness();
 
-	// write patch id
-	file.write((char*) &id, sizeof(int));
 	// write patch center
 	writeVec(file, patch.getCenter());
 	// write patch spherical normal
@@ -55,6 +53,8 @@ void FileWriter::writePatch(fstream &file, const Patch &patch) {
 	for (int i = 0; i < camNum; ++i) {
 		file.write((char*) &camIdx[i], sizeof(int));
 	}
+	// write fitness
+	file.write((char*) &fitness, sizeof(double));
 }
 
 void FileWriter::writeMVS(const char *fileName, const MVS &mvs) {
@@ -65,7 +65,7 @@ void FileWriter::writeMVS(const char *fileName, const MVS &mvs) {
 	}
 
 	// write MVS header
-	file << "MVS V2" << endl;
+	file << "MVS_V2" << endl;
 
 	//file << "CELL_SIZE " << mvs.getCellSize() << endl;
 	//file << "PATCH_RADIUS " << mvs.getPatchRadius() << endl;
@@ -86,4 +86,6 @@ void FileWriter::writeMVS(const char *fileName, const MVS &mvs) {
 	for (it = patches.begin(); it != patches.end(); ++it) {
 		writePatch(file, (*it).second);
 	}
+
+	file.close();
 }

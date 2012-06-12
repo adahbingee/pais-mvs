@@ -30,9 +30,11 @@ namespace PAIS {
 		static bool isNeighbor(const Patch &pth1, const Patch &pth2);
 		
 		// seed patch constructor
-		Patch(const Vec3d &center, Vec3b &color, vector<int> &camIdx, vector<Vec2d> &imgPoint, const int id = -1);
+		Patch(const Vec3d &center, const Vec3b &color, const vector<int> &camIdx, const vector<Vec2d> &imgPoint, const int id = -1);
 		// expansion patch constructor
 		Patch(const Vec3d &center, const Patch &parent, const int id = -1);
+		// mvs loader constructor
+		Patch(const Vec3d &center, const Vec2d &normalS, const vector<int> &camIdx, const double fitness, const int id = -1);
 
 		void refine();
 

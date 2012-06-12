@@ -20,7 +20,7 @@ bool Patch::isNeighbor(const Patch &pth1, const Patch &pth2) {
 }
 
 /* constructor */
-Patch::Patch(const Vec3d &center, Vec3b &color, vector<int> &camIdx, vector<Vec2d> &imgPoint, const int id) : AbstractPatch(id) {
+Patch::Patch(const Vec3d &center, const Vec3b &color, const vector<int> &camIdx, const vector<Vec2d> &imgPoint, const int id) : AbstractPatch(id) {
     this->center   = center;
     this->color    = color;
     this->camIdx   = camIdx;
@@ -28,10 +28,28 @@ Patch::Patch(const Vec3d &center, Vec3b &color, vector<int> &camIdx, vector<Vec2
 	setEstimatedNormal();
 }
 
-Patch::Patch(const Vec3d &center, const Patch &parent, const int id) :AbstractPatch(id) {
+Patch::Patch(const Vec3d &center, const Patch &parent, const int id) : AbstractPatch(id) {
     this->center    = center;
 	this->camIdx    = parent.getCameraIndices();
 	setNormal(parent.getNormal());
+}
+
+Patch::Patch(const Vec3d &center, const Vec2d &normalS, const vector<int> &camIdx, const double fitness, const int id) : AbstractPatch(id) {
+	this->center = center;
+	this->camIdx = camIdx;
+	this->fitness = fitness;
+	setNormal(normalS);
+	setReferenceCameraIndex();
+	setDepthAndRay();
+	setDepthRange();
+	setLOD();
+
+	// set normalized homography patch correlation table
+	setCorrelationTable();
+	// set patch priority
+	setPriority();
+	// set image point
+	setImagePoint();
 }
 
 Patch::~Patch(void) {

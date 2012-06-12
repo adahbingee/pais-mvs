@@ -110,6 +110,79 @@ Patch FileLoader::loadNvmPatch(ifstream &file, const MVS &mvs) {
 	return Patch(center, color, camIdx, imgPoint);
 }
 
+Camera FileLoader::loadMvsCamera(ifstream &file) {
+	int fileNameLength;
+	char *fileName;
+	Vec3d center;
+	double focal;
+	Vec4d quaternion;
+	double radialDistortion;
+
+	// read image file name length
+	file.read( (char*) &fileNameLength, sizeof(int) );
+	// read image file name
+	fileName = new char [fileNameLength+1];
+	file.read(fileName, fileNameLength);
+	fileName[fileNameLength] = '\0';
+	// read camera center
+	loadMvsVec(file, center);
+	// read camera focal length
+	file.read( (char*) &focal, sizeof(double) );
+	// read rotation quaternion
+	loadMvsVec(file, quaternion);
+	// read radial distortion
+	file.read((char*) &radialDistortion, sizeof(double));
+
+	Camera cam(fileName, focal, quaternion, center, radialDistortion);
+
+	delete [] fileName;
+
+	return cam;
+}
+
+Patch FileLoader::loadMvsPatch(ifstream &file) {
+	vector<int> camIdx;
+	int camNum;
+	Vec3d center;
+	Vec2d sphericalNormal;
+	double fitness;
+
+	// read patch center
+	loadMvsVec(file, center);
+	// read patch spherical normal
+	loadMvsVec(file, sphericalNormal);
+	// load visible camera number
+	file.read((char*) &camNum, sizeof(int));
+	// load visible camera index
+	for (int i = 0; i < camNum; ++i) {
+		int idx;
+		file.read((char*) &idx, sizeof(int));
+		camIdx.push_back(idx);
+	}
+	// load fitness
+	file.read((char*) &fitness, sizeof(double));
+
+	return Patch(center, sphericalNormal, camIdx, fitness);
+}
+
+void FileLoader::loadMvsVec(ifstream &file, Vec2d &v) {
+	file.read( (char*) &v[0], sizeof(double));
+	file.read( (char*) &v[1], sizeof(double));
+}
+
+void FileLoader::loadMvsVec(ifstream &file, Vec3d &v) {
+	file.read( (char*) &v[0], sizeof(double));
+	file.read( (char*) &v[1], sizeof(double));
+	file.read( (char*) &v[2], sizeof(double));
+}
+
+void FileLoader::loadMvsVec(ifstream &file, Vec4d &v) {
+	file.read( (char*) &v[0], sizeof(double));
+	file.read( (char*) &v[1], sizeof(double));
+	file.read( (char*) &v[2], sizeof(double));
+	file.read( (char*) &v[3], sizeof(double));
+}
+
 void FileLoader::loadNVM(const char *fileName, MVS &mvs) {
 	vector<Camera>  &cameras = mvs.cameras;
 	map<int, Patch> &patches = mvs.patches;
@@ -178,6 +251,66 @@ void FileLoader::loadNVM(const char *fileName, MVS &mvs) {
 			loadPatch = false;
 
 			break;
+		}
+	}
+
+	file.close();
+}
+
+void FileLoader::loadMVS(const char *fileName, MVS &mvs) {
+	vector<Camera>  &cameras = mvs.cameras;
+	map<int, Patch> &patches = mvs.patches;
+
+	// reset container
+	cameras.clear();
+	patches.clear();
+
+	// open mvs file
+	ifstream file(fileName, ifstream::in | ifstream::binary);
+
+	if ( !file.is_open() ) {
+		printf("Can't open MVS file: %s\n", fileName);
+		return;
+	}
+
+	char *strip = NULL;
+	char strbuf[STRING_BUFFER_LENGTH];
+	int num;
+	bool loadCamera = false;
+	bool loadPatch  = false;
+	while ( !file.eof() ) {
+
+		file.getline(strbuf, STRING_BUFFER_LENGTH);
+		strip = strtok(strbuf, DELIMITER);
+
+		if (strip == NULL) continue; // skip blank line
+
+		// start load camera
+		if (strcmp(strip, "MVS_V2") == 0) {
+			loadCamera = true;
+			continue;
+		}
+
+		if (loadCamera) {
+			printf("%s\n", strip);
+			strip = strtok(NULL, DELIMITER);
+			num = atoi(strip);
+			for (int i = 0; i < num; ++i) {
+				cameras.push_back( loadMvsCamera(file) );
+			}
+			loadCamera = false;
+			loadPatch  = true;
+			continue;
+		}
+
+		if (loadPatch) {
+			printf("%s\n", strip);
+			strip = strtok(NULL, DELIMITER);
+			num = atoi(strip);
+			for (int i = 0; i < num; ++i) {
+				Patch pth = loadMvsPatch(file);
+				patches.insert( pair<int, Patch>(pth.getId(), pth) );
+			}
 		}
 	}
 
