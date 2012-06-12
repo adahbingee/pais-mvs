@@ -16,8 +16,8 @@ int main(int argc, char* argv[])
 	
 	MVS &mvs = MVS::getInstance(5, 15, 3, 36, 0.8, 15, 60);
 	//mvs.loadNVM("../../../TMVS_data/pawn/pawn.nvm");
-	mvs.loadMVS((char*)argv[1]);
-	//mvs.loadMVS("pawn.mvs");
+	//mvs.loadMVS((char*)argv[1]);
+	mvs.loadMVS("pawn.mvs");
 
 	start_t = clock();
 	// mvs.refineSeedPatches();

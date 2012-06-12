@@ -65,16 +65,14 @@ namespace PAIS {
 		bool hasNeighborPatch(const vector<int> &cell, const Patch &refPth) const;
 		// get new expansion center
 		void getExpansionPatchCenter(const Camera &cam, const Patch &parent, const int cx, const int cy, Vec3d &center) const;
+		// patch filter (false: filter out)
+		bool patchFilter(const Patch &pth) const;
+
 	public:
 		friend class FileLoader;
 		friend class Patch;
 
-		static MVS& getInstance() {
-			if (instance==NULL) {
-				instance = new MVS(2, 15, 3, 36, 0.7, 15, 200);
-			}
-			return *instance;
-		}
+		static MVS& getInstance() { return *instance; }
 		static MVS& getInstance(const int cellSize, const int patchRadius, const int minCamNum, const double textureVariation, const double minCorrelation, const int particleNum, const int maxIteration);
 
 		void loadNVM(const char* fileName);

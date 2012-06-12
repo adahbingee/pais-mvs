@@ -128,8 +128,7 @@ void MVS::expansionPatches() {
 		printf("parent: fit: %f \t pri: %f \t camNum: %d\n", pth.getFitness(), pth.getPriority(), pth.getCameraNumber());
 		
 		// skip
-		if (pth.getCameraNumber() < minCamNum) continue;
-		if (pth.getFitness() == 0.0) continue;
+		if ( !patchFilter(pth) ) continue;
 
 		// expand patch
 		expandNeighborCell(pth);
@@ -184,14 +183,12 @@ void MVS::expandCell(const Camera &cam, const Patch &parent, const int cx, const
 	Patch expPatch(center, parent);
 	expPatch.refine();
 
-	if (expPatch.getCameraNumber() < minCamNum) return;
-	if (expPatch.getFitness() == 0.0)           return;
-	if ( _isnan(expPatch.getPriority()) )       return;
-
 	insertPatch(expPatch);
 }
 
 void MVS::insertPatch(const Patch &pth) {
+	if ( !patchFilter(pth) ) return;
+
 	// insert into patches container
 	patches.insert(pair<int, Patch>(pth.getId(), pth));
 	
@@ -270,4 +267,26 @@ int MVS::getTopPriorityPatchId() const {
 	printf("queue %d\n", count);
 
 	return topId;
+}
+
+bool MVS::patchFilter(const Patch &pth) const {
+	if (pth.getCameraNumber() < minCamNum) return false;
+	if (pth.getFitness() >= 10000)         return false;
+	if (pth.getFitness() == 0.0)           return false;
+	if (pth.getPriority() > 10000)         return false;
+
+	// skip background
+	const int camNum = pth.getCameraNumber();
+	const vector<int> &camIdx = pth.getCameraIndices();
+	const vector<Vec2d> &imgPoints = pth.getImagePoints();
+	for (int i = 0; i < camNum; i++) {
+		const Camera &cam = cameras[camIdx[i]];
+		const Vec2d &pt = imgPoints[i];
+		const Mat_<uchar> &img = cam.getPyramidImage(0);
+		if (img.at<uchar>(cvRound(pt[1]), cvRound(pt[0])) == 0) {
+			return false;
+		}
+	}
+
+	return true;
 }
