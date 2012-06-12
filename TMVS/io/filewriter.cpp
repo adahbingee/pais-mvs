@@ -67,9 +67,6 @@ void FileWriter::writeMVS(const char *fileName, const MVS &mvs) {
 	// write MVS header
 	file << "MVS_V2" << endl;
 
-	//file << "CELL_SIZE " << mvs.getCellSize() << endl;
-	//file << "PATCH_RADIUS " << mvs.getPatchRadius() << endl;
-
 	// write cameras
 	const int camNum = (int) mvs.getCameras().size();
 	file << "CAMERAS " << camNum << endl;
@@ -88,4 +85,8 @@ void FileWriter::writeMVS(const char *fileName, const MVS &mvs) {
 	}
 
 	file.close();
+}
+
+void FileWriter::writePLY(const char *fileName, const MVS &mvs) {
+	
 }

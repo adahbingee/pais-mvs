@@ -120,6 +120,7 @@ void MVS::expansionPatches() {
 	while ( pthId >= 0) {
 		// get top priority seed patch
 		Patch &pth = getPatch(pthId);
+		printf("parent: fit: %f \t pri: %f \t camNum: %d\n", pth.getFitness(), pth.getPriority(), pth.getCameraNumber());
 		// expand patch
 		expandNeighborCell(pth);
 		pth.setExpanded();
@@ -155,7 +156,7 @@ void MVS::expandNeighborCell(const Patch &pth) {
 
 			// skip neighbor cell with exist neighbor patch or discontinuous
 			const vector<int> &cell = map.getCell(nx[j], ny[j]);
-			if ( !hasNeighborPatch(cell, pth) ) continue;
+			if ( hasNeighborPatch(cell, pth) ) continue;
 
 			// expand neighbor cell (create expansion patch)
 			expandCell(cam, pth, nx[j], ny[j]);
@@ -177,9 +178,6 @@ void MVS::expandCell(const Camera &cam, const Patch &parent, const int cx, const
 }
 
 void MVS::insertPatch(const Patch &pth) {
-
-	printf("exp ID: %d\t fit: %f \t pri: %f\n", pth.getId(), pth.getFitness(), pth.getPriority());
-
 	// insert into patches container
 	patches.insert(pair<int, Patch>(pth.getId(), pth));
 	
@@ -241,17 +239,21 @@ int MVS::getTopPriorityPatchId() const {
 	map<int, Patch>::const_iterator it;
 	double topPriority = DBL_MAX;
 	int topId = -1;
-
+	int count = 0;
 	for (it = patches.begin(); it != patches.end(); ++it) { 
 		const Patch &pth = (*it).second;
 		// skip expanded
 		if ( pth.isExpanded() ) continue;
+		++count;
+
 		// update top priority
 		if (pth.getPriority() < topPriority) {
 			topPriority = pth.getPriority();
 			topId = pth.getId();
 		}
 	}
+
+	printf("queue %d\n", count);
 
 	return topId;
 }
