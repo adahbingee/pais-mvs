@@ -24,6 +24,7 @@ namespace PAIS {
 
 	public:
 		static void writeMVS(const char *fileName, const MVS &mvs);
+		static void writePLY(const char *fileName, const MVS &mvs);
 	};
 };
 
