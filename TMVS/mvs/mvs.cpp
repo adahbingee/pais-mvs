@@ -121,15 +121,20 @@ void MVS::expansionPatches() {
 	while ( pthId >= 0) {
 		// get top priority seed patch
 		Patch &pth = getPatch(pthId);
-		printf("parent: fit: %f \t pri: %f \t camNum: %d\n", pth.getFitness(), pth.getPriority(), pth.getCameraNumber());
-		// expand patch
-		expandNeighborCell(pth);
 		pth.setExpanded();
 		// get next seed patch
 		pthId = getTopPriorityPatchId();
+
+		printf("parent: fit: %f \t pri: %f \t camNum: %d\n", pth.getFitness(), pth.getPriority(), pth.getCameraNumber());
 		
-		++count;
-		if (count % 100 == 0) {
+		// skip
+		if (pth.getCameraNumber() < minCamNum) continue;
+		if (pth.getFitness() == 0.0) continue;
+
+		// expand patch
+		expandNeighborCell(pth);
+		
+		if (count++ % 200 == 0) {
 			writeMVS("auto_save.mvs");
 		}
 	}
@@ -180,6 +185,9 @@ void MVS::expandCell(const Camera &cam, const Patch &parent, const int cx, const
 	expPatch.refine();
 
 	if (expPatch.getCameraNumber() < minCamNum) return;
+	if (expPatch.getFitness() == 0.0)           return;
+	if ( _isnan(expPatch.getPriority()) )       return;
+
 	insertPatch(expPatch);
 }
 

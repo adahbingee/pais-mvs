@@ -1,5 +1,5 @@
 2012/06/12
-* BUG: expansion -> correlation table -> maxIdx
+* BUG: expansion -> correlation table -> maxIdx (fitness = 0)
 2012/06/01
 * Fix boot bug (static variable)
 2012/05/31
