@@ -419,14 +419,14 @@ void Patch::removeInvisibleCamera() {
 	// sum correlation and find max correlation index
 	double corrSum;
 	double maxCorr = -DBL_MAX;
-	int maxIdx;
+	int maxIdx = 0;
 	for (int i = 0; i < camNum; ++i) {
 		corrSum = 0;
 		for (int j = 0; j < camNum; ++j) {
 			corrSum += corrTable.at<double>(i, j);
 		}
 
-		if (corrSum > maxCorr) {
+		if (corrSum >= maxCorr) {
 			maxIdx = i;
 			maxCorr = corrSum;
 		}
