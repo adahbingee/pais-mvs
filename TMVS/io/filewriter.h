@@ -4,12 +4,16 @@
 #include <fstream>
 #include <opencv2\opencv.hpp>
 
+#include "../mvs/patch.h"
 #include "../mvs/mvs.h"
 
 using namespace PAIS;
 using namespace cv;
 
 namespace PAIS {
+	class MVS;
+	class Patch;
+
 	class FileWriter {
 	private:
 		static void writeCamera(fstream &file, const Camera &camera);
@@ -17,6 +21,7 @@ namespace PAIS {
 		static void writeVec(fstream &file, const Vec4d &vec);
 		static void writeVec(fstream &file, const Vec3d &vec);
 		static void writeVec(fstream &file, const Vec2d &vec);
+
 	public:
 		static void writeMVS(const char *fileName, const MVS &mvs);
 	};
