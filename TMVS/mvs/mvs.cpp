@@ -80,7 +80,7 @@ void MVS::loadMVS(const char* fileName) {
 	initCellMaps();
 }
 
-void MVS::wirteMVS(const char* fileName) {
+void MVS::writeMVS(const char* fileName) {
 	FileWriter::writeMVS(fileName, *this);
 }
 
@@ -117,6 +117,7 @@ void MVS::refineSeedPatches() {
 
 void MVS::expansionPatches() {
 	int pthId = getTopPriorityPatchId();
+	int count = 0;
 	while ( pthId >= 0) {
 		// get top priority seed patch
 		Patch &pth = getPatch(pthId);
@@ -126,6 +127,11 @@ void MVS::expansionPatches() {
 		pth.setExpanded();
 		// get next seed patch
 		pthId = getTopPriorityPatchId();
+		
+		++count;
+		if (count % 100 == 0) {
+			writeMVS("auto_save.mvs");
+		}
 	}
 }
 

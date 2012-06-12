@@ -79,7 +79,7 @@ namespace PAIS {
 
 		void loadNVM(const char* fileName);
 		void loadMVS(const char* fileName);
-		void wirteMVS(const char* fileName);
+		void writeMVS(const char* fileName);
 
 		// getter
 		const vector<Camera>&  getCameras()  const { return cameras;  }
