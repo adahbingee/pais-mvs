@@ -18,7 +18,7 @@ namespace PAIS {
 		static MVS *instance;
 
 		// constructor
-		MVS(const int cellSize, const int patchRadius, const int minCamNum, const double textureVariation, const double minCorrelation, const int particleNum, const int maxIteration);
+		MVS(const int cellSize, const int patchRadius, const int minCamNum, const double visibleCorrelation, const double textureVariation, const double minCorrelation, const int particleNum, const int maxIteration);
 		~MVS(void);
 
 		// image cell size (pixel*pixel)
@@ -58,6 +58,8 @@ namespace PAIS {
 		void expandNeighborCell(const Patch &pth);
 		void expandCell(const Camera &cam, const Patch &parent, const int cx, const int cy);
 		void insertPatch(const Patch &pth);
+		void deletePatch(Patch &pth);
+		void deletePatch(const int id);
 
 		// get top priority patch id to expansion
 		int getTopPriorityPatchId() const;
@@ -73,7 +75,7 @@ namespace PAIS {
 		friend class Patch;
 
 		static MVS& getInstance() { return *instance; }
-		static MVS& getInstance(const int cellSize, const int patchRadius, const int minCamNum, const double textureVariation, const double minCorrelation, const int particleNum, const int maxIteration);
+		static MVS& getInstance(const int cellSize, const int patchRadius, const int minCamNum, const double visibleCorrelation, const double textureVariation, const double minCorrelation, const int particleNum, const int maxIteration);
 
 		void loadNVM(const char* fileName);
 		void loadMVS(const char* fileName);
