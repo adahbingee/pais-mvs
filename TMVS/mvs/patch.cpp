@@ -131,6 +131,13 @@ void Patch::getHomographyPatch(const Vec2d &pt, const Mat_<uchar> &img, const Ma
 			ix = ( H.at<double>(0, 0) * x + H.at<double>(0, 1) * y + H.at<double>(0, 2) ) / w;
 			iy = ( H.at<double>(1, 0) * x + H.at<double>(1, 1) * y + H.at<double>(1, 2) ) / w;
 
+			// skip overflow cases
+			if (ix < 0 || ix >= img.cols-1 || iy < 0 || iy >= img.rows-1 || w == 0) {
+				hp = Mat_<double>::ones(patchSize*patchSize, 1) * DBL_MAX;
+				printf("ID %d \t correlation overflow %f \t %f\n", getId(), ix, iy);
+				return;
+			}
+
 			// interpolation neighbor points
 			px[0] = (int) ix;
 			py[0] = (int) iy;
