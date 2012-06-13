@@ -13,10 +13,11 @@ bool Patch::isNeighbor(const Patch &pth1, const Patch &pth2) {
 	dist += abs((c1-c2).ddot(n1));
 	dist += abs((c1-c2).ddot(n2));
 
-	if (dist < 0.001)
+	if (dist < 0.001) {
 		return true;
-	else 
+	} else { 
 		return false;
+	}
 }
 
 /* constructor */
@@ -32,6 +33,7 @@ Patch::Patch(const Vec3d &center, const Patch &parent, const int id) : AbstractP
     this->center    = center;
 	this->camIdx    = parent.getCameraIndices();
 	setNormal(parent.getNormal());
+	expandVisibleCamera();
 }
 
 Patch::Patch(const Vec3d &center, const Vec2d &normalS, const vector<int> &camIdx, const double fitness, const int id) : AbstractPatch(id) {
@@ -451,6 +453,23 @@ void Patch::removeInvisibleCamera() {
 		it = find(camIdx.begin(), camIdx.end(), removeIdx[i]);
 		camIdx.erase(it);
 	}
+}
+
+void Patch::expandVisibleCamera() {
+	const MVS &mvs = MVS::getInstance();
+	const vector<Camera> &cameras = mvs.cameras;
+
+	vector<int> expCamIdx;
+	for (int i = 0; i < cameras.size(); ++i) {
+		const Camera &cam = cameras[i];
+		if (normal.ddot(-cam.getOpticalNormal()) >= mvs.visibleCorrelation) {
+			camIdx.push_back(i);
+		}
+	}
+
+	sort(camIdx.begin(), camIdx.end());
+	vector<int>::iterator it = unique(camIdx.begin(), camIdx.end());
+	camIdx.resize(it - camIdx.begin());
 }
 
 /* fitness function */

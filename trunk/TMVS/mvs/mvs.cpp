@@ -6,17 +6,18 @@ MVS* MVS::instance = NULL;
 
 /* constructor */
 
-MVS& MVS::getInstance(const int cellSize, const int patchRadius, const int minCamNum, const double textureVariation, const double minCorrelation, const int particleNum, const int maxIteration) {
+MVS& MVS::getInstance(const int cellSize, const int patchRadius, const int minCamNum, const double visibleCorrelation, const double textureVariation, const double minCorrelation, const int particleNum, const int maxIteration) {
 	if (instance==NULL) {
-		instance = new MVS(cellSize, patchRadius, minCamNum, textureVariation, minCorrelation, particleNum, maxIteration);
+		instance = new MVS(cellSize, patchRadius, minCamNum, visibleCorrelation, textureVariation, minCorrelation, particleNum, maxIteration);
 	}
 	return *instance;
 }
 
-MVS::MVS(const int cellSize, const int patchRadius, const int minCamNum, const double textureVariation, const double minCorrelation, const int particleNum, const int maxIteration) {
+MVS::MVS(const int cellSize, const int patchRadius, const int minCamNum, const double visibleCorrelation, const double textureVariation, const double minCorrelation, const int particleNum, const int maxIteration) {
 	this->cellSize         = cellSize;
 	this->patchRadius      = patchRadius;
 	this->minCamNum        = minCamNum;
+	this->visibleCorrelation = visibleCorrelation;
 	this->textureVariation = textureVariation;
 	this->minCorrelation   = minCorrelation;
 	this->patchSize        = (patchRadius<<1)+1;
@@ -104,9 +105,9 @@ void MVS::refineSeedPatches() {
 
 		pth.refine();
 
-		// remove patch with few visible camera
-		if (pth.getCameraNumber() < minCamNum) {
+		if ( !patchFilter(pth) ) {
 			it = patches.erase(it);
+			continue;
 		}
 
 		++it;
@@ -128,12 +129,15 @@ void MVS::expansionPatches() {
 		printf("parent: fit: %f \t pri: %f \t camNum: %d\n", pth.getFitness(), pth.getPriority(), pth.getCameraNumber());
 		
 		// skip
-		if ( !patchFilter(pth) ) continue;
+		if ( !patchFilter(pth) ) {
+			deletePatch(pth);
+			continue;
+		}
 
 		// expand patch
 		expandNeighborCell(pth);
 		
-		if (count++ % 200 == 0) {
+		if (count++ % 500 == 0) {
 			writeMVS("auto_save.mvs");
 		}
 	}
@@ -202,6 +206,18 @@ void MVS::insertPatch(const Patch &pth) {
 		cy = (int) (imgPoints[i][1] / cellSize);
 		cellMaps[camIdx[i]].insert(cx, cy, pth.getId());
 	}
+}
+
+void MVS::deletePatch(Patch &pth) {
+	map<int, Patch>::iterator it = patches.find(pth.getId());
+	if (it == patches.end()) return;
+	patches.erase(it);
+}
+
+void MVS::deletePatch(const int id) {
+	map<int, Patch>::iterator it = patches.find(id);
+	if (it == patches.end()) return;
+	patches.erase(it);
 }
 
 /* const function */
@@ -274,15 +290,15 @@ bool MVS::patchFilter(const Patch &pth) const {
 	if (pth.getFitness() >= 10000)         return false;
 	if (pth.getFitness() == 0.0)           return false;
 	if (pth.getPriority() > 10000)         return false;
+	if (_isnan(pth.getPriority()))         return false;
+	if (_isnan(pth.getCorrelation()))      return false;
 
 	// skip background
-	const int camNum = pth.getCameraNumber();
-	const vector<int> &camIdx = pth.getCameraIndices();
-	const vector<Vec2d> &imgPoints = pth.getImagePoints();
-	for (int i = 0; i < camNum; i++) {
-		const Camera &cam = cameras[camIdx[i]];
-		const Vec2d &pt = imgPoints[i];
+	Vec2d pt;
+	for (int i = 0; i < cameras.size(); i++) {
+		const Camera &cam = cameras[i];
 		const Mat_<uchar> &img = cam.getPyramidImage(0);
+		cam.project(pth.getCenter(), pt);
 		if (img.at<uchar>(cvRound(pt[1]), cvRound(pt[0])) == 0) {
 			return false;
 		}
