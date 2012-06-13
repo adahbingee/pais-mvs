@@ -77,8 +77,12 @@ void Patch::refine() {
     solver.setParticle(init);
     solver.run(true);
 
-	// set refined patch information
 	fitness = solver.getGbestFitness();
+
+	// return if not convergence
+	if (fitness == DBL_MAX) return;
+
+	// set refined patch information
     const double *gBest = solver.getGbest();
     setNormal(Vec2d(gBest[0], gBest[1]));
     depth  = gBest[2];
