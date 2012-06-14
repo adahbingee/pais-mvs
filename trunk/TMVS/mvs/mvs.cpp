@@ -95,7 +95,7 @@ void MVS::refineSeedPatches() {
 
 	map<int, Patch>::iterator it;
 	for (it = patches.begin(); it != patches.end(); ) {
-		Patch &pth = (*it).second;
+		Patch &pth = it->second;
 
 		// remove patch with few visible camera
 		if (pth.getCameraNumber() < minCamNum) {
@@ -139,6 +139,44 @@ void MVS::expansionPatches() {
 		
 		if (count++ % 500 == 0) {
 			writeMVS("auto_save.mvs");
+		}
+	}
+}
+
+void MVS::patchQuantization(const int thetaNum, const int phiNum, const int distNum) {
+	// normal bound in spherical coordinate
+	double minTheta =  DBL_MAX;
+	double maxTheta = -DBL_MAX;
+	double minPhi   =  DBL_MAX;
+	double maxPhi   = -DBL_MAX;
+	// plane distance bound to origin
+	double minDist  =  DBL_MAX;
+	double maxDist  = -DBL_MAX;
+
+	// get bound
+	double dist;
+	for (map<int, Patch>::iterator it = patches.begin(); it != patches.end(); ++it) {
+		const Patch &pth = it->second;
+		const Vec2d &normalS = pth.getSphericalNormal();
+		dist = -pth.getNormal().ddot(pth.getCenter());
+
+		if (dist < minDist) {
+			minDist = dist;
+		}
+		if (dist > maxDist) {
+			maxDist = dist;
+		}
+		if (normalS[0] < minTheta) {
+			minTheta = normalS[0];
+		}
+		if (normalS[0] > maxTheta) {
+			maxTheta = normalS[0];
+		}
+		if (normalS[1] < minPhi) {
+			minPhi = normalS[1];
+		}
+		if (normalS[1] > maxTheta) {
+			maxPhi = normalS[1];
 		}
 	}
 }

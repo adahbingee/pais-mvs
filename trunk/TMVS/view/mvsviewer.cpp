@@ -28,8 +28,10 @@ void keyBoardEvent(const pcl::visualization::KeyboardEvent &event, void* viewer_
 }
 
 void pointPickEvent(const pcl::visualization::PointPickingEvent &event, void* viewer_void) {
+	cvDestroyAllWindows();
 	MvsViewer &viewer = *((MvsViewer *) viewer_void);
 	viewer.showPickedPoint(event.getPointIndex());
+	waitKey(1);
 }
 
 MvsViewer::MvsViewer(const MVS &mvs, bool show) {
@@ -124,9 +126,9 @@ void MvsViewer::addPatches() {
 		pt.x = p[0];
 		pt.y = p[1];
 		pt.z = p[2];
-		pt.r = c[0];
+		pt.r = c[2];
 		pt.g = c[1];
-		pt.b = c[2];
+		pt.b = c[0];
 		pcl::Normal nt(n[0], n[1], n[2]);
 
 		centers->push_back(pt);
@@ -198,10 +200,15 @@ void MvsViewer::showPickedPoint(const int idx) {
 	it = mvs->getPatches().begin();
 	for (int i = 0; i < idx; ++it, ++i);
 
+	const Patch &pth = it->second;
+
+	// print patch information
+	printPatchInformation(pth);
+
 	// patch center
-	const Vec3d &p = it->second.getCenter();
+	const Vec3d &p = pth.getCenter();
 	// patch normal
-	const Vec3d &n = it->second.getNormal();
+	const Vec3d &n = pth.getNormal();
 
 	PointCloud<PointXYZ>::Ptr cloud(new PointCloud<PointXYZ>);
 	PointCloud<pcl::Normal>::Ptr normal(new PointCloud<pcl::Normal>);
@@ -227,4 +234,43 @@ void MvsViewer::showPickedPoint(const int idx) {
     pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 1.0, 0.0, NAME_PICKED_PATCH);
 	// set point size
 	pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 5, NAME_PICKED_PATCH);
+}
+
+void MvsViewer::printPatchInformation(const Patch &pth) const {
+	const Vec3d &center = pth.getCenter();
+	const Vec3d &normal = pth.getNormal();
+	const Vec2d &normalS = pth.getSphericalNormal();
+
+	printf("\n");
+	printf("ID: %d\n", pth.getId());
+	printf("center: %f %f %f\n", center[0], center[1], center[2]);
+	printf("normal: %f %f %f\n", normal[0], normal[1], normal[2]);
+	printf("spherical normal: %f %f\n", normalS[0], normalS[1]);
+	printf("distance to origin: %f\n", -normal.ddot(center));
+	printf("avg correlation: %f\n", pth.getCorrelation());
+	Mat_<Vec3b> img;
+	char title[30];
+	int cx, cy;
+	double visCorr;
+	for (int i = 0; i < pth.getCameraNumber(); ++i) {
+		const int camIdx = pth.getCameraIndices()[i];
+		const Camera &cam = mvs->getCamera(camIdx);
+		const Vec2d &imgPoint = pth.getImagePoints()[i];
+		
+		img = cam.getRgbImage().clone();
+		circle(img, Point(cvRound(imgPoint[0]), cvRound(imgPoint[1])), 3, Scalar(0, 255, 0), 2, CV_AA);
+
+		sprintf(title, "img %d", camIdx);
+		if (camIdx == pth.getReferenceCameraIndex()) {
+			sprintf(title, "Reference img %d", camIdx);
+		}
+		imshow(title, img);
+
+		cx = (int) (imgPoint[0] / mvs->getCellSize());
+		cy = (int) (imgPoint[1] / mvs->getCellSize());
+		visCorr = normal.ddot(-cam.getOpticalNormal());
+
+		printf("camIdx: %d \t cx: %d \t cy: %d \t visCorr: %f\n", camIdx, cx, cy, visCorr);
+	}
+	printf("\n");
 }

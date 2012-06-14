@@ -98,6 +98,7 @@ namespace PAIS {
 
 		void refineSeedPatches();
 		void expansionPatches();
+		void patchQuantization(const int thetaNum, const int phiNum, const int distNum);
 	};
 };
 
