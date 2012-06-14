@@ -42,6 +42,7 @@ void FileWriter::writePatch(fstream &file, const Patch &patch) {
 	const vector<int> &camIdx = patch.getCameraIndices();
 	const int camNum = (int) camIdx.size();
 	double fitness = patch.getFitness();
+	double correaltion = patch.getCorrelation();
 
 	// write patch center
 	writeVec(file, patch.getCenter());
@@ -55,6 +56,8 @@ void FileWriter::writePatch(fstream &file, const Patch &patch) {
 	}
 	// write fitness
 	file.write((char*) &fitness, sizeof(double));
+	// write correlation
+	file.write((char*) &correaltion, sizeof(double));
 }
 
 void FileWriter::writeMVS(const char *fileName, const MVS &mvs) {

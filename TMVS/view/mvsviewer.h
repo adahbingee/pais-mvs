@@ -33,6 +33,9 @@ namespace PAIS {
 		void init();
 		void addCameras();
 		void addPatches();
+
+		void printPatchInformation(const Patch &pth) const;
+
 	public:
 		// constructor
 		MvsViewer(const MVS &mvs, bool show = false);

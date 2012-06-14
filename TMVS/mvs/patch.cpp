@@ -13,7 +13,7 @@ bool Patch::isNeighbor(const Patch &pth1, const Patch &pth2) {
 	dist += abs((c1-c2).ddot(n1));
 	dist += abs((c1-c2).ddot(n2));
 
-	if (dist < 0.001) {
+	if (dist < 0.01) {
 		return true;
 	} else { 
 		return false;
@@ -36,21 +36,17 @@ Patch::Patch(const Vec3d &center, const Patch &parent, const int id) : AbstractP
 	expandVisibleCamera();
 }
 
-Patch::Patch(const Vec3d &center, const Vec2d &normalS, const vector<int> &camIdx, const double fitness, const int id) : AbstractPatch(id) {
+Patch::Patch(const Vec3d &center, const Vec2d &normalS, const vector<int> &camIdx, const double fitness, const double correlation, const int id) : AbstractPatch(id) {
 	this->center = center;
 	this->camIdx = camIdx;
 	this->fitness = fitness;
+	this->correlation = correlation;
 	setNormal(normalS);
 	setReferenceCameraIndex();
 	setDepthAndRay();
 	setDepthRange();
 	setLOD();
-
-	// set normalized homography patch correlation table
-	setCorrelationTable();
-	// set patch priority
 	setPriority();
-	// set image point
 	setImagePoint();
 }
 
@@ -470,13 +466,20 @@ void Patch::expandVisibleCamera() {
 	for (int i = 0; i < cameras.size(); ++i) {
 		const Camera &cam = cameras[i];
 		if (normal.ddot(-cam.getOpticalNormal()) >= mvs.visibleCorrelation) {
-			camIdx.push_back(i);
+			expCamIdx.push_back(i);
 		}
 	}
 
-	sort(camIdx.begin(), camIdx.end());
-	vector<int>::iterator it = unique(camIdx.begin(), camIdx.end());
-	camIdx.resize(it - camIdx.begin());
+	if (expCamIdx.size() < mvs.minCamNum) {
+		for (int i = 0; i < expCamIdx.size(); ++i) {
+			camIdx.push_back(expCamIdx[i]);
+		}
+		sort(camIdx.begin(), camIdx.end());
+		vector<int>::iterator it = unique(camIdx.begin(), camIdx.end());
+		camIdx.resize(it - camIdx.begin());
+	} else {
+		camIdx = expCamIdx;
+	}
 }
 
 /* fitness function */

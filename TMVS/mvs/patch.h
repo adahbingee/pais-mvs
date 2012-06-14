@@ -37,7 +37,7 @@ namespace PAIS {
 		// expansion patch constructor
 		Patch(const Vec3d &center, const Patch &parent, const int id = -1);
 		// mvs loader constructor
-		Patch(const Vec3d &center, const Vec2d &normalS, const vector<int> &camIdx, const double fitness, const int id = -1);
+		Patch(const Vec3d &center, const Vec2d &normalS, const vector<int> &camIdx, const double fitness, const double correlation, const int id = -1);
 
 		void refine();
 

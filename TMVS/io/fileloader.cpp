@@ -146,6 +146,7 @@ Patch FileLoader::loadMvsPatch(ifstream &file) {
 	Vec3d center;
 	Vec2d sphericalNormal;
 	double fitness;
+	double correlation;
 
 	// read patch center
 	loadMvsVec(file, center);
@@ -161,8 +162,9 @@ Patch FileLoader::loadMvsPatch(ifstream &file) {
 	}
 	// load fitness
 	file.read((char*) &fitness, sizeof(double));
-
-	return Patch(center, sphericalNormal, camIdx, fitness);
+	// load correlation
+	file.read((char*) &correlation, sizeof(double));
+	return Patch(center, sphericalNormal, camIdx, fitness, correlation);
 }
 
 void FileLoader::loadMvsVec(ifstream &file, Vec2d &v) {
