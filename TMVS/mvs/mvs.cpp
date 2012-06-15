@@ -336,7 +336,9 @@ bool MVS::patchFilter(const Patch &pth) const {
 	for (int i = 0; i < cameras.size(); i++) {
 		const Camera &cam = cameras[i];
 		const Mat_<uchar> &img = cam.getPyramidImage(0);
-		cam.project(pth.getCenter(), pt);
+		if ( !cam.project(pth.getCenter(), pt) ) {
+			return false;
+		}
 		if (img.at<uchar>(cvRound(pt[1]), cvRound(pt[0])) == 0) {
 			return false;
 		}
