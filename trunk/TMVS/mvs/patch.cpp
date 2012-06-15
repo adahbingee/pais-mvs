@@ -57,12 +57,13 @@ Patch::~Patch(void) {
 /* public functions */
 
 void Patch::refine() {
+	const MVS &mvs = MVS::getInstance();
+	if (getCameraNumber() < mvs.minCamNum) return;
+
 	setReferenceCameraIndex();
 	setDepthAndRay();
 	setDepthRange();
 	setLOD();
-
-	const MVS &mvs = MVS::getInstance();
 
 	// PSO parameter range (theta, phi, depth)
     double rangeL [] = {0.0 , normalS[1] - M_PI/2.0, depthRange[0]};
@@ -470,16 +471,22 @@ void Patch::expandVisibleCamera() {
 		}
 	}
 
+	// use parent visible camera when not enough visible cameras
 	if (expCamIdx.size() < mvs.minCamNum) {
-		for (int i = 0; i < expCamIdx.size(); ++i) {
-			camIdx.push_back(expCamIdx[i]);
+
+		for (int i = 0; i < camIdx.size(); ++i) {
+			const Camera &cam = cameras[camIdx[i]];
+			if (normal.ddot(-cam.getOpticalNormal()) >= 0.5) {
+				expCamIdx.push_back(camIdx[i]);
+			}
 		}
-		sort(camIdx.begin(), camIdx.end());
-		vector<int>::iterator it = unique(camIdx.begin(), camIdx.end());
-		camIdx.resize(it - camIdx.begin());
-	} else {
-		camIdx = expCamIdx;
+		
+		sort(expCamIdx.begin(), expCamIdx.end());
+		vector<int>::iterator it = unique(expCamIdx.begin(), expCamIdx.end());
+		expCamIdx.resize(it - expCamIdx.begin());
 	}
+
+	camIdx = expCamIdx;
 }
 
 /* fitness function */
