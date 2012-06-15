@@ -49,9 +49,6 @@
     <ClInclude Include="io\fileloader.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
-    <ClInclude Include="view\mvsviewer.h">
-      <Filter>標頭檔</Filter>
-    </ClInclude>
     <ClInclude Include="io\filewriter.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
@@ -85,9 +82,6 @@
       <Filter>原始程式檔</Filter>
     </ClCompile>
     <ClCompile Include="io\fileloader.cpp">
-      <Filter>原始程式檔</Filter>
-    </ClCompile>
-    <ClCompile Include="view\mvsviewer.cpp">
       <Filter>原始程式檔</Filter>
     </ClCompile>
     <ClCompile Include="io\filewriter.cpp">

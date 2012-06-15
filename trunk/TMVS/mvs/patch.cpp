@@ -397,7 +397,7 @@ void Patch::setPriority() {
 	const MVS &mvs = MVS::getInstance();
 	const int totalCamNum = (int) mvs.getCameras().size();
 	const int camNum = getCameraNumber();
-	double camRatio = 1.0 - ((double) camNum) / ((double) totalCamNum);
+	double camRatio = 1.0 - ((double) camNum) / ((double) totalCamNum+1);
 	priority = fitness * exp(-correlation) * camRatio;
 }
 

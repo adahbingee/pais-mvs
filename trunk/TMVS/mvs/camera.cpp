@@ -106,6 +106,35 @@ Camera::Camera(const char *fileName, const double focal, const Vec4d &quaternion
 	_isAvaliable = true;
 }
 
+Camera::Camera(const char *fileName, const double focalX, const double focalY, const Vec2d &principlePoint, const Vec4d &quaternion, const Vec3d &center) {
+	_isAvaliable = false;
+
+	// read RGB image
+	imgRGB = imread(fileName);
+
+	// can't read image file
+	if (imgRGB.data == NULL) {
+		printf("Can't read image file %s\n", fileName);
+		return;
+	}
+
+	// copy image file name
+	strcpy(this->fileName, fileName);
+
+	// read gray level image pyramid
+	maxLOD = (int) ( log( (double) max(imgRGB.cols, imgRGB.rows) ) / log(2.0) );
+	imgPyramid.resize(maxLOD);
+	imgPyramid[0] = imread(fileName, 0);
+	for (int i = 1; i < maxLOD; i++) {
+		resize(imgPyramid[i-1], imgPyramid[i], Size(), 0.5, 0.5, INTER_AREA);
+	}
+
+	this->focalX = focalX;
+	this->focalY = focalY;
+
+	_isAvaliable = true;
+}
+
 bool Camera::project(const Vec3d &in3D, Vec2d &out2D, const int LOD, const bool applyDistortion) const {
 
 	if ( !applyDistortion ) {
