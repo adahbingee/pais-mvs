@@ -33,6 +33,8 @@ namespace PAIS {
 
 		// camera focal length, K = [f, 0, cx; 0 f cy; 0 0 1]
 		double focal;
+		double focalX;
+		double focalY;
 
 		// radial distortion parameter
 		double radialDistortion;
@@ -68,7 +70,10 @@ namespace PAIS {
 
 	public:
 		Camera(void);
+		// for load nvm format
 		Camera(const char *fileName, const double focal, const Vec4d &quaternion, const Vec3d &center, const double radialDistortion);
+		// for load nvm2 format
+		Camera(const char *fileName, const double focalX, const double focalY, const Vec2d &principlePoint, const Vec4d &quaternion, const Vec3d &center);
 		~Camera(void);
 
 		// get image information

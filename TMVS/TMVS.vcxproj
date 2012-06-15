@@ -137,6 +137,7 @@
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OpenMPSupport>true</OpenMPSupport>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -162,7 +163,6 @@
     <ClInclude Include="pso\psosolver.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
-    <ClInclude Include="view\mvsviewer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="io\fileloader.cpp" />
@@ -176,7 +176,6 @@
     <ClCompile Include="pso\psosolver.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="TMVS.cpp" />
-    <ClCompile Include="view\mvsviewer.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

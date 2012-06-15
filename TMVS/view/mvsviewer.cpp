@@ -248,6 +248,7 @@ void MvsViewer::printPatchInformation(const Patch &pth) const {
 	printf("spherical normal: %f %f\n", normalS[0], normalS[1]);
 	printf("distance to origin: %f\n", -normal.ddot(center));
 	printf("avg correlation: %f\n", pth.getCorrelation());
+	printf("Level of detail: %d\n", pth.getLOD());
 	Mat_<Vec3b> img;
 	char title[30];
 	int cx, cy;
