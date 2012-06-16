@@ -249,7 +249,10 @@ void MvsViewer::printPatchInformation(const Patch &pth) const {
 	printf("distance to origin: %f\n", -normal.ddot(center));
 	printf("avg correlation: %f\n", pth.getCorrelation());
 	printf("Level of detail: %d\n", pth.getLOD());
-	Mat_<Vec3b> img;
+
+	pth.showRefinedResult();
+	pth.showError();
+
 	char title[30];
 	int cx, cy;
 	double visCorr;
@@ -257,15 +260,6 @@ void MvsViewer::printPatchInformation(const Patch &pth) const {
 		const int camIdx = pth.getCameraIndices()[i];
 		const Camera &cam = mvs->getCamera(camIdx);
 		const Vec2d &imgPoint = pth.getImagePoints()[i];
-		
-		img = cam.getRgbImage().clone();
-		circle(img, Point(cvRound(imgPoint[0]), cvRound(imgPoint[1])), 3, Scalar(0, 255, 0), 2, CV_AA);
-
-		sprintf(title, "img %d", camIdx);
-		if (camIdx == pth.getReferenceCameraIndex()) {
-			sprintf(title, "Reference img %d", camIdx);
-		}
-		imshow(title, img);
 
 		cx = (int) (imgPoint[0] / mvs->getCellSize());
 		cy = (int) (imgPoint[1] / mvs->getCellSize());

@@ -4,6 +4,13 @@ using namespace PAIS;
 
 /* static functions */
 bool Patch::isNeighbor(const Patch &pth1, const Patch &pth2) {
+	const Vec3d &n1 = pth1.getNormal();
+	const Vec3d &n2 = pth2.getNormal();
+	if (n1.ddot(n2) > 0.99) {
+		return true;
+	}
+	return false;
+	/*
 	const Vec3d &c1 = pth1.getCenter();
 	const Vec3d &c2 = pth2.getCenter();
 	const Vec3d &n1 = pth1.getNormal();
@@ -18,6 +25,7 @@ bool Patch::isNeighbor(const Patch &pth1, const Patch &pth2) {
 	} else { 
 		return false;
 	}
+	*/
 }
 
 /* constructor */
@@ -476,7 +484,7 @@ void Patch::expandVisibleCamera() {
 
 		for (int i = 0; i < camIdx.size(); ++i) {
 			const Camera &cam = cameras[camIdx[i]];
-			if (normal.ddot(-cam.getOpticalNormal()) >= 0.5) {
+			if (normal.ddot(-cam.getOpticalNormal()) >= mvs.visibleCorrelation/2.0) {
 				expCamIdx.push_back(camIdx[i]);
 			}
 		}
@@ -487,6 +495,188 @@ void Patch::expandVisibleCamera() {
 	}
 
 	camIdx = expCamIdx;
+}
+
+/* misc */
+void Patch::showRefinedResult() const {
+	const MVS &mvs = MVS::getInstance();
+	const vector<Camera> &cameras = mvs.getCameras();
+	const int patchRadius = mvs.getPatchRadius();
+
+	// camera parameters
+	const int camNum        = getCameraNumber();
+	const Camera &refCam    = mvs.getCamera(refCamIdx);
+	const Mat_<double> &KRF = refCam.getKR();
+	const Mat_<double> &KTF = refCam.getKT();
+	
+	// plane equation (distance form plane to origin)
+	const double d = -center.ddot(normal);          
+	const Mat_<double> normalM(normal);
+
+	// LOD scalar for camera intrisic matrix
+	Mat_<double> LODM = Mat_<double>::zeros(3, 3);
+	LODM.at<double>(0, 0) = 1.0/(1<<LOD);
+	LODM.at<double>(1, 1) = 1.0/(1<<LOD);
+	LODM.at<double>(2, 2) = 1.0;
+
+	// Homographies to visible camera
+	vector<Mat_<double> > H(camNum);
+	for (int i = 0; i < camNum; i++) {
+		// visible camera
+		const Camera &cam = cameras[camIdx[i]];
+
+		// get homography matrix
+		const Mat_<double> &KRT = cam.getKR();        // K*R of to camera
+		const Mat_<double> &KTT = cam.getKT();        // K*T of to camera
+		H[i] = ( d*LODM*KRT - LODM*KTT*normalM.t() ) * ( d*LODM*KRF - LODM*KTF*normalM.t() ).inv();
+	}
+
+	Vec2d pt;
+	refCam.project(center, pt, LOD);
+	
+	double x[5] = {pt[0]-patchRadius, pt[0]-patchRadius, pt[0]+patchRadius, pt[0]+patchRadius, pt[0]};
+	double y[5] = {pt[1]-patchRadius, pt[1]+patchRadius, pt[1]-patchRadius, pt[1]+patchRadius, pt[1]};
+
+	double w, ix[5], iy[5];
+	char title[30];
+	for (int i = 0; i < camNum; i++) {
+		const Camera &cam = mvs.getCameras()[camIdx[i]];
+		Mat_<Vec3b> img = cam.getRgbImage().clone();
+		resize(img, img, Size(img.cols/(1<<LOD), img.rows/(1<<LOD) ) );
+
+		// homography projection
+		Mat F = Utility::getFundamental(refCam, cam);
+		for (int c = 0; c < 5; c++) {
+			w  =   H[i].at<double>(2, 0) * x[c] + H[i].at<double>(2, 1) * y[c] + H[i].at<double>(2, 2);
+			ix[c] = ( H[i].at<double>(0, 0) * x[c] + H[i].at<double>(0, 1) * y[c] + H[i].at<double>(0, 2) ) / w;
+			iy[c] = ( H[i].at<double>(1, 0) * x[c] + H[i].at<double>(1, 1) * y[c] + H[i].at<double>(1, 2) ) / w;
+			ix[c] = cvRound(ix[c]);
+			iy[c] = cvRound(iy[c]);
+
+			// draw epipolar line
+			/*
+			Mat_<double> pF(3, 1);
+			pF.at<double>(0,0) = x[c];
+			pF.at<double>(1,0) = y[c];
+			pF.at<double>(2,0) = 1;
+			Mat epiLine = F*pF;
+			double yStart = -epiLine.at<double>(0, 2)/epiLine.at<double>(0, 1);
+			double yEnd   = (-epiLine.at<double>(0, 2)-epiLine.at<double>(0, 0)*img.cols) / epiLine.at<double>(0, 1);
+			line(img, Point(0, cvRound(yStart)), Point( img.cols, cvRound(yEnd)), Scalar(0,255,0, 0.5));
+			*/
+		}
+
+		// draw patch
+		line(img, Point(ix[0],iy[0]), Point(ix[1],iy[1]), Scalar(0,0,255));
+		line(img, Point(ix[0],iy[0]), Point(ix[2],iy[2]), Scalar(0,0,255));
+		line(img, Point(ix[3],iy[3]), Point(ix[1],iy[1]), Scalar(0,0,255));
+		line(img, Point(ix[3],iy[3]), Point(ix[2],iy[2]), Scalar(0,0,255));
+		circle(img, Point(ix[4], iy[4]), 1, Scalar(0,0,255));
+
+		sprintf(title, "img%d_%d.png", getId(), camIdx[i]);
+		if (camIdx[i] == refCamIdx) {
+			sprintf(title, "reference img%d_%d.png", getId(), camIdx[i]);
+		}
+		imshow(title, img);
+		//imwrite(title, img);
+	}
+}
+
+void Patch::showError() const {
+	const MVS &mvs = MVS::getInstance();
+	const vector<Camera> &cameras = mvs.getCameras();
+	const int patchRadius = mvs.getPatchRadius();
+	const int patchSize   = mvs.getPatchSize();
+
+	// camera parameters
+	const Camera &refCam  = mvs.getCamera(refCamIdx);
+	const Mat_<double> &KRF = refCam.getKR();
+	const Mat_<double> &KTF = refCam.getKT();
+	const int camNum = getCameraNumber();
+
+	// plane equation (distance form plane to origin)
+	const double d = -center.ddot(normal);          
+	const Mat_<double> normalM(normal);
+
+	// Homographies to visible camera
+	vector<Mat_<double> > H(camNum);
+	for (int i = 0; i < camNum; i++) {
+		// visible camera
+		const Camera &cam = cameras[camIdx[i]];
+
+		// get homography matrix
+		const Mat_<double> &KRT = cam.getKR();        // K*R of to camera
+		const Mat_<double> &KTT = cam.getKT();        // K*T of to camera
+		H[i] = ( d*KRT - KTT*normalM.t() ) * ( d*KRF - KTF*normalM.t() ).inv();
+	}
+
+	Vec2d pt;
+	refCam.project(center, pt);
+
+	// warping (get pixel-wised variance)
+	double mean, avgSad;             // pixel-wised mean, avgSad
+	double w, ix, iy;                // position on target image
+	int px[4];                       // neighbor x
+	int py[4];                       // neighbor y
+	double *c = new double [camNum]; // bilinear color
+	Mat_<double> error(patchSize, patchSize);
+
+	for (double x = pt[0]-patchRadius, ex = 0; x <= pt[0]+patchRadius; x++, ex++) {
+		for (double y = pt[1]-patchRadius, ey = 0; y <= pt[1]+patchRadius; y++, ey++) {
+			// clear
+			mean = 0;
+			avgSad = 0;
+
+			for (int i = 0; i < camNum; i++) {
+				const Mat_<uchar> &img = cameras[camIdx[i]].getPyramidImage()[LOD];
+
+				// homography projection
+				w  =   H[i].at<double>(2, 0) * x + H[i].at<double>(2, 1) * y + H[i].at<double>(2, 2);
+				ix = ( H[i].at<double>(0, 0) * x + H[i].at<double>(0, 1) * y + H[i].at<double>(0, 2) ) / w;
+				iy = ( H[i].at<double>(1, 0) * x + H[i].at<double>(1, 1) * y + H[i].at<double>(1, 2) ) / w;
+				
+				// apply LOD transform
+				if (LOD > 0) {
+					ix /= 1<<LOD;
+					iy /= 1<<LOD;
+				}
+				
+				// interpolation neighbor points
+				px[0] = (int) ix;
+				py[0] = (int) iy;
+				px[1] = px[0] + 1;
+				py[1] = py[0];
+				px[2] = px[0];
+				py[2] = py[0] + 1;
+				px[3] = px[0] + 1;
+				py[3] = py[0] + 1;
+
+				c[i] = (double) img.at<uchar>(py[0], px[0])*(px[1]-ix)*(py[2]-iy) + 
+					   (double) img.at<uchar>(py[1], px[1])*(ix-px[0])*(py[3]-iy) + 
+					   (double) img.at<uchar>(py[2], px[2])*(iy-py[0])*(px[3]-ix) + 
+					   (double) img.at<uchar>(py[3], px[3])*(ix-px[2])*(iy-py[1]);
+
+				mean += c[i];
+			} // end of camera
+
+			mean /= camNum;
+
+			for (int i = 0; i < camNum; i++) {
+				avgSad += abs(c[i]-mean);
+			}
+			avgSad /= camNum;
+
+			error.at<double>(ey, ex) = avgSad;
+		} // end of warping y
+	} // end of warping x
+
+	double minE ,maxE;
+	minMaxLoc(error, &minE, &maxE);
+	error = (error - minE) / (maxE - minE);
+	char title[30];
+	sprintf(title, "error%d.png", getId());
+	resize(error, error, Size(200, 200), 0, 0, CV_INTER_NN);
+	imshow(title, error);
 }
 
 /* fitness function */
@@ -501,13 +691,20 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 	const int patchRadius         = mvs.getPatchRadius();
 	const vector<Camera> &cameras = mvs.getCameras();
 
+	// level of detail
+	int LOD = patch.getLOD();
+
+	// LOD scalar for camera intrisic matrix K
+	Mat_<double> LODM = Mat_<double>::zeros(3, 3);
+	LODM.at<double>(0, 0) = 1.0/(1<<LOD);
+	LODM.at<double>(1, 1) = 1.0/(1<<LOD);
+	LODM.at<double>(2, 2) = 1.0;
+
 	// camera parameters
 	const Camera &refCam  = mvs.getCamera(patch.getReferenceCameraIndex());
 	const Mat_<double> &KRF = refCam.getKR();
 	const Mat_<double> &KTF = refCam.getKT();
 	const int camNum = patch.getCameraNumber();
-	// level of detail
-	int LOD = patch.getLOD();
 
 	// given patch normal
 	Vec3d normal;
@@ -527,6 +724,7 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 
 	// Homographies to visible camera
 	vector<Mat_<double> > H(camNum);
+	Mat_<double> invH = ( d*LODM*KRF - LODM*KTF*normalM.t() ).inv();
 	for (int i = 0; i < camNum; i++) {
 		// visible camera
 		const Camera &cam = cameras[camIdx[i]];
@@ -534,12 +732,12 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 		// get homography matrix
 		const Mat_<double> &KRT = cam.getKR();        // K*R of to camera
 		const Mat_<double> &KTT = cam.getKT();        // K*T of to camera
-		H[i] = ( d*KRT - KTT*normalM.t() ) * ( d*KRF - KTF*normalM.t() ).inv();
+		H[i] = ( d*LODM*KRT - LODM*KTT*normalM.t() ) * invH;
 	}
 
-	// projected point on reference image
+	// projected point on reference image with LOD transform
 	Vec2d pt;
-	if ( !refCam.project(center, pt) ) {
+	if ( !refCam.project(center, pt, LOD) ) {
 		return DBL_MAX;
 	}
 
@@ -566,8 +764,8 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 			for (int i = 0; i < camNum; i++) {
 				const Mat_<uchar> &img = cameras[camIdx[i]].getPyramidImage(LOD);
 
-				// homography projection (with LOD transform)
-				w  = ( H[i].at<double>(2, 0) * x + H[i].at<double>(2, 1) * y + H[i].at<double>(2, 2) ) * (1<<LOD);
+				// homography projection
+				w  = ( H[i].at<double>(2, 0) * x + H[i].at<double>(2, 1) * y + H[i].at<double>(2, 2) );
 				ix = ( H[i].at<double>(0, 0) * x + H[i].at<double>(0, 1) * y + H[i].at<double>(0, 2) ) / w;
 				iy = ( H[i].at<double>(1, 0) * x + H[i].at<double>(1, 1) * y + H[i].at<double>(1, 2) ) / w;
 

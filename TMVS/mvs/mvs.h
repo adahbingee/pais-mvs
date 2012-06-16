@@ -35,6 +35,8 @@ namespace PAIS {
 		double visibleCorrelation;
 		// minimum patch correlation when filtering patch visible camera
 		double minCorrelation;
+		// minimum LOD
+		int minLOD;
 		// PSO parameter
 		// particle number
 		int particleNum;
@@ -95,6 +97,7 @@ namespace PAIS {
 		int    getPatchSize()          const { return patchSize;          }
 		double getTextureVariation()   const { return textureVariation;   }
 		double getVisibleCorrelation() const { return visibleCorrelation; }
+		int    getMinLOD()             const { return minLOD;             }
 
 		void refineSeedPatches();
 		void expansionPatches();

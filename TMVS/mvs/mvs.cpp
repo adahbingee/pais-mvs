@@ -179,6 +179,8 @@ void MVS::patchQuantization(const int thetaNum, const int phiNum, const int dist
 			maxPhi = normalS[1];
 		}
 	}
+
+	// set container
 }
 
 /* process */
@@ -264,7 +266,7 @@ bool MVS::hasNeighborPatch(const vector<int> &cell, const Patch &refPth) const {
 	const int pthNum = (int) cell.size();
 	for (int k = 0; k < pthNum; k++) {
 		const Patch &pth = getPatch(cell[k]);
-		if ( Patch::isNeighbor(refPth, pth) || pth.getCorrelation() > 0.9) {
+		if ( Patch::isNeighbor(refPth, pth) || pth.getCorrelation() > 0.95) {
 			return true;
 		}
 	}
@@ -343,6 +345,16 @@ bool MVS::patchFilter(const Patch &pth) const {
 			return false;
 		}
 	}
+
+	// skip visible view correlation
+	int count = 0;
+	for (int i = 0; i < pth.getCameraNumber(); ++i) {
+		const Camera &cam = getCamera(pth.getCameraIndices()[i]);
+		if (pth.getNormal().ddot(-cam.getOpticalNormal()) > visibleCorrelation) {
+			count++;
+		}
+	}
+	if (count < minCamNum) return false;
 
 	return true;
 }
