@@ -41,6 +41,11 @@ namespace PAIS {
 
 		void refine();
 
+		// show homography window in visible cameras
+		void showRefinedResult() const;
+		// show SAD error image
+		void showError() const;
+
 		~Patch(void);
 	};
 
