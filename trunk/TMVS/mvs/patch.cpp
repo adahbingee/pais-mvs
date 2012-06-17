@@ -117,6 +117,48 @@ void Patch::refine() {
 
 /* process */
 
+void Patch::getHomographies(const Vec3d &center, const Vec3d &normal, vector<Mat_<double>> &H) const {
+	const MVS &mvs = MVS::getInstance();
+	const vector<Camera> &cameras = mvs.getCameras();
+
+	// set container
+	const int camNum = getCameraNumber();
+	H.resize(camNum);
+
+	// LOD scalar for camera intrisic matrix K
+	Mat_<double> LODM = Mat_<double>::zeros(3, 3);
+	LODM.at<double>(0, 0) = 1.0/(1<<LOD);
+	LODM.at<double>(1, 1) = 1.0/(1<<LOD);
+	LODM.at<double>(2, 2) = 1.0;
+
+	// camera parameters
+	const Camera &refCam  = mvs.getCamera(refCamIdx);
+	const Mat_<double> &KRF = refCam.getKR();
+	const Mat_<double> &KTF = refCam.getKT();
+
+	// plane equation (distance form plane to origin)
+	const double d = -center.ddot(normal);          
+	const Mat_<double> normalM(normal);
+
+	// get homography from reference to target image
+	Mat_<double> invH = ( d*LODM*KRF - LODM*KTF*normalM.t() ).inv();
+	for (int i = 0; i < camNum; i++) {
+		// indentity for reference camera
+		if (camIdx[i] == refCamIdx) {
+			H[i] = Mat_<double>::eye(3, 3);
+			continue;
+		}
+
+		// visible camera
+		const Camera &cam = cameras[camIdx[i]];
+
+		// get homography matrix
+		const Mat_<double> &KRT = cam.getKR();        // K*R of to camera
+		const Mat_<double> &KTT = cam.getKT();        // K*T of to camera
+		H[i] = ( d*LODM*KRT - LODM*KTT*normalM.t() ) * invH;
+	}
+}
+
 void Patch::getHomographyPatch(const Vec2d &pt, const Mat_<uchar> &img, const Mat_<double> &H, Mat_<double> &hp) const {
 	const MVS &mvs = MVS::getInstance();
 	const int patchRadius = mvs.patchRadius;
@@ -132,7 +174,7 @@ void Patch::getHomographyPatch(const Vec2d &pt, const Mat_<uchar> &img, const Ma
 	for (double x = pt[0]-patchRadius; x <= pt[0]+patchRadius; ++x) {
 		for (double y = pt[1]-patchRadius; y <= pt[1]+patchRadius; ++y) {
 			// homography projection (with LOD transform)
-			w  = ( H.at<double>(2, 0) * x + H.at<double>(2, 1) * y + H.at<double>(2, 2) ) * (1<<LOD);
+			w  = ( H.at<double>(2, 0) * x + H.at<double>(2, 1) * y + H.at<double>(2, 2) );
 			ix = ( H.at<double>(0, 0) * x + H.at<double>(0, 1) * y + H.at<double>(0, 2) ) / w;
 			iy = ( H.at<double>(1, 0) * x + H.at<double>(1, 1) * y + H.at<double>(1, 2) ) / w;
 
@@ -273,7 +315,7 @@ void Patch::setLOD() {
     Vec2d pt;
         
     // initialize level of detail
-    LOD = -1;
+	LOD = mvs.minLOD-1;
 
     // find LOD
 	while (variance < mvs.textureVariation) {
@@ -338,7 +380,6 @@ void Patch::setLOD() {
         destroyAllWindows();
     }
     */
-        
     delete [] textures;
 }
 
@@ -349,28 +390,13 @@ void Patch::setCorrelationTable() {
 	// camera parameters
 	const int camNum        = getCameraNumber();
 	const Camera &refCam    = mvs.getCamera(refCamIdx);
-	const Mat_<double> &KRF = refCam.getKR();
-	const Mat_<double> &KTF = refCam.getKT();
 
-	// plane equation (distance form plane to origin)
-	const double d = -center.ddot(normal);          
-	const Mat_<double> normalM(normal);
-
-	// Homographies to visible camera
-	vector<Mat_<double> > H(camNum);
-	for (int i = 0; i < camNum; i++) {
-		// visible camera
-		const Camera &cam = cameras[camIdx[i]];
-
-		// get homography matrix
-		const Mat_<double> &KRT = cam.getKR();        // K*R of to camera
-		const Mat_<double> &KTT = cam.getKT();        // K*T of to camera
-		H[i] = ( d*KRT - KTT*normalM.t() ) * ( d*KRF - KTF*normalM.t() ).inv();
-	}
+	vector<Mat_<double>> H;
+	getHomographies(center, normal, H);
 
 	// 2D image point on reference image
 	Vec2d pt;
-	refCam.project(center, pt);
+	refCam.project(center, pt, LOD);
 
 	// get normalized homography patch column vector
 	vector<Mat_<double> > HP(camNum);
@@ -590,28 +616,14 @@ void Patch::showError() const {
 
 	// camera parameters
 	const Camera &refCam  = mvs.getCamera(refCamIdx);
-	const Mat_<double> &KRF = refCam.getKR();
-	const Mat_<double> &KTF = refCam.getKT();
 	const int camNum = getCameraNumber();
-
-	// plane equation (distance form plane to origin)
-	const double d = -center.ddot(normal);          
-	const Mat_<double> normalM(normal);
 
 	// Homographies to visible camera
 	vector<Mat_<double> > H(camNum);
-	for (int i = 0; i < camNum; i++) {
-		// visible camera
-		const Camera &cam = cameras[camIdx[i]];
-
-		// get homography matrix
-		const Mat_<double> &KRT = cam.getKR();        // K*R of to camera
-		const Mat_<double> &KTT = cam.getKT();        // K*T of to camera
-		H[i] = ( d*KRT - KTT*normalM.t() ) * ( d*KRF - KTF*normalM.t() ).inv();
-	}
+	getHomographies(center, normal, H);
 
 	Vec2d pt;
-	refCam.project(center, pt);
+	refCam.project(center, pt, LOD);
 
 	// warping (get pixel-wised variance)
 	double mean, avgSad;             // pixel-wised mean, avgSad
@@ -628,7 +640,7 @@ void Patch::showError() const {
 			avgSad = 0;
 
 			for (int i = 0; i < camNum; i++) {
-				const Mat_<uchar> &img = cameras[camIdx[i]].getPyramidImage()[LOD];
+				const Mat_<uchar> &img = cameras[camIdx[i]].getPyramidImage(LOD);
 
 				// homography projection
 				w  =   H[i].at<double>(2, 0) * x + H[i].at<double>(2, 1) * y + H[i].at<double>(2, 2);
@@ -694,16 +706,8 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 	// level of detail
 	int LOD = patch.getLOD();
 
-	// LOD scalar for camera intrisic matrix K
-	Mat_<double> LODM = Mat_<double>::zeros(3, 3);
-	LODM.at<double>(0, 0) = 1.0/(1<<LOD);
-	LODM.at<double>(1, 1) = 1.0/(1<<LOD);
-	LODM.at<double>(2, 2) = 1.0;
-
 	// camera parameters
 	const Camera &refCam  = mvs.getCamera(patch.getReferenceCameraIndex());
-	const Mat_<double> &KRF = refCam.getKR();
-	const Mat_<double> &KTF = refCam.getKT();
 	const int camNum = patch.getCameraNumber();
 
 	// given patch normal
@@ -718,22 +722,9 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 	// given patch center
 	const Vec3d center = patch.getRay() * p.pos[2] + refCam.getCenter();
 
-	// plane equation (distance form plane to origin)
-	const double d = -center.ddot(normal);          
-	const Mat_<double> normalM(normal);
-
 	// Homographies to visible camera
 	vector<Mat_<double> > H(camNum);
-	Mat_<double> invH = ( d*LODM*KRF - LODM*KTF*normalM.t() ).inv();
-	for (int i = 0; i < camNum; i++) {
-		// visible camera
-		const Camera &cam = cameras[camIdx[i]];
-
-		// get homography matrix
-		const Mat_<double> &KRT = cam.getKR();        // K*R of to camera
-		const Mat_<double> &KTT = cam.getKT();        // K*T of to camera
-		H[i] = ( d*LODM*KRT - LODM*KTT*normalM.t() ) * invH;
-	}
+	patch.getHomographies(center, normal, H);
 
 	// projected point on reference image with LOD transform
 	Vec2d pt;

@@ -41,6 +41,9 @@ namespace PAIS {
 
 		void refine();
 
+		// get homographies
+		void getHomographies(const Vec3d &center, const Vec3d &normal, vector<Mat_<double>> &H) const;
+
 		// show homography window in visible cameras
 		void showRefinedResult() const;
 		// show SAD error image

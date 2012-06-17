@@ -6,23 +6,26 @@ MVS* MVS::instance = NULL;
 
 /* constructor */
 
-MVS& MVS::getInstance(const int cellSize, const int patchRadius, const int minCamNum, const double visibleCorrelation, const double textureVariation, const double minCorrelation, const int particleNum, const int maxIteration) {
+MVS& MVS::getInstance(const MvsConfig &config) {
 	if (instance==NULL) {
-		instance = new MVS(cellSize, patchRadius, minCamNum, visibleCorrelation, textureVariation, minCorrelation, particleNum, maxIteration);
+		instance = new MVS(config);
 	}
 	return *instance;
 }
 
-MVS::MVS(const int cellSize, const int patchRadius, const int minCamNum, const double visibleCorrelation, const double textureVariation, const double minCorrelation, const int particleNum, const int maxIteration) {
-	this->cellSize         = cellSize;
-	this->patchRadius      = patchRadius;
-	this->minCamNum        = minCamNum;
-	this->visibleCorrelation = visibleCorrelation;
-	this->textureVariation = textureVariation;
-	this->minCorrelation   = minCorrelation;
+MVS::MVS(const MvsConfig &config) {
+	this->cellSize           = config.cellSize;
+	this->patchRadius        = config.patchRadius;
+	this->minCamNum          = config.minCamNum;
+	this->visibleCorrelation = config.visibleCorrelation;
+	this->textureVariation   = config.textureVariation;
+	this->minCorrelation     = config.minCorrelation;
+	this->minLOD             = config.minLOD;
+	this->maxCellPatchNum    = config.maxCellPatchNum;
+	this->particleNum        = config.particleNum;
+	this->maxIteration       = config.maxIteration;
+	
 	this->patchSize        = (patchRadius<<1)+1;
-	this->particleNum      = particleNum;
-	this->maxIteration     = maxIteration;
 	initPatchDistanceWeighting();
 }
 
@@ -266,7 +269,7 @@ bool MVS::hasNeighborPatch(const vector<int> &cell, const Patch &refPth) const {
 	const int pthNum = (int) cell.size();
 	for (int k = 0; k < pthNum; k++) {
 		const Patch &pth = getPatch(cell[k]);
-		if ( Patch::isNeighbor(refPth, pth) || pth.getCorrelation() > 0.95) {
+		if ( Patch::isNeighbor(refPth, pth) || pth.getCorrelation() > 0.95 || pthNum >= maxCellPatchNum) {
 			return true;
 		}
 	}
