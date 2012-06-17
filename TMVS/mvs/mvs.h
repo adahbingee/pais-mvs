@@ -12,13 +12,37 @@
 namespace PAIS {
 	class Patch;
 
+	struct MvsConfig {
+		// image cell size (pixel*pixel)
+		int cellSize;
+		// patch radius in pixel
+		int patchRadius;
+		// minimum visible camera number
+		int minCamNum;
+		// normalized intensity variation in patch
+		double textureVariation;
+		// expand visible camera
+		double visibleCorrelation;
+		// minimum patch correlation when filtering patch visible camera
+		double minCorrelation;
+		// minimum LOD
+		int minLOD;
+		// maxium cell patch number
+		int maxCellPatchNum;
+		// PSO parameter
+		// particle number
+		int particleNum;
+		// maximum iteration number
+		int maxIteration;
+	};
+
 	class MVS {
 	private:
 		// instance holder
 		static MVS *instance;
 
 		// constructor
-		MVS(const int cellSize, const int patchRadius, const int minCamNum, const double visibleCorrelation, const double textureVariation, const double minCorrelation, const int particleNum, const int maxIteration);
+		MVS(const MvsConfig &config);
 		~MVS(void);
 
 		// image cell size (pixel*pixel)
@@ -37,6 +61,8 @@ namespace PAIS {
 		double minCorrelation;
 		// minimum LOD
 		int minLOD;
+		// maxium cell patch number
+		int maxCellPatchNum;
 		// PSO parameter
 		// particle number
 		int particleNum;
@@ -77,7 +103,7 @@ namespace PAIS {
 		friend class Patch;
 
 		static MVS& getInstance() { return *instance; }
-		static MVS& getInstance(const int cellSize, const int patchRadius, const int minCamNum, const double visibleCorrelation, const double textureVariation, const double minCorrelation, const int particleNum, const int maxIteration);
+		static MVS& getInstance(const MvsConfig &config);
 
 		void loadNVM(const char* fileName);
 		void loadMVS(const char* fileName);
