@@ -28,8 +28,8 @@ void keyBoardEvent(const pcl::visualization::KeyboardEvent &event, void* viewer_
 }
 
 void pointPickEvent(const pcl::visualization::PointPickingEvent &event, void* viewer_void) {
-	cvDestroyAllWindows();
 	MvsViewer &viewer = *((MvsViewer *) viewer_void);
+	cvDestroyAllWindows();
 	viewer.showPickedPoint(event.getPointIndex());
 	waitKey(1);
 }
@@ -236,7 +236,7 @@ void MvsViewer::showPickedPoint(const int idx) {
 	pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 5, NAME_PICKED_PATCH);
 }
 
-void MvsViewer::printPatchInformation(const Patch &pth) const {
+void MvsViewer::printPatchInformation(const Patch &pth) {
 	const Vec3d &center = pth.getCenter();
 	const Vec3d &normal = pth.getNormal();
 	const Vec2d &normalS = pth.getSphericalNormal();
@@ -249,6 +249,9 @@ void MvsViewer::printPatchInformation(const Patch &pth) const {
 	printf("distance to origin: %f\n", -normal.ddot(center));
 	printf("avg correlation: %f\n", pth.getCorrelation());
 	printf("Level of detail: %d\n", pth.getLOD());
+	printf("fitness: %f\n", pth.getFitness());
+	printf("priority: %f\n", pth.getPriority());
+	printf("visible camera number: %d\n", pth.getCameraNumber());
 
 	pth.showRefinedResult();
 	pth.showError();
@@ -256,10 +259,21 @@ void MvsViewer::printPatchInformation(const Patch &pth) const {
 	char title[30];
 	int cx, cy;
 	double visCorr;
+	// visible camera
+	PointCloud<PointXYZ>::Ptr cameraCenter(new PointCloud<PointXYZ>);
+	PointCloud<pcl::Normal>::Ptr cameraNormal(new PointCloud<pcl::Normal>);
 	for (int i = 0; i < pth.getCameraNumber(); ++i) {
 		const int camIdx = pth.getCameraIndices()[i];
 		const Camera &cam = mvs->getCamera(camIdx);
 		const Vec2d &imgPoint = pth.getImagePoints()[i];
+
+		PointXYZ pt;
+		pt.x = cam.getCenter()[0];
+		pt.y = cam.getCenter()[1];
+		pt.z = cam.getCenter()[2];
+		pcl::Normal nt(cam.getOpticalNormal()[0], cam.getOpticalNormal()[1], cam.getOpticalNormal()[2]);
+		cameraCenter->push_back(pt);
+		cameraNormal->push_back(nt);
 
 		cx = (int) (imgPoint[0] / mvs->getCellSize());
 		cy = (int) (imgPoint[1] / mvs->getCellSize());
@@ -268,4 +282,15 @@ void MvsViewer::printPatchInformation(const Patch &pth) const {
 		printf("camIdx: %d \t cx: %d \t cy: %d \t visCorr: %f\n", camIdx, cx, cy, visCorr);
 	}
 	printf("\n");
+
+	pclViewer.removePointCloud(NAME_VISIBLE_CAMERA_CENTER);
+	pclViewer.removePointCloud(NAME_VISIBLE_CAMERA_NORMAL);
+	// add new points
+    pclViewer.addPointCloud(cameraCenter, NAME_VISIBLE_CAMERA_CENTER);
+	// add point normals
+	pclViewer.addPointCloudNormals<pcl::PointXYZ, pcl::Normal>(cameraCenter, cameraNormal, 1, 0.1, NAME_VISIBLE_CAMERA_NORMAL);
+	// set color
+    pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 1.0, 0.0, NAME_VISIBLE_CAMERA_CENTER);
+	// set point size
+	pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 8, NAME_VISIBLE_CAMERA_CENTER);
 }

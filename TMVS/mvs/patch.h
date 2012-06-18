@@ -17,6 +17,8 @@ namespace PAIS {
 		void getHomographyPatch(const Vec2d &pt, const Mat_<uchar> &img, const Mat_<double> &H, Mat_<double> &hp) const;
 		// expand visible camera using normal correlation
 		void expandVisibleCamera();
+		// do pso optimization 
+		void psoOptimization();
 
 	protected:
 		void setEstimatedNormal();
@@ -43,7 +45,6 @@ namespace PAIS {
 
 		// get homographies
 		void getHomographies(const Vec3d &center, const Vec3d &normal, vector<Mat_<double>> &H) const;
-
 		// show homography window in visible cameras
 		void showRefinedResult() const;
 		// show SAD error image

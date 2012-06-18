@@ -22,6 +22,8 @@ MVS::MVS(const MvsConfig &config) {
 	this->minCorrelation     = config.minCorrelation;
 	this->minLOD             = config.minLOD;
 	this->maxCellPatchNum    = config.maxCellPatchNum;
+	this->distWeighting      = config.distWeighting;
+	this->diffWeighting      = config.diffWeighting;
 	this->particleNum        = config.particleNum;
 	this->maxIteration       = config.maxIteration;
 	
@@ -52,7 +54,7 @@ bool MVS::initCellMaps() {
 
 void MVS::initPatchDistanceWeighting() {
 	patchDistWeight = Mat_<double>(patchSize, patchSize);
-	double sigma = patchRadius / 2;
+	double sigma = distWeighting;
 	double s2 = 1.0/(2.0*sigma*sigma);
     double s = 1.0/(2.0*M_PI*sigma*sigma);
 
@@ -93,16 +95,10 @@ void MVS::refineSeedPatches() {
 		return;
 	}
 
-	ofstream file;
-	file.open("fitness.txt");
-
 	map<int, Patch>::iterator it;
 	for (it = patches.begin(); it != patches.end(); ) {
 		Patch &pth = it->second;
-		pth.refine();
-		printf("ID: %d fit: %f\n", pth.getId(), pth.getFitness());
-		file << pth.getFitness() << endl;
-		/*
+
 		// remove patch with few visible camera
 		if (pth.getCameraNumber() < minCamNum) {
 			it = patches.erase(it);
@@ -115,12 +111,11 @@ void MVS::refineSeedPatches() {
 			it = patches.erase(it);
 			continue;
 		}
-		*/
+
+		printf("ID: %d \t fit: %.2f \t pri: %.2f\n", pth.getId(), pth.getFitness(), pth.getPriority());
 
 		++it;
 	}
-
-	file.close();
 	return;
 }
 
@@ -338,6 +333,7 @@ bool MVS::patchFilter(const Patch &pth) const {
 	if (pth.getFitness() >= 10000)         return false;
 	if (pth.getFitness() == 0.0)           return false;
 	if (pth.getPriority() > 10000)         return false;
+	if (_isnan(pth.getFitness()))          return false;
 	if (_isnan(pth.getPriority()))         return false;
 	if (_isnan(pth.getCorrelation()))      return false;
 
@@ -354,6 +350,7 @@ bool MVS::patchFilter(const Patch &pth) const {
 		}
 	}
 
+	/*
 	// skip visible view correlation
 	int count = 0;
 	for (int i = 0; i < pth.getCameraNumber(); ++i) {
@@ -363,6 +360,7 @@ bool MVS::patchFilter(const Patch &pth) const {
 		}
 	}
 	if (count < minCamNum) return false;
+	*/
 
 	return true;
 }
