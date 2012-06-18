@@ -5,6 +5,8 @@
 #define NAME_NORMAL        "normal"
 #define NAME_PICKED_PATCH  "picked patch"
 #define NAME_PICKED_NORMAL "picked normal"
+#define NAME_VISIBLE_CAMERA_CENTER "visible camera center"
+#define NAME_VISIBLE_CAMERA_NORMAL "visible camera normal"
 
 // include PCL
 #include <boost/thread/thread.hpp>
@@ -34,7 +36,7 @@ namespace PAIS {
 		void addCameras();
 		void addPatches();
 
-		void printPatchInformation(const Patch &pth) const;
+		void printPatchInformation(const Patch &pth);
 
 	public:
 		// constructor

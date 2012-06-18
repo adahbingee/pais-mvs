@@ -29,6 +29,10 @@ namespace PAIS {
 		int minLOD;
 		// maxium cell patch number
 		int maxCellPatchNum;
+		// patch distance weighting
+		double distWeighting;
+		// patch difference weighting
+		double diffWeighting;
 		// PSO parameter
 		// particle number
 		int particleNum;
@@ -63,6 +67,11 @@ namespace PAIS {
 		int minLOD;
 		// maxium cell patch number
 		int maxCellPatchNum;
+		// patch distance weighting
+		double distWeighting;
+		// patch difference weighting
+		double diffWeighting;
+
 		// PSO parameter
 		// particle number
 		int particleNum;
@@ -123,6 +132,8 @@ namespace PAIS {
 		int    getPatchSize()          const { return patchSize;          }
 		double getTextureVariation()   const { return textureVariation;   }
 		double getVisibleCorrelation() const { return visibleCorrelation; }
+		double getDifferenceWeight()   const { return diffWeighting;      }
+		double getDistanceWeight()     const { return distWeighting;      }
 		int    getMinLOD()             const { return minLOD;             }
 
 		void refineSeedPatches();

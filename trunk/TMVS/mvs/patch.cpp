@@ -72,6 +72,44 @@ void Patch::refine() {
 	setDepthRange();
 	setLOD();
 
+	int beforeRefCamIdx = refCamIdx;
+	int afterRefCamIdx  = -1;
+	int beforeCamNum    = getCameraNumber();
+	int afterCamNum     = -1;
+
+	while (beforeRefCamIdx != afterRefCamIdx && beforeCamNum != afterCamNum) {
+
+		if (getCameraNumber() < mvs.minCamNum) {
+			fitness  = DBL_MAX;
+			priority = DBL_MAX;
+			return;
+		}
+
+		beforeRefCamIdx = refCamIdx;
+		beforeCamNum    = getCameraNumber();
+
+		psoOptimization();
+		setReferenceCameraIndex();
+		setDepthAndRay();
+		setDepthRange();
+		setLOD();
+		setCorrelationTable();
+		removeInvisibleCamera();
+
+		afterRefCamIdx = refCamIdx;
+		afterCamNum    = getCameraNumber();
+		//printf("ID: %d aft %d cam %d\n", getId(), afterRefCamIdx, afterCamNum);
+	}
+
+	setPriority();
+	setImagePoint();
+}
+
+/* process */
+
+void Patch::psoOptimization() {
+	const MVS &mvs = MVS::getInstance();
+
 	// PSO parameter range (theta, phi, depth)
     double rangeL [] = {0.0 , normalS[1] - M_PI/2.0, depthRange[0]};
     double rangeU [] = {M_PI, normalS[1] + M_PI/2.0, depthRange[1]};
@@ -89,36 +127,7 @@ void Patch::refine() {
     setNormal(Vec2d(gBest[0], gBest[1]));
     depth  = gBest[2];
 	center = ray * depth + mvs.getCamera(refCamIdx).getCenter();
-
-	return;
-
-	/*
-	int beforeRefCamIdx = refCamIdx;
-	setReferenceCameraIndex();
-	if (beforeRefCamIdx != refCamIdx) {
-		refine();
-	}
-
-    int beforeCamNum = getCameraNumber();
-	// set normalized homography patch correlation table
-    setCorrelationTable();
-	// remove insvisible camera
-    removeInvisibleCamera();
-    int afterCamNum = getCameraNumber();
-	if (beforeCamNum != afterCamNum && afterCamNum >= mvs.minCamNum) {
-		refine();
-    }
-	if (beforeCamNum == afterCamNum && afterCamNum >= mvs.minCamNum) {
-		// set patch priority
-		setPriority();
-		// set image point
-		setImagePoint();
-	}
-
-	*/
 }
-
-/* process */
 
 void Patch::getHomographies(const Vec3d &center, const Vec3d &normal, vector<Mat_<double>> &H) const {
 	const MVS &mvs = MVS::getInstance();
@@ -432,8 +441,8 @@ void Patch::setPriority() {
 	const MVS &mvs = MVS::getInstance();
 	const int totalCamNum = (int) mvs.getCameras().size();
 	const int camNum = getCameraNumber();
-	double camRatio = 1.0 - ((double) camNum) / ((double) totalCamNum+1);
-	priority = fitness * exp(-correlation) * camRatio;
+	double camRatio = ((double) camNum) / ((double) totalCamNum);
+	priority = fitness * exp(-correlation-camRatio);
 }
 
 void Patch::setImagePoint() {
@@ -740,8 +749,12 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 	int py[4];                       // neighbor y
 	double *c = new double [camNum]; // bilinear color
 	double fitness = 0;              // result of normalized fitness
-	// distance weighting
+
+	// distance & difference weighting weighting
+	const double diffWeighting = mvs.getDifferenceWeight();
 	Mat_<double>::const_iterator it = mvs.getPatchDistanceWeighting().begin();
+	double weight;
+	double sumWeight = 0;
 
 	for (double x = pt[0]-patchRadius; x <= pt[0]+patchRadius; ++x) {
 		for (double y = pt[1]-patchRadius; y <= pt[1]+patchRadius; ++y) {
@@ -784,13 +797,15 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 			mean /= camNum;
 
 			for (int i = 0; i < camNum; i++) {
-				avgSad += (c[i]-mean)*(c[i]-mean);
+				avgSad += abs(c[i]-mean);
 			}
-
-			fitness += (*it++) * avgSad;
+			avgSad /= camNum;
+			weight = (*it++) * exp(-avgSad*avgSad/diffWeighting);
+			sumWeight += weight;
+			fitness += weight * avgSad;
 		} // end of warping y
 	} // end of warping x
 
 	delete [] c;
-	return fitness / camNum;
+	return fitness / sumWeight;
 }
