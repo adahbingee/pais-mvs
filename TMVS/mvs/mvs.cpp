@@ -410,17 +410,15 @@ bool MVS::patchFilter(const Patch &pth) const {
 		}
 	}
 
-	/*
 	// skip visible view correlation
 	int count = 0;
 	for (int i = 0; i < pth.getCameraNumber(); ++i) {
 		const Camera &cam = getCamera(pth.getCameraIndices()[i]);
-		if (pth.getNormal().ddot(-cam.getOpticalNormal()) > visibleCorrelation) {
+		if (pth.getNormal().ddot(-cam.getOpticalNormal()) > 0) {
 			count++;
 		}
 	}
 	if (count < minCamNum) return false;
-	*/
 
 	return true;
 }
