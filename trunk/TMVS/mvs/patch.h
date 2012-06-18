@@ -13,6 +13,11 @@ namespace PAIS {
 
 	class Patch : public AbstractPatch {
 	private:
+		static const int TYPE_SEED   = 0x0;
+		static const int TYPE_EXPAND = 0x1;
+
+		int type;
+
 		// get homography texture 1D vector
 		void getHomographyPatch(const Vec2d &pt, const Mat_<uchar> &img, const Mat_<double> &H, Mat_<double> &hp) const;
 		// expand visible camera using normal correlation
