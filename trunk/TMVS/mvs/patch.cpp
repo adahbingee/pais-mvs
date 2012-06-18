@@ -66,7 +66,6 @@ Patch::~Patch(void) {
 
 void Patch::refine() {
 	const MVS &mvs = MVS::getInstance();
-	if (getCameraNumber() < mvs.minCamNum) return;
 
 	setReferenceCameraIndex();
 	setDepthAndRay();
@@ -84,16 +83,21 @@ void Patch::refine() {
     solver.setParticle(init);
     solver.run(true);
 
-	fitness = solver.getGbestFitness();
-
-	// return if not convergence
-	if (fitness == DBL_MAX) return;
-
 	// set refined patch information
+	fitness = solver.getGbestFitness();
     const double *gBest = solver.getGbest();
     setNormal(Vec2d(gBest[0], gBest[1]));
     depth  = gBest[2];
-	center = ray * depth + mvs.cameras[refCamIdx].getCenter();
+	center = ray * depth + mvs.getCamera(refCamIdx).getCenter();
+
+	return;
+
+	/*
+	int beforeRefCamIdx = refCamIdx;
+	setReferenceCameraIndex();
+	if (beforeRefCamIdx != refCamIdx) {
+		refine();
+	}
 
     int beforeCamNum = getCameraNumber();
 	// set normalized homography patch correlation table
@@ -104,7 +108,6 @@ void Patch::refine() {
 	if (beforeCamNum != afterCamNum && afterCamNum >= mvs.minCamNum) {
 		refine();
     }
-
 	if (beforeCamNum == afterCamNum && afterCamNum >= mvs.minCamNum) {
 		// set patch priority
 		setPriority();
@@ -112,7 +115,7 @@ void Patch::refine() {
 		setImagePoint();
 	}
 
-	printf("ID: %d\tLOD: %d\tit: %d\tfit: %.2f \tpri: %.2f\n", getId(), LOD, solver.getIteration(), fitness, priority);
+	*/
 }
 
 /* process */
@@ -120,6 +123,15 @@ void Patch::refine() {
 void Patch::getHomographies(const Vec3d &center, const Vec3d &normal, vector<Mat_<double>> &H) const {
 	const MVS &mvs = MVS::getInstance();
 	const vector<Camera> &cameras = mvs.getCameras();
+
+	// camera parameters
+	const Camera &refCam  = mvs.getCamera(refCamIdx);
+	const Mat_<double> &KRF = refCam.getKR();
+	const Mat_<double> &KTF = refCam.getKT();
+
+	// plane equation (distance form plane to origin)
+	const double d = -center.ddot(normal);          
+	const Mat_<double> normalM(normal);
 
 	// set container
 	const int camNum = getCameraNumber();
@@ -130,15 +142,6 @@ void Patch::getHomographies(const Vec3d &center, const Vec3d &normal, vector<Mat
 	LODM.at<double>(0, 0) = 1.0/(1<<LOD);
 	LODM.at<double>(1, 1) = 1.0/(1<<LOD);
 	LODM.at<double>(2, 2) = 1.0;
-
-	// camera parameters
-	const Camera &refCam  = mvs.getCamera(refCamIdx);
-	const Mat_<double> &KRF = refCam.getKR();
-	const Mat_<double> &KTF = refCam.getKT();
-
-	// plane equation (distance form plane to origin)
-	const double d = -center.ddot(normal);          
-	const Mat_<double> normalM(normal);
 
 	// get homography from reference to target image
 	Mat_<double> invH = ( d*LODM*KRF - LODM*KTF*normalM.t() ).inv();
@@ -254,36 +257,34 @@ void Patch::setDepthAndRay() {
 void Patch::setDepthRange() {
 	const MVS &mvs   = MVS::getInstance();
     const int camNum = getCameraNumber();
-
     const Camera &refCam = mvs.getCamera(refCamIdx);
 
-    const double cellSize = MVS::getInstance().cellSize;
+	const double cellSize = mvs.cellSize;
 
     // center shift
     Vec3d c2 = ray * (depth+1.0) + refCam.getCenter();
     // projected point
     Vec2d p1, p2;
 
-    double imgDist, worldDist;
+    double worldDist;
     double maxWorldDist = -DBL_MAX;
     for (int i = 0; i < camNum; i++) {
         if (camIdx[i] == refCamIdx) continue;
                 
         const Camera &cam = mvs.getCamera(camIdx[i]);
 
-        cam.project(c2, p2);
         cam.project(center, p1);
+		cam.project(c2, p2);
 
-        imgDist = norm(p1-p2);
-        worldDist = max(cellSize, 5.0) / imgDist;
+        worldDist = 1.0 / norm(p1-p2);
 
         if (worldDist > maxWorldDist) {
             maxWorldDist = worldDist;
         }
     }
 
-    depthRange[0] = depth - maxWorldDist;
-    depthRange[1] = depth + maxWorldDist;
+	depthRange[0] = depth - max(cellSize, 5.0) * maxWorldDist;
+    depthRange[1] = depth + max(cellSize, 5.0) * maxWorldDist;
 }
 
 void Patch::setLOD() {
@@ -694,15 +695,15 @@ void Patch::showError() const {
 /* fitness function */
 
 double PAIS::getFitness(const Particle &p, void *obj) {
+	// MVS
+	const MVS &mvs                = MVS::getInstance();
+	const int patchRadius         = mvs.getPatchRadius();
+	const vector<Camera> &cameras = mvs.getCameras();
+
 	// current patch
 	const Patch  &patch   = *((Patch *)obj);
 	// visible camera indices
 	const vector<int> &camIdx = patch.getCameraIndices();
-	// MVS
-	const MVS  &mvs               = MVS::getInstance();
-	const int patchRadius         = mvs.getPatchRadius();
-	const vector<Camera> &cameras = mvs.getCameras();
-
 	// level of detail
 	int LOD = patch.getLOD();
 
@@ -740,11 +741,7 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 	double *c = new double [camNum]; // bilinear color
 	double fitness = 0;              // result of normalized fitness
 	// distance weighting
-	const Mat_<double> &distWeight = mvs.getPatchDistanceWeighting();
-	Mat_<double>::const_iterator it = distWeight.begin();
-	// sum of weighting
-	double sumWeight = 0;
-	double weight;
+	Mat_<double>::const_iterator it = mvs.getPatchDistanceWeighting().begin();
 
 	for (double x = pt[0]-patchRadius; x <= pt[0]+patchRadius; ++x) {
 		for (double y = pt[1]-patchRadius; y <= pt[1]+patchRadius; ++y) {
@@ -752,7 +749,7 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 			mean   = 0;
 			avgSad = 0;
 
-			for (int i = 0; i < camNum; i++) {
+			for (int i = 0; i < camNum; ++i) {
 				const Mat_<uchar> &img = cameras[camIdx[i]].getPyramidImage(LOD);
 
 				// homography projection
@@ -780,8 +777,6 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 					   (double) img.at<uchar>(py[1], px[1])*(ix-px[0])*(py[2]-iy) + 
 					   (double) img.at<uchar>(py[2], px[2])*(px[1]-ix)*(iy-py[0]) + 
 					   (double) img.at<uchar>(py[3], px[3])*(ix-px[0])*(iy-py[0]);
-				
-				// c[i] = img.at<uchar>(cvRound(iy), cvRound(ix));
 
 				mean += c[i];
 			} // end of camera
@@ -789,16 +784,13 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 			mean /= camNum;
 
 			for (int i = 0; i < camNum; i++) {
-				avgSad += abs(c[i]-mean);
+				avgSad += (c[i]-mean)*(c[i]-mean);
 			}
-			avgSad /= camNum;
 
-			weight = (*it++) * exp(-(avgSad*avgSad)/16384.0);
-			sumWeight += weight;
-			fitness += avgSad * weight;
+			fitness += (*it++) * avgSad;
 		} // end of warping y
 	} // end of warping x
 
 	delete [] c;
-	return fitness / sumWeight;
+	return fitness / camNum;
 }

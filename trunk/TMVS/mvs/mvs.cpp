@@ -61,15 +61,12 @@ void MVS::initPatchDistanceWeighting() {
 		for (int y = 0; y < patchSize; ++y) {
 			e = -( pow((double)(x-patchRadius), 2)+ pow((double)(y-patchRadius), 2))*s2;
 			g = s*exp(e);
-			patchDistWeight.at<double>(y,x) = g;
+			patchDistWeight.at<double>(x,y) = g;
 		}
 	}
 
-	// normalize [0 1]
-	patchDistWeight = patchDistWeight / s;
-
-	//imshow("", patchDistWeight);
-	//waitKey();
+	Scalar n = sum(patchDistWeight);
+	patchDistWeight = patchDistWeight / n[0];
 }
 
 /* io */
@@ -96,10 +93,16 @@ void MVS::refineSeedPatches() {
 		return;
 	}
 
+	ofstream file;
+	file.open("fitness.txt");
+
 	map<int, Patch>::iterator it;
 	for (it = patches.begin(); it != patches.end(); ) {
 		Patch &pth = it->second;
-
+		pth.refine();
+		printf("ID: %d fit: %f\n", pth.getId(), pth.getFitness());
+		file << pth.getFitness() << endl;
+		/*
 		// remove patch with few visible camera
 		if (pth.getCameraNumber() < minCamNum) {
 			it = patches.erase(it);
@@ -112,10 +115,12 @@ void MVS::refineSeedPatches() {
 			it = patches.erase(it);
 			continue;
 		}
+		*/
 
 		++it;
 	}
 
+	file.close();
 	return;
 }
 
