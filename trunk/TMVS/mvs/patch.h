@@ -47,6 +47,7 @@ namespace PAIS {
 		Patch(const Vec3d &center, const Vec2d &normalS, const vector<int> &camIdx, const double fitness, const double correlation, const int id = -1);
 
 		void refine();
+		void setQuantization(const Vec3d &center, const Vec3d &normal);
 
 		// get homographies
 		void getHomographies(const Vec3d &center, const Vec3d &normal, vector<Mat_<double>> &H) const;
