@@ -30,7 +30,8 @@ bool Patch::isNeighbor(const Patch &pth1, const Patch &pth2) {
 
 /* constructor */
 Patch::Patch(const Vec3d &center, const Vec3b &color, const vector<int> &camIdx, const vector<Vec2d> &imgPoint, const int id) : AbstractPatch(id) {
-    this->center   = center;
+	this->type     = TYPE_SEED;
+	this->center   = center;
     this->color    = color;
     this->camIdx   = camIdx;
     this->imgPoint = imgPoint;
@@ -38,6 +39,7 @@ Patch::Patch(const Vec3d &center, const Vec3b &color, const vector<int> &camIdx,
 }
 
 Patch::Patch(const Vec3d &center, const Patch &parent, const int id) : AbstractPatch(id) {
+	this->type      = TYPE_EXPAND;
     this->center    = center;
 	this->camIdx    = parent.getCameraIndices();
 	setNormal(parent.getNormal());
@@ -45,9 +47,10 @@ Patch::Patch(const Vec3d &center, const Patch &parent, const int id) : AbstractP
 }
 
 Patch::Patch(const Vec3d &center, const Vec2d &normalS, const vector<int> &camIdx, const double fitness, const double correlation, const int id) : AbstractPatch(id) {
-	this->center = center;
-	this->camIdx = camIdx;
-	this->fitness = fitness;
+	this->type        = TYPE_SEED;
+	this->center      = center;
+	this->camIdx      = camIdx;
+	this->fitness     = fitness;
 	this->correlation = correlation;
 	setNormal(normalS);
 	setReferenceCameraIndex();
@@ -95,6 +98,8 @@ void Patch::refine() {
 		setLOD();
 		setCorrelationTable();
 		removeInvisibleCamera();
+
+		if (type == TYPE_EXPAND) break;
 
 		afterRefCamIdx = refCamIdx;
 		afterCamNum    = getCameraNumber();

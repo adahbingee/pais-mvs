@@ -183,7 +183,38 @@ void MVS::patchQuantization(const int thetaNum, const int phiNum, const int dist
 		}
 	}
 
-	// set container
+	// set container range
+	const double thetaRange = (maxTheta - minTheta);
+	const double phiRange   = (maxPhi   - minPhi  );
+	const double distRange  = (maxDist  - minDist );
+
+	const double thetaStep = thetaRange / thetaNum;
+	const double phiStep   = phiRange   / phiNum;
+	const double distStep  = distRange  / distNum;
+
+	vector<vector<vector< vector<int> > > > bins(thetaNum, vector<vector<vector<int> > >(phiNum, vector<vector<int > >(distNum, vector<int>()) ));
+
+	double thetaN, phiN, distN;
+	int thetaIdx, phiIdx, distIdx;
+	for (map<int, Patch>::iterator it = patches.begin(); it != patches.end(); ++it) {
+		const Patch &pth = it->second;
+		const Vec2d &normalS = pth.getSphericalNormal();
+		dist = -pth.getNormal().ddot(pth.getCenter());
+
+		// normalized to [0, 1]
+		thetaN = (normalS[0] - minTheta) / thetaRange;
+		phiN   = (normalS[1] - minPhi)   / phiRange;
+		distN  = (dist       - minDist)  / distRange;
+
+		// get index
+		thetaIdx = cvRound(thetaN * (thetaNum-1));
+		phiIdx   = cvRound(phiN   * (phiNum  -1));
+		distIdx  = cvRound(dist   * (distNum -1));
+		
+		bins[thetaIdx][phiIdx][distIdx].push_back(pth.getId());
+
+		// patch quantization 
+	}
 }
 
 /* process */
