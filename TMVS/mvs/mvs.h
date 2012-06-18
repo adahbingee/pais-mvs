@@ -33,6 +33,8 @@ namespace PAIS {
 		double distWeighting;
 		// patch difference weighting
 		double diffWeighting;
+		// neighbor radius
+		double neighborRadius;
 		// PSO parameter
 		// particle number
 		int particleNum;
@@ -71,6 +73,8 @@ namespace PAIS {
 		double distWeighting;
 		// patch difference weighting
 		double diffWeighting;
+		// neighbor radius
+		double neighborRadius;
 
 		// PSO parameter
 		// particle number

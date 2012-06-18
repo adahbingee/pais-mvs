@@ -70,6 +70,13 @@ Patch::~Patch(void) {
 void Patch::refine() {
 	const MVS &mvs = MVS::getInstance();
 
+	// skip few cameras
+	if (getCameraNumber() < mvs.minCamNum) {
+		fitness  = DBL_MAX;
+		priority = DBL_MAX;
+		return;
+	}
+
 	setReferenceCameraIndex();
 	setDepthAndRay();
 	setDepthRange();
@@ -91,7 +98,10 @@ void Patch::refine() {
 		beforeRefCamIdx = refCamIdx;
 		beforeCamNum    = getCameraNumber();
 
+		// do pso optimization
 		psoOptimization();
+
+		// update information
 		setReferenceCameraIndex();
 		setDepthAndRay();
 		setDepthRange();
@@ -103,7 +113,6 @@ void Patch::refine() {
 
 		afterRefCamIdx = refCamIdx;
 		afterCamNum    = getCameraNumber();
-		//printf("ID: %d aft %d cam %d\n", getId(), afterRefCamIdx, afterCamNum);
 	}
 
 	setPriority();
@@ -260,6 +269,12 @@ void Patch::setReferenceCameraIndex() {
             refCamIdx = camIdx[i];
         }
     }
+
+	if (refCamIdx < 0) {
+		printf("can't set reference camera camNum: %d maxCorr: %f\n", camNum, maxCorr);
+		refCamIdx = camIdx[0];
+		system("pause");
+	}
 }
 
 void Patch::setDepthAndRay() {
@@ -536,6 +551,11 @@ void Patch::expandVisibleCamera() {
 	}
 
 	camIdx = expCamIdx;
+}
+
+void Patch::setQuantization(const Vec3d &center, const Vec3d &normal) {
+	this->center = center;
+	setNormal(normal);
 }
 
 /* misc */
