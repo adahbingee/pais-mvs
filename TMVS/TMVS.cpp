@@ -21,14 +21,14 @@ int main(int argc, char* argv[])
 	config.textureVariation   = 36;
 	config.visibleCorrelation = 0.87;
 	config.minCorrelation     = 0.95;
-	config.minLOD             = 2;
+	config.minLOD             = 0;
 	config.maxCellPatchNum    = 5;
 	config.particleNum        = 15;
 	config.maxIteration       = 60;
 
 	
 	MVS &mvs = MVS::getInstance(config);
-	mvs.loadNVM("../../../TMVS_data/castle/castle.nvm");
+	mvs.loadNVM("../../../TMVS_data/cube/cube.nvm");
 	//mvs.loadNVM((char*)argv[1]);
 	//mvs.loadMVS((char*)argv[1]);
 	//mvs.loadMVS("pmvs.mvs");
