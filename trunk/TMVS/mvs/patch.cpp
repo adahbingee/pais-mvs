@@ -77,6 +77,7 @@ void Patch::refine() {
 	if (getCameraNumber() < mvs.minCamNum) {
 		fitness  = DBL_MAX;
 		priority = DBL_MAX;
+		drop = true;
 		return;
 	}
 
@@ -95,6 +96,7 @@ void Patch::refine() {
 		if (getCameraNumber() < mvs.minCamNum) {
 			fitness  = DBL_MAX;
 			priority = DBL_MAX;
+			drop = true;
 			return;
 		}
 
@@ -566,7 +568,7 @@ void Patch::removeInvisibleCamera() {
 			continue;
 		}
 		// filter by region ratio
-		if (getHomographyRegionRatio(pt, H[i]) < 0.5) {
+		if (getHomographyRegionRatio(pt, H[i]) < 0.6) {
 			printf("filter by region ratio\n");
 			removeIdx.push_back(camIdx[i]);
 			continue;
@@ -867,14 +869,20 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 			}
 			avgSad /= camNum;
 
-			//weight = (*it++) * exp(-avgSad*avgSad/diffWeighting);
-			//sumWeight += weight;
-			//fitness += weight * avgSad;
-			fitness += avgSad;
+			if (LOD > mvs.getMinLOD()) {
+				fitness += avgSad;
+			} else {
+				weight = (*it++) * exp(-avgSad*avgSad/diffWeighting);
+				sumWeight += weight;
+				fitness += weight * avgSad;
+			}
 		} // end of warping y
 	} // end of warping x
 
 	delete [] c;
-	//return fitness / sumWeight;
-	return fitness / (patchSize*patchSize);
+	if (LOD > mvs.getMinLOD()) {
+		return fitness / (patchSize*patchSize);
+	} else {
+		return fitness / sumWeight;
+	}
 }
