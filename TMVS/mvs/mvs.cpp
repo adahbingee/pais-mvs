@@ -89,6 +89,25 @@ void MVS::writeMVS(const char* fileName) {
 
 /* main functions */
 
+void MVS::setCellMaps() {
+	initCellMaps();
+
+	map<int, Patch>::iterator it;
+	int camNum, cx, cy;
+	for (it = patches.begin(); it != patches.end(); ++it) {
+		Patch &pth                     = it->second;
+		camNum                         = pth.getCameraNumber();
+		const vector<Vec2d> &imgPoints = pth.getImagePoints();
+		const vector<int> &camIdx      = pth.getCameraIndices();
+
+		for (int i = 0; i < camNum; ++i) {
+			cx = (int) (imgPoints[i][0] / cellSize);
+			cy = (int) (imgPoints[i][1] / cellSize);
+			cellMaps[camIdx[i]].insert(cx, cy, pth.getId());
+		}
+	}
+}
+
 void MVS::refineSeedPatches() {
 	if ( patches.empty() ) {
 		printf("No seed patches\n");
@@ -246,6 +265,54 @@ void MVS::patchQuantization(const int thetaNum, const int phiNum, const int dist
 	}
 }
 
+void MVS::cellFiltering() {
+
+}
+
+void MVS::neighborCellFiltering() {
+	
+}
+
+void MVS::visibilityFiltering() {
+	map<int, Patch>::iterator it;
+	int camNum, cx, cy;
+	double depth, neighborDepth;
+	for (it = patches.begin(); it != patches.end(); ) {
+		Patch &pth = it->second;
+		camNum = pth.getCameraNumber();
+		const vector<Vec2d> &imgPoints = pth.getImagePoints();
+		const vector<int> &camIdx = pth.getCameraIndices();
+		
+		// count visible views
+		int visibleCount = camNum;
+		for (int i = 0; i < camNum; ++i) {
+			const Camera &cam = cameras[camIdx[i]];
+			depth = norm(pth.getCenter() - cam.getCenter());
+			cx = (int) (imgPoints[i][0] / cellSize);
+			cy = (int) (imgPoints[i][1] / cellSize);
+			const vector<int> &cell = cellMaps[camIdx[i]].getCell(cx, cy);
+
+			// number of patches in cell
+			const int pthNum = (int) cell.size();
+			for (int p = 0; p < pthNum; ++p) {
+				if (cell[p] == pth.getId()) continue;
+				neighborDepth = norm(getPatch(cell[p]).getCenter() - cam.getCenter());
+				if (depth > neighborDepth) {
+					--visibleCount;
+					break;
+				}
+			}
+		}
+
+		if (visibleCount < minCamNum) {
+			it = deletePatch(pth);
+			continue;
+		}
+
+		++it;
+	}
+}
+
 /* process */
 
 void MVS::expandNeighborCell(const Patch &pth) {
@@ -311,16 +378,26 @@ void MVS::insertPatch(const Patch &pth) {
 	}
 }
 
-void MVS::deletePatch(Patch &pth) {
-	map<int, Patch>::iterator it = patches.find(pth.getId());
-	if (it == patches.end()) return;
-	patches.erase(it);
+map<int, Patch>::iterator MVS::deletePatch(Patch &pth) {
+	return deletePatch(pth.getId());
 }
 
-void MVS::deletePatch(const int id) {
+map<int, Patch>::iterator MVS::deletePatch(const int id) {
 	map<int, Patch>::iterator it = patches.find(id);
-	if (it == patches.end()) return;
-	patches.erase(it);
+	if (it == patches.end()) return patches.end();
+	const Patch &pth = it->second;
+	const int camNum = pth.getCameraNumber();
+	const vector<int> &camIdx = pth.getCameraIndices();
+	const vector<Vec2d> &imgPoints = pth.getImagePoints();
+
+	int cx, cy;
+	for (int i = 0; i < camNum; ++i) {
+		cx = (int) (imgPoints[i][0] / cellSize);
+		cy = (int) (imgPoints[i][1] / cellSize);
+		cellMaps[camIdx[i]].drop(cx, cy, pth.getId());
+	}
+
+	return patches.erase(it);
 }
 
 /* const function */
@@ -383,7 +460,7 @@ int MVS::getTopPriorityPatchId() const {
 		}
 	}
 
-	printf("queue %d\n", count);
+	printf("queue %d patches %d\n", count, patches.size());
 
 	return topId;
 }

@@ -24,6 +24,7 @@ namespace PAIS {
 
 		bool inMap(const int x, const int y) const;
 		bool insert(const int x, const int y, const int patchId);
+		bool drop(const int x, const int y, const int patchId);
 		const vector<int>& getCell(const int x, const int y) const { return map[y][x]; }
 	};
 };

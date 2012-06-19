@@ -99,8 +99,8 @@ namespace PAIS {
 		void expandNeighborCell(const Patch &pth);
 		void expandCell(const Camera &cam, const Patch &parent, const int cx, const int cy);
 		void insertPatch(const Patch &pth);
-		void deletePatch(Patch &pth);
-		void deletePatch(const int id);
+		map<int, Patch>::iterator deletePatch(Patch &pth);
+		map<int, Patch>::iterator deletePatch(const int id);
 
 		// get top priority patch id to expansion
 		int getTopPriorityPatchId() const;
@@ -140,9 +140,13 @@ namespace PAIS {
 		double getDistanceWeight()     const { return distWeighting;      }
 		int    getMinLOD()             const { return minLOD;             }
 
+		void setCellMaps();
 		void refineSeedPatches();
 		void expansionPatches();
 		void patchQuantization(const int thetaNum, const int phiNum, const int distNum);
+		void cellFiltering();
+		void neighborCellFiltering();
+		void visibilityFiltering();
 	};
 };
 
