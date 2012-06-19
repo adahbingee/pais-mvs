@@ -64,8 +64,6 @@ namespace PAIS {
 		virtual void setDepthAndRay()          = 0;
 		// set depth range using projected pixel range
 		virtual void setDepthRange()           = 0;
-		// set patch correlation table
-		virtual void setCorrelationTable()     = 0;
 		// set patch priority
 		virtual void setPriority()             = 0;
 		// set center image points

@@ -15,11 +15,14 @@ namespace PAIS {
 	private:
 		static const int TYPE_SEED   = 0x0;
 		static const int TYPE_EXPAND = 0x1;
-
+		bool drop;
 		int type;
 
-		// get homography texture 1D vector
-		void getHomographyPatch(const Vec2d &pt, const Mat_<uchar> &img, const Mat_<double> &H, Mat_<double> &hp) const;
+		void setCorrelationTable(const vector<Mat_<double>> &H);
+		// get homography region ratio
+		double getHomographyRegionRatio(const Vec2d &pt, const Mat_<double> &H) const;
+		// get homography texture 1D vector [true: drop, false: preserve]
+		bool getHomographyPatch(const Vec2d &pt, const Mat_<uchar> &img, const Mat_<double> &H, Mat_<double> &hp) const;
 		// expand visible camera using normal correlation
 		void expandVisibleCamera();
 		// do pso optimization 
@@ -31,7 +34,6 @@ namespace PAIS {
 		void setDepthAndRay();
 		void setDepthRange();
 		void setLOD();
-		void setCorrelationTable();
 		void setPriority();
 		void setImagePoint();
 		void removeInvisibleCamera();
@@ -55,7 +57,8 @@ namespace PAIS {
 		void showRefinedResult() const;
 		// show SAD error image
 		void showError() const;
-
+		// is dropped
+		bool isDropped() const { return drop; }
 		~Patch(void);
 	};
 
