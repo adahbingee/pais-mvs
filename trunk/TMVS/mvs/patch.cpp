@@ -35,6 +35,7 @@ Patch::Patch(const Vec3d &center, const Vec3b &color, const vector<int> &camIdx,
     this->color    = color;
     this->camIdx   = camIdx;
     this->imgPoint = imgPoint;
+	this->drop     = false;
 	setEstimatedNormal();
 }
 
@@ -42,6 +43,7 @@ Patch::Patch(const Vec3d &center, const Patch &parent, const int id) : AbstractP
 	this->type      = TYPE_EXPAND;
     this->center    = center;
 	this->camIdx    = parent.getCameraIndices();
+	this->drop      = false;
 	setNormal(parent.getNormal());
 	expandVisibleCamera();
 }
@@ -52,6 +54,7 @@ Patch::Patch(const Vec3d &center, const Vec2d &normalS, const vector<int> &camId
 	this->camIdx      = camIdx;
 	this->fitness     = fitness;
 	this->correlation = correlation;
+	this->drop        = false;
 	setNormal(normalS);
 	setReferenceCameraIndex();
 	setDepthAndRay();
@@ -106,7 +109,6 @@ void Patch::refine() {
 		setDepthAndRay();
 		setDepthRange();
 		setLOD();
-		setCorrelationTable();
 		removeInvisibleCamera();
 
 		if (type == TYPE_EXPAND) break;
@@ -141,6 +143,88 @@ void Patch::psoOptimization() {
     setNormal(Vec2d(gBest[0], gBest[1]));
     depth  = gBest[2];
 	center = ray * depth + mvs.getCamera(refCamIdx).getCenter();
+}
+
+void Patch::setCorrelationTable(const vector<Mat_<double>> &H) {
+	const MVS &mvs = MVS::getInstance();
+	const vector<Camera> &cameras = mvs.cameras;
+
+	// camera parameters
+	const int camNum        = getCameraNumber();
+	const Camera &refCam    = mvs.getCamera(refCamIdx);
+
+	corrTable = Mat_<double>::zeros(camNum, camNum);
+
+	// 2D image point on reference image
+	Vec2d pt;
+	refCam.project(center, pt, LOD);
+
+	// get normalized homography patch column vector
+	vector<Mat_<double> > HP(camNum);
+	#pragma omp parallel for
+	for (int i = 0; i < camNum; i++) {
+		const Mat_<uchar> &img = cameras[camIdx[i]].getPyramidImage(LOD);
+		bool drop = false;
+		drop |= getHomographyPatch(pt, img, H[i], HP[i]);
+		#pragma omp critical 
+		{
+			this->drop |= drop;
+		}
+	}
+
+	// drop patch if out of boundary
+	if (drop) {
+		correlation = 0;
+		return;
+	}
+
+	// correlation table
+	for (int i = 0; i < camNum; ++i) {
+		corrTable.at<double>(i, i) = 0;
+		for (int j = i+1; j < camNum; ++j) {
+			Mat_<double> corr = HP[i].t() * HP[j];
+			corrTable.at<double>(i, j) = corr.at<double>(0, 0);
+			corrTable.at<double>(j, i) = corrTable.at<double>(i, j);
+		}
+	}
+
+	// set average correlation
+	correlation = 0;
+	for (int i = 0; i < corrTable.rows; ++i) {
+		for (int j = 0; j < corrTable.cols; ++j) {
+			correlation += corrTable.at<double>(i,j);
+		}
+	}
+	correlation /= (camNum*camNum-camNum);
+}
+
+double Patch::getHomographyRegionRatio(const Vec2d &pt, const Mat_<double> &H) const {
+	const int patchRadius = MVS::getInstance().patchRadius;
+	const int patchSize   = MVS::getInstance().patchSize;
+
+	double x [] = {pt[0]-patchRadius, pt[0]+patchRadius, pt[0]-patchRadius, pt[0]+patchRadius};
+	double y [] = {pt[1]-patchRadius, pt[1]-patchRadius, pt[1]+patchRadius, pt[1]+patchRadius};
+	Vec2d p[4];
+	double w;
+	for (int i = 0; i < 4; ++i) {
+		w       =   H.at<double>(2, 0) * x[i] + H.at<double>(2, 1) * y[i] + H.at<double>(2, 2);
+		p[i][0] = ( H.at<double>(0, 0) * x[i] + H.at<double>(0, 1) * y[i] + H.at<double>(0, 2) ) / w;
+		p[i][1] = ( H.at<double>(1, 0) * x[i] + H.at<double>(1, 1) * y[i] + H.at<double>(1, 2) ) / w;
+	}
+	
+	double dist[4];
+	dist[0] = norm(p[0]-p[1]);
+	dist[1] = norm(p[0]-p[2]);
+	dist[2] = norm(p[1]-p[3]);
+	dist[3] = norm(p[2]-p[3]);
+	double minDist = DBL_MAX;
+	for (int i = 0; i < 4; ++i) {
+		if (dist[i] < minDist) {
+			minDist = dist[i];
+		}
+	}
+
+	return minDist / patchSize;
 }
 
 void Patch::getHomographies(const Vec3d &center, const Vec3d &normal, vector<Mat_<double>> &H) const {
@@ -185,7 +269,7 @@ void Patch::getHomographies(const Vec3d &center, const Vec3d &normal, vector<Mat
 	}
 }
 
-void Patch::getHomographyPatch(const Vec2d &pt, const Mat_<uchar> &img, const Mat_<double> &H, Mat_<double> &hp) const {
+bool Patch::getHomographyPatch(const Vec2d &pt, const Mat_<uchar> &img, const Mat_<double> &H, Mat_<double> &hp) const {
 	const MVS &mvs = MVS::getInstance();
 	const int patchRadius = mvs.patchRadius;
 	const int patchSize   = mvs.patchSize;
@@ -206,9 +290,8 @@ void Patch::getHomographyPatch(const Vec2d &pt, const Mat_<uchar> &img, const Ma
 
 			// skip overflow cases
 			if (ix < 0 || ix >= img.cols-1 || iy < 0 || iy >= img.rows-1 || w == 0) {
-				hp = Mat_<double>::ones(patchSize*patchSize, 1) * DBL_MAX;
 				printf("ID %d \t correlation overflow %f \t %f\n", getId(), ix, iy);
-				return;
+				return true;
 			}
 
 			// interpolation neighbor points
@@ -232,6 +315,7 @@ void Patch::getHomographyPatch(const Vec2d &pt, const Mat_<uchar> &img, const Ma
 	}
 
 	hp /= sqrt(sum);
+	return false;
 }
 
 /* setters */
@@ -413,50 +497,6 @@ void Patch::setLOD() {
     delete [] textures;
 }
 
-void Patch::setCorrelationTable() {
-	const MVS &mvs = MVS::getInstance();
-	const vector<Camera> &cameras = mvs.cameras;
-
-	// camera parameters
-	const int camNum        = getCameraNumber();
-	const Camera &refCam    = mvs.getCamera(refCamIdx);
-
-	vector<Mat_<double>> H;
-	getHomographies(center, normal, H);
-
-	// 2D image point on reference image
-	Vec2d pt;
-	refCam.project(center, pt, LOD);
-
-	// get normalized homography patch column vector
-	vector<Mat_<double> > HP(camNum);
-	#pragma omp parallel for
-	for (int i = 0; i < camNum; i++) {
-		const Mat_<uchar> &img = cameras[camIdx[i]].getPyramidImage(LOD);
-		getHomographyPatch(pt, img, H[i], HP[i]);
-	}
-
-	// correlation table
-	corrTable = Mat_<double>(camNum, camNum);
-	for (int i = 0; i < camNum; ++i) {
-		corrTable.at<double>(i, i) = 0;
-		for (int j = i+1; j < camNum; ++j) {
-			Mat_<double> corr = HP[i].t() * HP[j];
-			corrTable.at<double>(i, j) = corr.at<double>(0, 0);
-			corrTable.at<double>(j, i) = corrTable.at<double>(i, j);
-		}
-	}
-
-	// set average correlation
-	correlation = 0;
-	for (int i = 0; i < corrTable.rows; ++i) {
-		for (int j = 0; j < corrTable.cols; ++j) {
-			correlation += corrTable.at<double>(i,j);
-		}
-	}
-	correlation /= (camNum*camNum-camNum);
-}
-
 void Patch::setPriority() {
 	const MVS &mvs = MVS::getInstance();
 	const int totalCamNum = (int) mvs.getCameras().size();
@@ -487,8 +527,14 @@ void Patch::setImagePoint() {
 }
 
 void Patch::removeInvisibleCamera() {
+
 	const MVS &mvs = MVS::getInstance();
 	const int camNum = getCameraNumber();
+	const Camera &refCam = mvs.getCamera(refCamIdx);
+
+	vector<Mat_<double>> H;
+	getHomographies(center, normal, H);
+	setCorrelationTable(H);
 
 	// sum correlation and find max correlation index
 	double corrSum;
@@ -506,19 +552,32 @@ void Patch::removeInvisibleCamera() {
 		}
 	}
 
+	Vec2d pt;
+	refCam.project(center, pt, LOD);
+
 	// remove invisible camera
 	vector<int> removeIdx;
 	// mark idx
 	for (int i = 0; i < camNum; ++i) {
 		if (i == maxIdx) continue;
+		// filter by correlation
 		if (corrTable.at<double>(maxIdx, i) < mvs.minCorrelation) {
 			removeIdx.push_back(camIdx[i]);
+			continue;
+		}
+		// filter by region ratio
+		if (getHomographyRegionRatio(pt, H[i]) < 0.5) {
+			printf("filter by region ratio\n");
+			removeIdx.push_back(camIdx[i]);
+			continue;
 		}
 	}
+
 	// remove idx
 	vector<int>::iterator it;
 	for (int i = 0; i < (int) removeIdx.size(); i++) {
 		it = find(camIdx.begin(), camIdx.end(), removeIdx[i]);
+		if(it == camIdx.end()) continue;
 		camIdx.erase(it);
 	}
 }
@@ -567,30 +626,10 @@ void Patch::showRefinedResult() const {
 	// camera parameters
 	const int camNum        = getCameraNumber();
 	const Camera &refCam    = mvs.getCamera(refCamIdx);
-	const Mat_<double> &KRF = refCam.getKR();
-	const Mat_<double> &KTF = refCam.getKT();
 	
-	// plane equation (distance form plane to origin)
-	const double d = -center.ddot(normal);          
-	const Mat_<double> normalM(normal);
-
-	// LOD scalar for camera intrisic matrix
-	Mat_<double> LODM = Mat_<double>::zeros(3, 3);
-	LODM.at<double>(0, 0) = 1.0/(1<<LOD);
-	LODM.at<double>(1, 1) = 1.0/(1<<LOD);
-	LODM.at<double>(2, 2) = 1.0;
-
 	// Homographies to visible camera
 	vector<Mat_<double> > H(camNum);
-	for (int i = 0; i < camNum; i++) {
-		// visible camera
-		const Camera &cam = cameras[camIdx[i]];
-
-		// get homography matrix
-		const Mat_<double> &KRT = cam.getKR();        // K*R of to camera
-		const Mat_<double> &KTT = cam.getKT();        // K*T of to camera
-		H[i] = ( d*LODM*KRT - LODM*KTT*normalM.t() ) * ( d*LODM*KRF - LODM*KTF*normalM.t() ).inv();
-	}
+	getHomographies(center, normal, H);
 
 	Vec2d pt;
 	refCam.project(center, pt, LOD);
@@ -599,7 +638,7 @@ void Patch::showRefinedResult() const {
 	double y[5] = {pt[1]-patchRadius, pt[1]+patchRadius, pt[1]-patchRadius, pt[1]+patchRadius, pt[1]};
 
 	double w, ix[5], iy[5];
-	char title[30];
+	char title[128];
 	for (int i = 0; i < camNum; i++) {
 		const Camera &cam = mvs.getCameras()[camIdx[i]];
 		Mat_<Vec3b> img = cam.getRgbImage().clone();
@@ -634,12 +673,13 @@ void Patch::showRefinedResult() const {
 		line(img, Point(ix[3],iy[3]), Point(ix[2],iy[2]), Scalar(0,0,255));
 		circle(img, Point(ix[4], iy[4]), 1, Scalar(0,0,255));
 
-		sprintf(title, "img%d_%d.png", getId(), camIdx[i]);
+		double regionRatio = getHomographyRegionRatio(pt, H[i]);
+		
+		sprintf(title, "id: %d cam: %d ratio: %f", getId(), camIdx[i], regionRatio);
 		if (camIdx[i] == refCamIdx) {
-			sprintf(title, "reference img%d_%d.png", getId(), camIdx[i]);
+			sprintf(title, "reference id: %d cam: %d ratio: %f", getId(), camIdx[i], regionRatio);
 		}
 		imshow(title, img);
-		//imwrite(title, img);
 	}
 }
 
@@ -732,6 +772,7 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 	// MVS
 	const MVS &mvs                = MVS::getInstance();
 	const int patchRadius         = mvs.getPatchRadius();
+	const int patchSize           = mvs.getPatchSize();
 	const vector<Camera> &cameras = mvs.getCameras();
 
 	// current patch
@@ -825,12 +866,15 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 				avgSad += abs(c[i]-mean);
 			}
 			avgSad /= camNum;
-			weight = (*it++) * exp(-avgSad*avgSad/diffWeighting);
-			sumWeight += weight;
-			fitness += weight * avgSad;
+
+			//weight = (*it++) * exp(-avgSad*avgSad/diffWeighting);
+			//sumWeight += weight;
+			//fitness += weight * avgSad;
+			fitness += avgSad;
 		} // end of warping y
 	} // end of warping x
 
 	delete [] c;
-	return fitness / sumWeight;
+	//return fitness / sumWeight;
+	return fitness / (patchSize*patchSize);
 }

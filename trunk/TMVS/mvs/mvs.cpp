@@ -112,7 +112,7 @@ void MVS::refineSeedPatches() {
 			continue;
 		}
 
-		printf("ID: %d \t fit: %.2f \t pri: %.2f\n", pth.getId(), pth.getFitness(), pth.getPriority());
+		printf("ID: %d \t LOD: %d \t fit: %.2f \t pri: %.2f\n", pth.getId(), pth.getLOD(), pth.getFitness(), pth.getPriority());
 
 		++it;
 	}
@@ -389,6 +389,7 @@ int MVS::getTopPriorityPatchId() const {
 }
 
 bool MVS::patchFilter(const Patch &pth) const {
+	if (pth.isDropped())                   return false;
 	if (pth.getCameraNumber() < minCamNum) return false;
 	if (pth.getFitness() >= 10000)         return false;
 	if (pth.getFitness() == 0.0)           return false;
@@ -410,7 +411,7 @@ bool MVS::patchFilter(const Patch &pth) const {
 		}
 	}
 
-	// skip visible view correlation
+	// skip invisible cameras 
 	int count = 0;
 	for (int i = 0; i < pth.getCameraNumber(); ++i) {
 		const Camera &cam = getCamera(pth.getCameraIndices()[i]);
