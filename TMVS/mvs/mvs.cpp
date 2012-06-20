@@ -460,19 +460,33 @@ void MVS::expandCell(const PAIS::Camera &cam, const Patch &parent, const int cx,
 void MVS::insertPatch(const Patch &pth) {
 	if ( !patchFilter(pth) ) return;
 
-	// insert into patches container
-	patches.insert(pair<int, Patch>(pth.getId(), pth));
-	
-	// insert into cell maps
 	const int camNum = pth.getCameraNumber();
 	const vector<Vec2d> &imgPoints = pth.getImagePoints();
 	const vector<int>   &camIdx    = pth.getCameraIndices();
 	int cx, cy;
+
+	int fullCellCounter = 0;
+	for (int i = 0; i < camNum; ++i) {
+		cx = (int) (imgPoints[i][0] / cellSize);
+		cy = (int) (imgPoints[i][1] / cellSize);
+		if ( cellMaps[camIdx[i]].getCell(cx, cy).size() >= maxCellPatchNum) {
+			++fullCellCounter;
+		}
+	}
+
+	if (fullCellCounter >= camNum) {
+		printf("full cell\n");
+		return;
+	}
+
+	// insert into patches container
+	patches.insert(pair<int, Patch>(pth.getId(), pth));
+	
+	// insert into cell maps
 	for (int i = 0; i < camNum; ++i) {
 		cx = (int) (imgPoints[i][0] / cellSize);
 		cy = (int) (imgPoints[i][1] / cellSize);
 		cellMaps[camIdx[i]].insert(cx, cy, pth.getId());
-		printf("cellNum: %d\n", cellMaps[camIdx[i]].getCell(cx, cy).size());
 	}
 
 	addPatchView(pth);
