@@ -34,6 +34,7 @@ namespace PAIS {
 		bool normalEnable;    // hide normal       / show normal 
 		bool backgroundColor; // black background  / white background 
 		bool colorEnable;     // hide vertex color / show vertex color
+		bool update;
 
 		void init();
 		void addCameras();

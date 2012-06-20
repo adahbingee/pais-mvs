@@ -86,6 +86,7 @@ void MvsViewer::init() {
 	normalEnable    = false;
 	backgroundColor = false;
 	colorEnable     = true;
+	update          = true;
 }
 
 void MvsViewer::addCameras() {
