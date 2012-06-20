@@ -25,7 +25,10 @@ namespace PAIS {
 		// mvs const instance
 		const MVS *mvs;
 		PCLVisualizer pclViewer;
-		
+
+		PointCloud<PointXYZRGB>::Ptr centers;
+		PointCloud<pcl::Normal>::Ptr normals;
+
 		// viewer flags (default:false)
 		// false/true
 		bool normalEnable;    // hide normal       / show normal 
@@ -35,14 +38,16 @@ namespace PAIS {
 		void init();
 		void addCameras();
 		void addPatches();
-
-		void printPatchInformation(const Patch &pth);
-
 	public:
+
+		int pointSize;
+
 		// constructor
-		MvsViewer(const MVS &mvs, bool show = false);
+		MvsViewer(const MVS &mvs, bool initPatch = true, bool show = false);
 		// descructor
 		~MvsViewer(void);
+
+		void addPatch(const Patch &pth);
 
 		// getter
 		PCLVisualizer& getPclViewer()             { return pclViewer; }
@@ -52,7 +57,10 @@ namespace PAIS {
 		void toggleBackground();
 		void toggleNormal();
 		void toggleColor();
-		void showPickedPoint(const int idx);
+		const Patch* getPickedPatch(const int idx) const;
+		void printPatchInformation(const Patch &pth) const;
+		void showPickedPoint(const Patch &pth);
+		void showVisibleCamera(const Patch &pth);
 
 		// start rendering
 		void open();

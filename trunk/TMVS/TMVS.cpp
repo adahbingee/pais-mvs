@@ -10,6 +10,14 @@
 using namespace cv;
 using namespace PAIS;
 
+MvsViewer *viewer;
+
+void addPatchView(const Patch &pth) {
+	if (viewer != NULL) {
+		viewer->addPatch(pth);
+	}
+}
+
 int main(int argc, char* argv[])
 {
 	// MVS configures
@@ -31,20 +39,26 @@ int main(int argc, char* argv[])
 	MVS &mvs = MVS::getInstance(config);
 
 	// LOAD MVS file
-	//mvs.loadNVM("../../../TMVS_data/wc/wc.nvm");
+	mvs.loadNVM("../../../TMVS_data/wc/wc.nvm");
 	//mvs.loadNVM((char*)argv[1]);
-	mvs.loadMVS((char*)argv[1]);
+	//mvs.loadMVS((char*)argv[1]);
 	//mvs.loadMVS("exp.mvs");
 	printf("patches: %d\n", mvs.getPatches().size());
-	
+
 	// start MVS process
-	clock_t start_t, end_t;
-	start_t = clock();
+	//clock_t start_t, end_t;
+	//start_t = clock();
+	//end_t = clock();
+
+	viewer = new MvsViewer(mvs, false, false);
 	mvs.refineSeedPatches();
 	mvs.writeMVS("seed.mvs");
+	mvs.setCellMaps();
 	mvs.expansionPatches();
 	mvs.writeMVS("exp.mvs");
-	mvs.setCellMaps();
+
+	//
+	/*
 	mvs.cellFiltering();
 	printf("patches: %d\n", mvs.getPatches().size());
 	mvs.visibilityFiltering();
@@ -52,11 +66,8 @@ int main(int argc, char* argv[])
 	mvs.neighborCellFiltering(0.1, 0.25);
 	printf("patches: %d\n", mvs.getPatches().size());
 	mvs.writeMVS("filter.mvs");
-	end_t = clock();
 	printf("time1\t%f\n", (double)(end_t - start_t) / CLOCKS_PER_SEC);
-
-	// show last result
-	MvsViewer viewer(mvs, true);
+	*/
 
 	return 0;
 }

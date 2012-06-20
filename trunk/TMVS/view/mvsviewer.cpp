@@ -24,17 +24,28 @@ void keyBoardEvent(const pcl::visualization::KeyboardEvent &event, void* viewer_
 	case 'n':
 		viewer.toggleNormal();
 		break;
+	case '+':
+		viewer.pointSize = min(viewer.pointSize+1, 10);
+		break;
+	case '-':
+		viewer.pointSize = max(viewer.pointSize-1, 1);
+		break;
 	}
 }
 
 void pointPickEvent(const pcl::visualization::PointPickingEvent &event, void* viewer_void) {
 	MvsViewer &viewer = *((MvsViewer *) viewer_void);
+	const Patch *pth = viewer.getPickedPatch(event.getPointIndex());
+	if (pth == NULL) return;
+
 	cvDestroyAllWindows();
-	viewer.showPickedPoint(event.getPointIndex());
+	viewer.printPatchInformation(*pth);
+	viewer.showPickedPoint(*pth);
+	viewer.showVisibleCamera(*pth);
 	waitKey(1);
 }
 
-MvsViewer::MvsViewer(const MVS &mvs, bool show) {
+MvsViewer::MvsViewer(const MVS &mvs, bool initPatch, bool show) {
 	// set instance holder
 	this->mvs = &mvs;
 
@@ -43,8 +54,10 @@ MvsViewer::MvsViewer(const MVS &mvs, bool show) {
 
 	// add MVS cameras
 	addCameras();
-	// add MVS patches
-	addPatches();
+	if (initPatch) {
+		// add MVS patches
+		addPatches();
+	}
 
 	if (show) open();
 }
@@ -54,6 +67,12 @@ MvsViewer::~MvsViewer(void) {
 }
 
 void MvsViewer::init() {
+	pointSize = 1;
+
+	// set container
+	centers = PointCloud<PointXYZRGB>::Ptr (new PointCloud<PointXYZRGB>);
+	normals = PointCloud<pcl::Normal>::Ptr (new PointCloud<pcl::Normal>);
+
 	// set viewer
 	pclViewer.setBackgroundColor(0, 0, 0);
 	pclViewer.initCameraParameters();
@@ -106,12 +125,48 @@ void MvsViewer::addCameras() {
     pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, 0.5, "cameraNormals");
 }
 
+void MvsViewer::addPatch(const Patch &pth) {
+	// patch center
+	const Vec3d &p = pth.getCenter();
+	// patch normal
+	const Vec3d &n = pth.getNormal();
+	// patch color
+	const Vec3b &c = pth.getColor();
+
+	PointXYZRGB pt;
+	pt.x = p[0];
+	pt.y = p[1];
+	pt.z = p[2];
+	pt.r = c[2];
+	pt.g = c[1];
+	pt.b = c[0];
+	pcl::Normal nt(n[0], n[1], n[2]);
+
+	centers->push_back(pt);
+	normals->push_back(nt);
+
+	// remove old points
+	pclViewer.removePointCloud(NAME_PATCH);
+	pclViewer.removePointCloud(NAME_NORMAL);
+
+	// add new points
+    pclViewer.addPointCloud(centers, NAME_PATCH);
+	pclViewer.addPointCloudNormals<pcl::PointXYZRGB, pcl::Normal>(centers, normals, 1, 0.1, NAME_NORMAL);
+	pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, (double) pointSize, NAME_PATCH);
+	
+	// set normal color
+	pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1.0, 1.0, 0.0, NAME_NORMAL);
+    pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, 0.0, NAME_NORMAL);
+
+	showPickedPoint(pth);
+	showVisibleCamera(pth);
+
+	pclViewer.spinOnce(1);
+}
+
 void MvsViewer::addPatches() {
 	const map<int, Patch> &patches = mvs->getPatches();
 	map<int, Patch>::const_iterator it;
-
-	PointCloud<PointXYZRGB>::Ptr centers(new PointCloud<PointXYZRGB>);
-	PointCloud<pcl::Normal>::Ptr normals(new PointCloud<pcl::Normal>);
 
 	for (it = patches.begin(); it != patches.end(); ++it) {
 		// patch center
@@ -120,7 +175,6 @@ void MvsViewer::addPatches() {
 		const Vec3d &n = it->second.getNormal();
 		// patch color
 		const Vec3b &c = it->second.getColor();
-		
 		
 		PointXYZRGB pt;
 		pt.x = p[0];
@@ -175,7 +229,7 @@ void MvsViewer::toggleNormal() {
 		normalEnable = true;
 	}
 
-	pclViewer.spinOnce(1, true);
+	pclViewer.spinOnce(1);
 }
 
 void MvsViewer::toggleColor() {
@@ -187,24 +241,23 @@ void MvsViewer::toggleColor() {
 		colorEnable = true;
 	}
 
-	pclViewer.spinOnce(1, true);
+	pclViewer.spinOnce(1);
 }
 
-void MvsViewer::showPickedPoint(const int idx) {
+const Patch* MvsViewer::getPickedPatch(const int idx) const {
 	// skip out of index boundary
 	if (idx > mvs->getPatches().size() || idx < 0) {
-		return;
+		return NULL;
 	}
 
 	map<int, Patch>::const_iterator it;
 	it = mvs->getPatches().begin();
 	for (int i = 0; i < idx; ++it, ++i);
 
-	const Patch &pth = it->second;
+	return &it->second;
+}
 
-	// print patch information
-	printPatchInformation(pth);
-
+void MvsViewer::showPickedPoint(const Patch &pth) {
 	// patch center
 	const Vec3d &p = pth.getCenter();
 	// patch normal
@@ -236,7 +289,36 @@ void MvsViewer::showPickedPoint(const int idx) {
 	pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 5, NAME_PICKED_PATCH);
 }
 
-void MvsViewer::printPatchInformation(const Patch &pth) {
+void MvsViewer::showVisibleCamera(const Patch &pth) {
+	// visible camera
+	PointCloud<PointXYZ>::Ptr cameraCenter(new PointCloud<PointXYZ>);
+	PointCloud<pcl::Normal>::Ptr cameraNormal(new PointCloud<pcl::Normal>);
+	for (int i = 0; i < pth.getCameraNumber(); ++i) {
+		const int camIdx = pth.getCameraIndices()[i];
+		const Camera &cam = mvs->getCamera(camIdx);
+
+		PointXYZ pt;
+		pt.x = cam.getCenter()[0];
+		pt.y = cam.getCenter()[1];
+		pt.z = cam.getCenter()[2];
+		pcl::Normal nt(cam.getOpticalNormal()[0], cam.getOpticalNormal()[1], cam.getOpticalNormal()[2]);
+		cameraCenter->push_back(pt);
+		cameraNormal->push_back(nt);
+	}
+
+	pclViewer.removePointCloud(NAME_VISIBLE_CAMERA_CENTER);
+	pclViewer.removePointCloud(NAME_VISIBLE_CAMERA_NORMAL);
+	// add new points
+    pclViewer.addPointCloud(cameraCenter, NAME_VISIBLE_CAMERA_CENTER);
+	// add point normals
+	pclViewer.addPointCloudNormals<pcl::PointXYZ, pcl::Normal>(cameraCenter, cameraNormal, 1, 0.1, NAME_VISIBLE_CAMERA_NORMAL);
+	// set color
+    pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 1.0, 0.0, NAME_VISIBLE_CAMERA_CENTER);
+	// set point size
+	pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 8, NAME_VISIBLE_CAMERA_CENTER);
+}
+
+void MvsViewer::printPatchInformation(const Patch &pth) const {
 	const Vec3d &center = pth.getCenter();
 	const Vec3d &normal = pth.getNormal();
 	const Vec2d &normalS = pth.getSphericalNormal();
@@ -255,42 +337,4 @@ void MvsViewer::printPatchInformation(const Patch &pth) {
 
 	pth.showRefinedResult();
 	pth.showError();
-
-	char title[30];
-	int cx, cy;
-	double visCorr;
-	// visible camera
-	PointCloud<PointXYZ>::Ptr cameraCenter(new PointCloud<PointXYZ>);
-	PointCloud<pcl::Normal>::Ptr cameraNormal(new PointCloud<pcl::Normal>);
-	for (int i = 0; i < pth.getCameraNumber(); ++i) {
-		const int camIdx = pth.getCameraIndices()[i];
-		const Camera &cam = mvs->getCamera(camIdx);
-		const Vec2d &imgPoint = pth.getImagePoints()[i];
-
-		PointXYZ pt;
-		pt.x = cam.getCenter()[0];
-		pt.y = cam.getCenter()[1];
-		pt.z = cam.getCenter()[2];
-		pcl::Normal nt(cam.getOpticalNormal()[0], cam.getOpticalNormal()[1], cam.getOpticalNormal()[2]);
-		cameraCenter->push_back(pt);
-		cameraNormal->push_back(nt);
-
-		cx = (int) (imgPoint[0] / mvs->getCellSize());
-		cy = (int) (imgPoint[1] / mvs->getCellSize());
-		visCorr = normal.ddot(-cam.getOpticalNormal());
-
-		printf("camIdx: %d \t cx: %d \t cy: %d \t visCorr: %f\n", camIdx, cx, cy, visCorr);
-	}
-	printf("\n");
-
-	pclViewer.removePointCloud(NAME_VISIBLE_CAMERA_CENTER);
-	pclViewer.removePointCloud(NAME_VISIBLE_CAMERA_NORMAL);
-	// add new points
-    pclViewer.addPointCloud(cameraCenter, NAME_VISIBLE_CAMERA_CENTER);
-	// add point normals
-	pclViewer.addPointCloudNormals<pcl::PointXYZ, pcl::Normal>(cameraCenter, cameraNormal, 1, 0.1, NAME_VISIBLE_CAMERA_NORMAL);
-	// set color
-    pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 1.0, 0.0, NAME_VISIBLE_CAMERA_CENTER);
-	// set point size
-	pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 8, NAME_VISIBLE_CAMERA_CENTER);
 }

@@ -18,7 +18,7 @@ void FileWriter::writeVec(fstream &file, const Vec2d &vec) {
 	file.write((char*) &vec[1], sizeof(double));
 }
 
-void FileWriter::writeCamera(fstream &file, const Camera &camera) {
+void FileWriter::writeCamera(fstream &file, const PAIS::Camera &camera) {
 	const int fileNameLength      = (int) string(camera.getFileName()).size();
 	const double focal            = camera.getFocalLength();
 	const Vec4d &quaternion       = camera.getQuaternion();

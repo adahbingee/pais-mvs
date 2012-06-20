@@ -9,6 +9,8 @@
 #include "patch.h"
 #include "cellmap.h"
 
+extern void addPatchView(const Patch &pth);
+
 namespace PAIS {
 	class Patch;
 
