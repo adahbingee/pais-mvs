@@ -9,7 +9,7 @@ void FileLoader::getDir(const char *fileName, char *path) {
     path[found+1] = '\0';
 }
 
-Camera FileLoader::loadNvmCamera(ifstream &file, const char* path) {
+PAIS::Camera FileLoader::loadNvmCamera(ifstream &file, const char* path) {
 	// camera information
 	string fileName = path;
 	double focal;
@@ -77,11 +77,11 @@ Patch FileLoader::loadNvmPatch(ifstream &file, const MVS &mvs) {
 
 	// RGB color
     strip = strtok(NULL, DELIMITER);
-	color[0] = atoi(strip);            // r
+	color[2] = atoi(strip);            // r
     strip = strtok(NULL, DELIMITER);
 	color[1] = atoi(strip);            // g
     strip = strtok(NULL, DELIMITER);
-	color[2] = atoi(strip);            // b
+	color[0] = atoi(strip);            // b
 
 	// number of measurements ( how many cameras see this point)
     strip = strtok(NULL, DELIMITER);
@@ -110,7 +110,7 @@ Patch FileLoader::loadNvmPatch(ifstream &file, const MVS &mvs) {
 	return Patch(center, color, camIdx, imgPoint);
 }
 
-Camera FileLoader::loadMvsCamera(ifstream &file) {
+PAIS::Camera FileLoader::loadMvsCamera(ifstream &file) {
 	int fileNameLength;
 	char *fileName;
 	Vec3d center;

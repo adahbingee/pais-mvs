@@ -131,6 +131,8 @@ void MVS::refineSeedPatches() {
 			continue;
 		}
 
+		addPatchView(pth);
+
 		printf("ID: %d \t LOD: %d \t fit: %.2f \t pri: %.2f\n", pth.getId(), pth.getLOD(), pth.getFitness(), pth.getPriority());
 
 		++it;
@@ -441,7 +443,7 @@ void MVS::expandNeighborCell(const Patch &pth) {
 	} // end of cameras
 }
 
-void MVS::expandCell(const Camera &cam, const Patch &parent, const int cx, const int cy) {
+void MVS::expandCell(const PAIS::Camera &cam, const Patch &parent, const int cx, const int cy) {
 	// get expansion patch center
 	Vec3d center;
 	getExpansionPatchCenter(cam, parent, cx, cy, center);
@@ -449,6 +451,8 @@ void MVS::expandCell(const Camera &cam, const Patch &parent, const int cx, const
 	// get expansion patch
 	Patch expPatch(center, parent);
 	expPatch.refine();
+
+	if ( !patchFilter(expPatch) ) return;
 
 	insertPatch(expPatch);
 }
@@ -468,7 +472,10 @@ void MVS::insertPatch(const Patch &pth) {
 		cx = (int) (imgPoints[i][0] / cellSize);
 		cy = (int) (imgPoints[i][1] / cellSize);
 		cellMaps[camIdx[i]].insert(cx, cy, pth.getId());
+		printf("cellNum: %d\n", cellMaps[camIdx[i]].getCell(cx, cy).size());
 	}
+
+	addPatchView(pth);
 }
 
 map<int, Patch>::iterator MVS::deletePatch(Patch &pth) {
@@ -478,6 +485,7 @@ map<int, Patch>::iterator MVS::deletePatch(Patch &pth) {
 map<int, Patch>::iterator MVS::deletePatch(const int id) {
 	map<int, Patch>::iterator it = patches.find(id);
 	if (it == patches.end()) return patches.end();
+
 	const Patch &pth = it->second;
 	const int camNum = pth.getCameraNumber();
 	const vector<int> &camIdx = pth.getCameraIndices();
@@ -497,16 +505,16 @@ map<int, Patch>::iterator MVS::deletePatch(const int id) {
 
 bool MVS::hasNeighborPatch(const vector<int> &cell, const Patch &refPth) const {
 	const int pthNum = (int) cell.size();
+	if (pthNum >= maxCellPatchNum) return true;
 	for (int k = 0; k < pthNum; k++) {
 		const Patch &pth = getPatch(cell[k]);
-		if ( Patch::isNeighbor(refPth, pth) || pth.getCorrelation() > minCorrelation || pthNum >= maxCellPatchNum) {
-			return true;
-		}
+		if ( pth.getCorrelation() > minCorrelation ) return true;
+		if ( Patch::isNeighbor(refPth, pth) )        return true;
 	}
 	return false;
 }
 
-void MVS::getExpansionPatchCenter(const Camera &cam, const Patch &parent, const int cx, const int cy, Vec3d &center) const {
+void MVS::getExpansionPatchCenter(const PAIS::Camera &cam, const Patch &parent, const int cx, const int cy, Vec3d &center) const {
 	const double focal     = cam.getFocalLength();
 	const Vec2d &imgCenter = cam.getPrinciplePoint();
 	const Vec3d &camCenter = cam.getCenter();
