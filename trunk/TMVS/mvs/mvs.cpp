@@ -303,8 +303,65 @@ void MVS::cellFiltering() {
 	}
 }
 
-void MVS::neighborCellFiltering() {
-	
+void MVS::neighborCellFiltering(const double neighborDist,  const double neighborRatio) {
+	const int camNum = (int) cameras.size();
+	int mapWidth, mapHeight;
+	for (int i = 0; i < camNum; ++i) {
+		CellMap &map = cellMaps[i];
+		mapWidth     = map.getWidth();
+		mapHeight    = map.getHeight(); 
+
+		for (int x = 0; x < mapWidth; ++x) {
+			for (int y = 0; y < mapHeight; ++y) {
+				// center cell
+				const vector<int> &cell = map.getCell(x, y);
+				vector<int> removeIdx;
+
+				// neighbor cell
+				int nx [] = {x, x-1, x+1, x-1, x+1, x+1, x  , x-1, x};
+				int ny [] = {y, y-1, y-1, y+1, y+1, y  , y+1, y  , y-1};
+
+				const int pthNum = (int) cell.size();
+
+				// center cell
+				for (int j = 0; j < pthNum; ++j) {
+					// center patch
+					const Patch &centerPth = getPatch(cell[j]);
+					int neighborPthSum = 0;
+					int neighborPthNum = 0;
+
+					// neighbor cell
+					for (int j = 0; j < 9; ++j) {
+						// skip out of boundary
+						if ( !map.inMap(nx[j], ny[j]) ) continue;
+
+						const vector<int> &neighborCell = map.getCell(nx[j], ny[j]);
+						int neighborCellPthNum = (int) neighborCell.size();
+						neighborPthSum += neighborCellPthNum;
+
+						for (int k = 0; k < neighborCellPthNum; ++k) {
+							const Patch &neighborPth = getPatch(neighborCell[k]);
+							if ( Patch::isNeighbor(centerPth, neighborPth) ) {
+								++neighborPthNum;
+							}
+						} // end of neighbor patch
+					} // end of neighbor cell
+
+					// mark as remove
+					if ((double) neighborPthNum / (double) neighborPthSum < neighborRatio) {
+						removeIdx.push_back(centerPth.getId());
+					}
+				} // end of center cell
+
+				// remove patch
+				for (int i = 0; i < (int) removeIdx.size(); ++i) {
+					deletePatch(removeIdx[i]);
+				}
+
+			} // end of map y
+		} // end of map x
+		
+	}
 }
 
 void MVS::visibilityFiltering() {
@@ -367,9 +424,10 @@ void MVS::expandNeighborCell(const Patch &pth) {
 		cy = (int) (imgPoints[i][1] / cellSize);
 
 		// check neighbor cells
-		int nx [] = {cx, cx-1, cx-1, cx+1, cx+1};
-		int ny [] = {cy, cy-1, cy+1, cy-1, cy+1};
-		for (int j = 0; j < 5; ++j) {
+		int nx [] = {cx, cx-1, cx-1, cx+1, cx+1, cx-1, cx  , cx+1, cx  };
+		int ny [] = {cy, cy-1, cy+1, cy-1, cy+1, cy  , cy-1, cy  , cy+1};
+
+		for (int j = 0; j < 9; ++j) {
 			// skip out of map
 			if ( !map.inMap(nx[j], ny[j]) ) continue;
 
@@ -441,7 +499,7 @@ bool MVS::hasNeighborPatch(const vector<int> &cell, const Patch &refPth) const {
 	const int pthNum = (int) cell.size();
 	for (int k = 0; k < pthNum; k++) {
 		const Patch &pth = getPatch(cell[k]);
-		if ( Patch::isNeighbor(refPth, pth) || pth.getCorrelation() > 0.95 || pthNum >= maxCellPatchNum) {
+		if ( Patch::isNeighbor(refPth, pth) || pth.getCorrelation() > minCorrelation || pthNum >= maxCellPatchNum) {
 			return true;
 		}
 	}

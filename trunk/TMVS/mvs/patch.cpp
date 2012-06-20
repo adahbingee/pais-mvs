@@ -4,13 +4,15 @@ using namespace PAIS;
 
 /* static functions */
 bool Patch::isNeighbor(const Patch &pth1, const Patch &pth2) {
+	/*
 	const Vec3d &n1 = pth1.getNormal();
 	const Vec3d &n2 = pth2.getNormal();
 	if (n1.ddot(n2) > 0.99) {
 		return true;
 	}
 	return false;
-	/*
+	*/
+
 	const Vec3d &c1 = pth1.getCenter();
 	const Vec3d &c2 = pth2.getCenter();
 	const Vec3d &n1 = pth1.getNormal();
@@ -20,12 +22,11 @@ bool Patch::isNeighbor(const Patch &pth1, const Patch &pth2) {
 	dist += abs((c1-c2).ddot(n1));
 	dist += abs((c1-c2).ddot(n2));
 
-	if (dist < 0.01) {
+	if (dist < 0.005) {
 		return true;
 	} else { 
 		return false;
 	}
-	*/
 }
 
 /* constructor */
