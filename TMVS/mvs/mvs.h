@@ -99,6 +99,7 @@ namespace PAIS {
 		void expandNeighborCell(const Patch &pth);
 		void expandCell(const Camera &cam, const Patch &parent, const int cx, const int cy);
 		void insertPatch(const Patch &pth);
+		// delete patch and return next patch iterator
 		map<int, Patch>::iterator deletePatch(Patch &pth);
 		map<int, Patch>::iterator deletePatch(const int id);
 

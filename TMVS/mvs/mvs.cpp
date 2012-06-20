@@ -71,24 +71,6 @@ void MVS::initPatchDistanceWeighting() {
 	patchDistWeight = patchDistWeight / n[0];
 }
 
-/* io */
-
-void MVS::loadNVM(const char* fileName) {
-	FileLoader::loadNVM(fileName, *this);
-	initCellMaps();
-}
-
-void MVS::loadMVS(const char* fileName) {
-	FileLoader::loadMVS(fileName, *this);
-	initCellMaps();
-}
-
-void MVS::writeMVS(const char* fileName) {
-	FileWriter::writeMVS(fileName, *this);
-}
-
-/* main functions */
-
 void MVS::setCellMaps() {
 	initCellMaps();
 
@@ -107,6 +89,24 @@ void MVS::setCellMaps() {
 		}
 	}
 }
+
+/* io */
+
+void MVS::loadNVM(const char* fileName) {
+	FileLoader::loadNVM(fileName, *this);
+	initCellMaps();
+}
+
+void MVS::loadMVS(const char* fileName) {
+	FileLoader::loadMVS(fileName, *this);
+	initCellMaps();
+}
+
+void MVS::writeMVS(const char* fileName) {
+	FileWriter::writeMVS(fileName, *this);
+}
+
+/* main functions */
 
 void MVS::refineSeedPatches() {
 	if ( patches.empty() ) {
@@ -266,7 +266,41 @@ void MVS::patchQuantization(const int thetaNum, const int phiNum, const int dist
 }
 
 void MVS::cellFiltering() {
+	const int camNum = (int) cameras.size();
+	int mapWidth, mapHeight, pthNum;
+	double corrSum;
 
+	for (int i = 0; i < camNum; ++i) {
+		CellMap &map = cellMaps[i];
+		mapWidth     = map.getWidth();
+		mapHeight    = map.getHeight(); 
+		
+		for (int x = 0; x < mapWidth; ++x) {
+			for (int y = 0; y < mapHeight; ++y) {
+				const vector<int> &cell = map.getCell(x, y);
+				pthNum            = (int) cell.size();
+				// patch index to be removed
+				vector<int> removeIdx;
+
+				for (int j = 0; j < pthNum; ++j) {
+					corrSum = 0;
+					for (int k = 0; k < pthNum; ++k) {
+						if (j == k) continue;
+						Patch &pth = getPatch(cell[k]);
+						corrSum += pth.getCorrelation();
+					}
+					Patch &pth = getPatch(cell[j]);
+					if (pth.getCorrelation() * pth.getCameraNumber() < corrSum) {
+						removeIdx.push_back(cell[j]);
+					}
+				}
+
+				for (int j = 0; j < (int) removeIdx.size(); ++j) {
+					deletePatch(removeIdx[j]);
+				}
+			}
+		}
+	}
 }
 
 void MVS::neighborCellFiltering() {
@@ -304,6 +338,7 @@ void MVS::visibilityFiltering() {
 			}
 		}
 
+		// drop patch if few visible camera
 		if (visibleCount < minCamNum) {
 			it = deletePatch(pth);
 			continue;
