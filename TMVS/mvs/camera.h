@@ -30,6 +30,7 @@ namespace PAIS {
 
 		// gray level image pyramid from 0 = original size to vector size = 1 pixel size
 		vector<Mat_<uchar> > imgPyramid;
+		vector<Mat_<uchar> > edgePyramid;
 
 		// camera focal length, K = [f, 0, cx; 0 f cy; 0 0 1]
 		double focal;
@@ -67,7 +68,7 @@ namespace PAIS {
 
 		// convert quaternion to rotation matrix 
 		static Mat_<double> Camera::quaternionToRotationMat(const Vec4d &q);
-
+		static string getEdgeFileName(const char *fileName);
 	public:
 		Camera(void);
 		// for load nvm format
@@ -82,6 +83,8 @@ namespace PAIS {
 		const Mat_<bool>& getMaskImage()                const { return imgMask;          }
 		const vector<Mat_<uchar> >& getPyramidImage()   const { return imgPyramid;       }
 		const Mat_<uchar>& getPyramidImage(const int i) const { return imgPyramid[i];    }
+		const vector<Mat_<uchar> >& getPyramidEdge()    const { return edgePyramid;      }
+		const Mat_<uchar>& getPyramidEdge(const int i)  const { return edgePyramid[i];   }
 
 		// get intrinsic information
 		double getFocalLength()                         const { return focal;            }

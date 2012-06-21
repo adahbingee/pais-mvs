@@ -33,6 +33,14 @@ Mat_<double> Camera::quaternionToRotationMat(const Vec4d &q) {
     return R;
 }
 
+string Camera::getEdgeFileName(const char *fileName) {
+	string fileNameStr(fileName);
+	size_t split = fileNameStr.find_last_of(".");
+	string edgeFileNameStr = fileNameStr.substr(0, split);
+	edgeFileNameStr.append("e.png");
+	return edgeFileNameStr;
+}
+
 // object function
 Camera::Camera(void) {
 	_isAvaliable = false;
@@ -44,6 +52,9 @@ Camera::~Camera(void) {
 
 Camera::Camera(const char *fileName, const double focal, const Vec4d &quaternion, const Vec3d &center, const double radialDistortion) {
 	_isAvaliable = false;
+
+	// get edge image file name
+	// string edgeFileName = Camera::getEdgeFileName(fileName);
 
 	// read RGB image
 	imgRGB = imread(fileName);
@@ -57,12 +68,28 @@ Camera::Camera(const char *fileName, const double focal, const Vec4d &quaternion
 	// copy image file name
 	strcpy(this->fileName, fileName);
 
-	// read gray level image pyramid
+	// get max level of detail
 	maxLOD = (int) ( log( (double) max(imgRGB.cols, imgRGB.rows) ) / log(2.0) );
+	maxLOD = min(maxLOD, 5);
+
+	// read gray level image pyramid
 	imgPyramid.resize(maxLOD);
+	edgePyramid.resize(maxLOD);
 	imgPyramid[0] = imread(fileName, 0);
+
+	Mat_<uchar> gradientX, gradientY;
+	Sobel(imgPyramid[0], gradientX, CV_8U, 1, 0, 1);
+	Sobel(imgPyramid[0], gradientY, CV_8U, 0, 1, 1);
+	edgePyramid[0] = abs(gradientX + gradientY);
+	
+	#pragma omp parallel for
 	for (int i = 1; i < maxLOD; i++) {
-		resize(imgPyramid[i-1], imgPyramid[i], Size(), 0.5, 0.5, INTER_AREA);
+		double size = 1.0 / (1<<i);
+		resize(imgPyramid[0], imgPyramid[i], Size(), size, size, INTER_AREA);
+		Mat_<uchar> gradientX, gradientY;
+		Sobel(imgPyramid[i], gradientX, CV_8U, 1, 0, 1);
+		Sobel(imgPyramid[i], gradientY, CV_8U, 0, 1, 1);
+		edgePyramid[i] = abs(gradientX + gradientY);
 	}
 
 	// set focal length
@@ -81,7 +108,6 @@ Camera::Camera(const char *fileName, const double focal, const Vec4d &quaternion
 	                               0,     0,                 1};
 	intrinsic = Mat_<double>(3, 3, intrisic_data);
 	
-
 	// set rotation matrix
 	this->quaternion = quaternion;
 	this->rotation = quaternionToRotationMat(quaternion);
