@@ -68,7 +68,6 @@ namespace PAIS {
 
 		// convert quaternion to rotation matrix 
 		static Mat_<double> Camera::quaternionToRotationMat(const Vec4d &q);
-		static string getEdgeFileName(const char *fileName);
 	public:
 		Camera(void);
 		// for load nvm format

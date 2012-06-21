@@ -26,13 +26,13 @@ int main(int argc, char* argv[])
 	config.patchRadius        = 30;
 	config.distWeighting      = config.patchRadius / 3.0;
 	config.diffWeighting      = 128*128;
-	config.minCamNum          = 3;
-	config.textureVariation   = 500;
-	config.visibleCorrelation = 0.7;
+	config.minCamNum          = 2;
+	config.textureVariation   = 300;
+	config.visibleCorrelation = 0.87;
 	config.minCorrelation     = 0.99;
 	config.minLOD             = 0;
 	config.maxCellPatchNum    = 5;
-	config.particleNum        = 10;
+	config.particleNum        = 15;
 	config.maxIteration       = 60;
 
 	// set MVS instance

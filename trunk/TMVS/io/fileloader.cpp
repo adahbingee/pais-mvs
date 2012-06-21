@@ -259,6 +259,23 @@ void FileLoader::loadNVM(const char *fileName, MVS &mvs) {
 	file.close();
 }
 
+void FileLoader::loadNVM2(const char *fileName, MVS &mvs) {
+	vector<Camera>  &cameras = mvs.cameras;
+	map<int, Patch> &patches = mvs.patches;
+
+	// reset container
+	cameras.clear();
+	patches.clear();
+
+	// open nvm file
+	ifstream file(fileName, ifstream::in);
+
+	if ( !file.is_open() ) {
+		printf("Can't open NVM file: %s\n", fileName);
+		return;
+	}
+}
+
 void FileLoader::loadMVS(const char *fileName, MVS &mvs) {
 	vector<Camera>  &cameras = mvs.cameras;
 	map<int, Patch> &patches = mvs.patches;
