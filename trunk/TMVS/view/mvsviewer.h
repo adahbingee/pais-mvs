@@ -26,7 +26,7 @@ namespace PAIS {
 		const MVS *mvs;
 		PCLVisualizer pclViewer;
 
-		PointCloud<PointXYZRGB>::Ptr centers;
+		PointCloud<pcl::PointXYZRGB>::Ptr centers;
 		PointCloud<pcl::Normal>::Ptr normals;
 
 		// viewer flags (default:false)

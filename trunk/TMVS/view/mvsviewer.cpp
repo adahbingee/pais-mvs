@@ -26,9 +26,11 @@ void keyBoardEvent(const pcl::visualization::KeyboardEvent &event, void* viewer_
 		break;
 	case '+':
 		viewer.pointSize = min(viewer.pointSize+1, 10);
+		viewer.getPclViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, (double) viewer.pointSize, NAME_PATCH);
 		break;
 	case '-':
 		viewer.pointSize = max(viewer.pointSize-1, 1);
+		viewer.getPclViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, (double) viewer.pointSize, NAME_PATCH);
 		break;
 	}
 }
@@ -71,7 +73,7 @@ void MvsViewer::init() {
 
 	// set container
 	centers = PointCloud<PointXYZRGB>::Ptr (new PointCloud<PointXYZRGB>);
-	normals = PointCloud<pcl::Normal>::Ptr (new PointCloud<pcl::Normal>);
+	normals = PointCloud<Normal>::Ptr (new PointCloud<Normal>);
 
 	// set viewer
 	pclViewer.setBackgroundColor(0, 0, 0);
@@ -146,18 +148,16 @@ void MvsViewer::addPatch(const Patch &pth) {
 	centers->push_back(pt);
 	normals->push_back(nt);
 
-	// remove old points
-	pclViewer.removePointCloud(NAME_PATCH);
-	pclViewer.removePointCloud(NAME_NORMAL);
+	if ( !pclViewer.updatePointCloud(centers, NAME_PATCH) ) {
+		pclViewer.addPointCloud(centers, NAME_PATCH);
+	}
 
-	// add new points
-    pclViewer.addPointCloud(centers, NAME_PATCH);
+	pclViewer.removePointCloud(NAME_NORMAL);
 	pclViewer.addPointCloudNormals<pcl::PointXYZRGB, pcl::Normal>(centers, normals, 1, 0.1, NAME_NORMAL);
-	pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, (double) pointSize, NAME_PATCH);
-	
+
 	// set normal color
 	pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1.0, 1.0, 0.0, NAME_NORMAL);
-    pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, 0.0, NAME_NORMAL);
+	pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, 0.0, NAME_NORMAL);
 
 	showPickedPoint(pth);
 	showVisibleCamera(pth);
@@ -184,7 +184,7 @@ void MvsViewer::addPatches() {
 		pt.r = c[2];
 		pt.g = c[1];
 		pt.b = c[0];
-		pcl::Normal nt(n[0], n[1], n[2]);
+		Normal nt(n[0], n[1], n[2]);
 
 		centers->push_back(pt);
 		normals->push_back(nt);
