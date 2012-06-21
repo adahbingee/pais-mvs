@@ -725,12 +725,6 @@ void Patch::showError() const {
 				ix = ( H[i].at<double>(0, 0) * x + H[i].at<double>(0, 1) * y + H[i].at<double>(0, 2) ) / w;
 				iy = ( H[i].at<double>(1, 0) * x + H[i].at<double>(1, 1) * y + H[i].at<double>(1, 2) ) / w;
 				
-				// apply LOD transform
-				if (LOD > 0) {
-					ix /= 1<<LOD;
-					iy /= 1<<LOD;
-				}
-				
 				// interpolation neighbor points
 				px[0] = (int) ix;
 				py[0] = (int) iy;
@@ -788,6 +782,7 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 	// camera parameters
 	const Camera &refCam  = mvs.getCamera(patch.getReferenceCameraIndex());
 	const int camNum = patch.getCameraNumber();
+	const Mat_<uchar> &edgeImg = refCam.getPyramidEdge(LOD);
 
 	// given patch normal
 	Vec3d normal;
@@ -831,6 +826,10 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 			mean   = 0;
 			avgSad = 0;
 
+			weight = (double) edgeImg.at<uchar>(cvRound(y), cvRound(x));
+
+			if (weight == 0) continue;
+
 			for (int i = 0; i < camNum; ++i) {
 				const Mat_<uchar> &img = cameras[camIdx[i]].getPyramidImage(LOD);
 
@@ -870,20 +869,13 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 			}
 			avgSad /= camNum;
 
-			if (LOD > mvs.getMinLOD()) {
-				fitness += avgSad;
-			} else {
-				weight = (*it++) * exp(-avgSad*avgSad/diffWeighting);
-				sumWeight += weight;
-				fitness += weight * avgSad;
-			}
+			weight    *= (*it++) * exp(-avgSad*avgSad/diffWeighting);
+			sumWeight += weight;
+			fitness   += weight * avgSad;
 		} // end of warping y
 	} // end of warping x
 
 	delete [] c;
-	if (LOD > mvs.getMinLOD()) {
-		return fitness / (patchSize*patchSize);
-	} else {
-		return fitness / sumWeight;
-	}
+
+	return fitness / sumWeight;
 }
