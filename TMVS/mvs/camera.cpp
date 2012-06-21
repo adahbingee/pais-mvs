@@ -33,14 +33,6 @@ Mat_<double> Camera::quaternionToRotationMat(const Vec4d &q) {
     return R;
 }
 
-string Camera::getEdgeFileName(const char *fileName) {
-	string fileNameStr(fileName);
-	size_t split = fileNameStr.find_last_of(".");
-	string edgeFileNameStr = fileNameStr.substr(0, split);
-	edgeFileNameStr.append("e.png");
-	return edgeFileNameStr;
-}
-
 // object function
 Camera::Camera(void) {
 	_isAvaliable = false;
@@ -52,9 +44,6 @@ Camera::~Camera(void) {
 
 Camera::Camera(const char *fileName, const double focal, const Vec4d &quaternion, const Vec3d &center, const double radialDistortion) {
 	_isAvaliable = false;
-
-	// get edge image file name
-	// string edgeFileName = Camera::getEdgeFileName(fileName);
 
 	// read RGB image
 	imgRGB = imread(fileName);
@@ -147,17 +136,67 @@ Camera::Camera(const char *fileName, const double focalX, const double focalY, c
 	// copy image file name
 	strcpy(this->fileName, fileName);
 
-	// read gray level image pyramid
+	// get max level of detail
 	maxLOD = (int) ( log( (double) max(imgRGB.cols, imgRGB.rows) ) / log(2.0) );
+	maxLOD = min(maxLOD, 5);
+
+	// read gray level image pyramid
 	imgPyramid.resize(maxLOD);
+	edgePyramid.resize(maxLOD);
 	imgPyramid[0] = imread(fileName, 0);
+
+	Mat_<uchar> gradientX, gradientY;
+	Sobel(imgPyramid[0], gradientX, CV_8U, 1, 0, 1);
+	Sobel(imgPyramid[0], gradientY, CV_8U, 0, 1, 1);
+	edgePyramid[0] = abs(gradientX + gradientY);
+	
+	#pragma omp parallel for
 	for (int i = 1; i < maxLOD; i++) {
-		resize(imgPyramid[i-1], imgPyramid[i], Size(), 0.5, 0.5, INTER_AREA);
+		double size = 1.0 / (1<<i);
+		resize(imgPyramid[0], imgPyramid[i], Size(), size, size, INTER_AREA);
+		Mat_<uchar> gradientX, gradientY;
+		Sobel(imgPyramid[i], gradientX, CV_8U, 1, 0, 1);
+		Sobel(imgPyramid[i], gradientY, CV_8U, 0, 1, 1);
+		edgePyramid[i] = abs(gradientX + gradientY);
 	}
 
+	// set focal length
+	this->focal  = (focalX+focalY)*0.5;
 	this->focalX = focalX;
 	this->focalY = focalY;
 
+	// get principle point
+	this->principlePoint = principlePoint;
+
+	this->radialDistortion = 0;
+
+	// set intrisic matrix
+	double intrisic_data [] = {focalX,   0.0, principlePoint[0],
+	                               0, focalY, principlePoint[1],
+	                               0,      0,                 1};
+	intrinsic = Mat_<double>(3, 3, intrisic_data);
+	
+	// set rotation matrix
+	this->quaternion = quaternion;
+	this->rotation = quaternionToRotationMat(quaternion);
+
+	// set camera center and translation
+	this->center = center;
+	this->translation = -rotation * Mat(center);
+
+	// set projection matrix
+	this->KR = intrinsic * rotation;
+	this->KT = intrinsic * translation;
+	this->P  = Mat_<double>(3, 4);
+	KR.copyTo(P(Rect(0,0,3,3)));
+    KT.copyTo(P(Rect(3,0,1,3)));
+
+	// set camera optical normal
+	double dir_data [] = {0.0, 0.0, 1.0};
+    Mat dir(3, 1, CV_64FC1, dir_data);
+    dir = rotation.t() * dir; 
+    opticalNormal = Vec3d(dir);
+	
 	_isAvaliable = true;
 }
 

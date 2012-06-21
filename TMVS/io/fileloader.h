@@ -34,6 +34,7 @@ namespace PAIS {
 		static void   loadMvsVec(ifstream &file, Vec4d &v);
 	public:
 		static void loadNVM(const char *fileName, MVS &mvs);
+		static void loadNVM2(const char *fileName, MVS &mvs);
 		static void loadMVS(const char *fileName, MVS &mvs);
 	};
 };
