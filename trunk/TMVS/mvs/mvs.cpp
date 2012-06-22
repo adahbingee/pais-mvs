@@ -90,16 +90,26 @@ void MVS::setCellMaps() {
 	}
 }
 
+void MVS::reCentering() {
+	map<int, Patch>::iterator it;
+	for (it = patches.begin(); it != patches.end(); ++it) {
+		Patch &pth                     = it->second;
+		pth.reCentering();
+	}
+}
+
 /* io */
 
 void MVS::loadNVM(const char* fileName) {
 	FileLoader::loadNVM(fileName, *this);
-	initCellMaps();
+	reCentering();
+	//initCellMaps();
 }
 
 void MVS::loadNVM2(const char *fileName) {
 	FileLoader::loadNVM2(fileName, *this);
-	initCellMaps();
+	//reCentering();
+	//initCellMaps();
 }
 
 void MVS::loadMVS(const char* fileName) {

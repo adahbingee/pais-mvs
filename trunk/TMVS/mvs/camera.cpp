@@ -89,8 +89,8 @@ Camera::Camera(const char *fileName, const Vec2d &focal, const Vec2d &principleP
 
 	// get principle point
 	if (principlePoint[0] < 0 && principlePoint[1] < 0) {
-		this->principlePoint[0] = imgRGB.cols << 1;
-		this->principlePoint[1] = imgRGB.rows << 1;
+		this->principlePoint[0] = imgRGB.cols >> 1;
+		this->principlePoint[1] = imgRGB.rows >> 1;
 	} else {
 		this->principlePoint = principlePoint;
 	}
@@ -127,17 +127,23 @@ Camera::Camera(const char *fileName, const Vec2d &focal, const Vec2d &principleP
 
 bool Camera::project(const Vec3d &in3D, Vec2d &out2D, const int LOD, const bool applyDistortion) const {
 	Mat X2 = rotation * Mat(in3D, false) + translation;
-	out2D[0] = focal[0] * ( X2.at<double>(0,0) / X2.at<double>(2,0) ) + principlePoint[0];
-	out2D[1] = focal[1] * ( X2.at<double>(1,0) / X2.at<double>(2,0) ) + principlePoint[1];
 	
-	// wit radial distortion
-	if ( applyDistortion ) {
-		double r = radialDistortion * (out2D[0]*out2D[0] + out2D[1]*out2D[1]);
-		out2D    = (1.0+r) * out2D + principlePoint;
-	} 
+	if ( !applyDistortion ) {
+        // without radial distortion
+		out2D[0] = focal[0] * ( X2.at<double>(0,0) / X2.at<double>(2,0) );
+		out2D[1] = focal[1] * ( X2.at<double>(1,0) / X2.at<double>(2,0) );
+        out2D   += principlePoint;
+    } else {
+        // with radial distortion
+		out2D[0] = X2.at<double>(0,0) / X2.at<double>(2,0);
+		out2D[1] = X2.at<double>(1,0) / X2.at<double>(2,0);
+        double r = radialDistortion * (out2D[0]*out2D[0] + out2D[1]*out2D[1]);
+        out2D[0]  = (1.0+r) * focal[0] * out2D[0] + principlePoint[0];
+		out2D[1]  = (1.0+r) * focal[1] * out2D[1] + principlePoint[1];
+    }
 
 	out2D[0] /= 1<<LOD;
-	out2D[1] /= 1<<LOD;
+    out2D[1] /= 1<<LOD;
 
 	return inImage(out2D, LOD);
 }
