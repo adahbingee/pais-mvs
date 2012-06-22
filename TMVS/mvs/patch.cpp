@@ -71,6 +71,26 @@ Patch::~Patch(void) {
 
 /* public functions */
 
+void Patch::reCentering() {
+	const MVS &mvs = MVS::getInstance();
+	const int camNum = getCameraNumber();
+	
+	double focalX, focalY;
+	for (int i = 0 ; i < camNum; ++i) {
+		const Vec2d  &pt        = imgPoint[i];
+		const Camera &cam       = mvs.getCamera(camIdx[i]);
+		const Vec2d  &principle = cam.getPrinciplePoint();
+		const Vec3d  &camCenter = cam.getCenter();
+		
+		// get projected pixel position in world coordinate
+		Mat p3d(3, 1, CV_64FC1);
+		p3d.at<double>(0, 0) = (pt[0] - principle[0]) / focalX;
+		p3d.at<double>(1, 0) = (pt[1] - principle[1]) / focalY;
+		p3d.at<double>(2, 0) = 1.0;
+		p3d = cam.getRotation().t() * (p3d - cam.getTranslation());
+	}
+}
+
 void Patch::refine() {
 	const MVS &mvs = MVS::getInstance();
 

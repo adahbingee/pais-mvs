@@ -22,14 +22,14 @@ int main(int argc, char* argv[])
 {
 	// MVS configures
 	MvsConfig config;
-	config.cellSize           = 4;
+	config.cellSize           = 10;
 	config.patchRadius        = 30;
 	config.distWeighting      = config.patchRadius / 3.0;
 	config.diffWeighting      = 128*128;
 	config.minCamNum          = 2;
 	config.textureVariation   = 300;
 	config.visibleCorrelation = 0.87;
-	config.minCorrelation     = 0.99;
+	config.minCorrelation     = 0.9;
 	config.minLOD             = 0;
 	config.maxCellPatchNum    = 5;
 	config.particleNum        = 15;
@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
 	MVS &mvs = MVS::getInstance(config);
 
 	// LOAD MVS file
-	mvs.loadNVM("../../../TMVS_data/face/face.nvm");
+	mvs.loadNVM2("../../../TMVS_data/dino/dino.nvm2");
 	//mvs.loadNVM((char*)argv[1]);
 	//mvs.loadMVS((char*)argv[1]);
 	//mvs.loadMVS("exp.mvs");

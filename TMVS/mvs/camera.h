@@ -32,10 +32,8 @@ namespace PAIS {
 		vector<Mat_<uchar> > imgPyramid;
 		vector<Mat_<uchar> > edgePyramid;
 
-		// camera focal length, K = [f, 0, cx; 0 f cy; 0 0 1]
-		double focal;
-		double focalX;
-		double focalY;
+		// camera focal length, K = [fx, 0, cx; 0 fy cy; 0 0 1]
+		Vec2d focal;
 
 		// radial distortion parameter
 		double radialDistortion;
@@ -71,9 +69,7 @@ namespace PAIS {
 	public:
 		Camera(void);
 		// for load nvm format
-		Camera(const char *fileName, const double focal, const Vec4d &quaternion, const Vec3d &center, const double radialDistortion);
-		// for load nvm2 format
-		Camera(const char *fileName, const double focalX, const double focalY, const Vec2d &principlePoint, const Vec4d &quaternion, const Vec3d &center);
+		Camera(const char *fileName, const Vec2d &focal, const Vec2d &principlePoint, const Vec4d &quaternion, const Vec3d &center, const double radialDistortion);
 		~Camera(void);
 
 		// get image information
@@ -86,7 +82,7 @@ namespace PAIS {
 		const Mat_<uchar>& getPyramidEdge(const int i)  const { return edgePyramid[i];   }
 
 		// get intrinsic information
-		double getFocalLength()                         const { return focal;            }
+		const Vec2d& getFocalLength()                   const { return focal;            }
 		double getRadialDistortion()                    const { return radialDistortion; }
 		const Vec2d& getPrinciplePoint()                const { return principlePoint;   }
 		const Vec3d& getCenter()                        const { return center;           }

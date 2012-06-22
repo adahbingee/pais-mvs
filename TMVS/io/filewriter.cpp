@@ -20,7 +20,7 @@ void FileWriter::writeVec(fstream &file, const Vec2d &vec) {
 
 void FileWriter::writeCamera(fstream &file, const PAIS::Camera &camera) {
 	const int fileNameLength      = (int) string(camera.getFileName()).size();
-	const double focal            = camera.getFocalLength();
+	const Vec2d &focal            = camera.getFocalLength();
 	const Vec4d &quaternion       = camera.getQuaternion();
 	const Vec3d &center           = camera.getCenter();
 	const double radialDistortion = camera.getRadialDistortion();
@@ -30,8 +30,8 @@ void FileWriter::writeCamera(fstream &file, const PAIS::Camera &camera) {
 	file.write(camera.getFileName(), fileNameLength);
 	// write camera center 
 	writeVec(file, center);
-	// wirte camera focal length (double)
-	file.write((char*) &focal, sizeof(double));
+	// wirte camera focal length
+	writeVec(file, focal);
 	// write rotation quaternion
 	writeVec(file, quaternion);
 	// write radial distortion

@@ -97,6 +97,11 @@ void MVS::loadNVM(const char* fileName) {
 	initCellMaps();
 }
 
+void MVS::loadNVM2(const char *fileName) {
+	FileLoader::loadNVM2(fileName, *this);
+	initCellMaps();
+}
+
 void MVS::loadMVS(const char* fileName) {
 	FileLoader::loadMVS(fileName, *this);
 	initCellMaps();
@@ -529,9 +534,9 @@ bool MVS::hasNeighborPatch(const vector<int> &cell, const Patch &refPth) const {
 }
 
 void MVS::getExpansionPatchCenter(const PAIS::Camera &cam, const Patch &parent, const int cx, const int cy, Vec3d &center) const {
-	const double focal     = cam.getFocalLength();
-	const Vec2d &imgCenter = cam.getPrinciplePoint();
-	const Vec3d &camCenter = cam.getCenter();
+	const Vec2d &focal        = cam.getFocalLength();
+	const Vec2d &principle    = cam.getPrinciplePoint();
+	const Vec3d &camCenter    = cam.getCenter();
 	const Vec3d &parentNormal = parent.getNormal();
 	const Vec3d &parentCenter = parent.getCenter();
 
@@ -541,8 +546,8 @@ void MVS::getExpansionPatchCenter(const PAIS::Camera &cam, const Patch &parent, 
 
 	// get center pixel position of cell in world coordinate
 	Mat p3d(3, 1, CV_64FC1);
-	p3d.at<double>(0, 0) = (px - imgCenter[0]) / focal;
-	p3d.at<double>(1, 0) = (py - imgCenter[1]) / focal;
+	p3d.at<double>(0, 0) = (px - principle[0]) / focal[0];
+	p3d.at<double>(1, 0) = (py - principle[1]) / focal[1];
 	p3d.at<double>(2, 0) = 1.0;
 	p3d = cam.getRotation().t() * (p3d - cam.getTranslation());
 

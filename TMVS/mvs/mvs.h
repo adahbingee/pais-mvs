@@ -121,9 +121,10 @@ namespace PAIS {
 		static MVS& getInstance() { return *instance; }
 		static MVS& getInstance(const MvsConfig &config);
 
-		void loadNVM(const char* fileName);
-		void loadMVS(const char* fileName);
-		void writeMVS(const char* fileName);
+		void loadNVM(const char *fileName);
+		void loadNVM2(const char *fileName);
+		void loadMVS(const char *fileName);
+		void writeMVS(const char *fileName);
 
 		// getter
 		const vector<Camera>&  getCameras()  const { return cameras;  }

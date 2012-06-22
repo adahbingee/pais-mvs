@@ -48,6 +48,7 @@ namespace PAIS {
 		// mvs loader constructor
 		Patch(const Vec3d &center, const Vec2d &normalS, const vector<int> &camIdx, const double fitness, const double correlation, const int id = -1);
 
+		void reCentering();
 		void refine();
 		void setQuantization(const Vec3d &center, const Vec3d &normal);
 
