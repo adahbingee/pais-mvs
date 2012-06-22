@@ -12,7 +12,7 @@ void FileLoader::getDir(const char *fileName, char *path) {
 PAIS::Camera FileLoader::loadNvmCamera(ifstream &file, const char* path) {
 	// camera information
 	string fileName = path;
-	double focal;
+	Vec2d focal;
 	Vec4d quaternion;
 	Vec3d center;
 	double radialDistortion;
@@ -27,7 +27,8 @@ PAIS::Camera FileLoader::loadNvmCamera(ifstream &file, const char* path) {
 
 	// focal length
 	strip = strtok(NULL, DELIMITER);
-	focal = atof(strip);
+	focal[0] = atof(strip);
+	focal[1] = atof(strip);
 
 	// quaternion rotation
     strip = strtok(NULL, DELIMITER); // k
@@ -52,7 +53,57 @@ PAIS::Camera FileLoader::loadNvmCamera(ifstream &file, const char* path) {
     strip = strtok(NULL, DELIMITER);
 	radialDistortion = atof(strip);
 
-	return Camera(fileName.c_str(), focal, quaternion, center, radialDistortion);
+	return Camera(fileName.c_str(), focal, Vec2d(-1, -1), quaternion, center, radialDistortion);
+}
+
+PAIS::Camera FileLoader::loadNvm2Camera(ifstream &file, const char* path) {
+	// camera information
+	string fileName = path;
+	Vec2d focal;
+	Vec2d principlePoint;
+	Vec4d quaternion;
+	Vec3d center;
+
+	char strbuf[STRING_BUFFER_LENGTH];
+	char *strip;
+
+	file.getline(strbuf, STRING_BUFFER_LENGTH);
+	// image file name
+    strip = strtok(strbuf, DELIMITER);
+	fileName.append(strip);
+
+	// focal length
+	strip = strtok(NULL, DELIMITER);
+	focal[0] = atof(strip);
+	strip = strtok(NULL, DELIMITER);
+	focal[1] = atof(strip);
+
+	// priciple point
+	strip = strtok(NULL, DELIMITER);
+	principlePoint[0] = atof(strip);
+	strip = strtok(NULL, DELIMITER);
+	principlePoint[1] = atof(strip);
+
+	// quaternion rotation
+    strip = strtok(NULL, DELIMITER); // k
+    quaternion[0] = atof(strip);
+    strip = strtok(NULL, DELIMITER); // wx                  
+    quaternion[1] = atof(strip);
+    strip = strtok(NULL, DELIMITER); // wy
+    quaternion[2] = atof(strip);
+    strip = strtok(NULL, DELIMITER); // wz
+    quaternion[3] = atof(strip);
+
+	// 3D camera center in world coordinate
+    Vec3d cameraCenter;
+    strip = strtok(NULL, DELIMITER); // cx
+    center[0] = atof(strip);
+    strip = strtok(NULL, DELIMITER); // cy
+    center[1] = atof(strip);
+    strip = strtok(NULL, DELIMITER); // cz
+    center[2] = atof(strip);
+
+	return Camera(fileName.c_str(), focal, principlePoint, quaternion, center, 0);
 }
 
 Patch FileLoader::loadNvmPatch(ifstream &file, const MVS &mvs) {
@@ -101,9 +152,9 @@ Patch FileLoader::loadNvmPatch(ifstream &file, const MVS &mvs) {
 		// 2D image point
 		Vec2d p;
         strip  = strtok(NULL, DELIMITER);
-		p[0] = atof(strip) + cam.getImageWidth()/2.0;
+		p[0] = atof(strip) + cam.getPrinciplePoint()[0];
         strip  = strtok(NULL, DELIMITER);
-		p[1] = atof(strip) + cam.getImageHeight()/2.0;
+		p[1] = atof(strip) + cam.getPrinciplePoint()[1];
 		imgPoint.push_back(p);
 	}
 
@@ -114,8 +165,9 @@ PAIS::Camera FileLoader::loadMvsCamera(ifstream &file) {
 	int fileNameLength;
 	char *fileName;
 	Vec3d center;
-	double focal;
+	Vec2d focal;
 	Vec4d quaternion;
+	Vec2d principle;
 	double radialDistortion;
 
 	// read image file name length
@@ -127,13 +179,15 @@ PAIS::Camera FileLoader::loadMvsCamera(ifstream &file) {
 	// read camera center
 	loadMvsVec(file, center);
 	// read camera focal length
-	file.read( (char*) &focal, sizeof(double) );
+	loadMvsVec(file, focal);
+	// read camera principle point
+	loadMvsVec(file, principle);
 	// read rotation quaternion
 	loadMvsVec(file, quaternion);
 	// read radial distortion
 	file.read((char*) &radialDistortion, sizeof(double));
 
-	Camera cam(fileName, focal, quaternion, center, radialDistortion);
+	Camera cam(fileName, focal, principle, quaternion, center, radialDistortion);
 
 	delete [] fileName;
 
@@ -274,6 +328,65 @@ void FileLoader::loadNVM2(const char *fileName, MVS &mvs) {
 		printf("Can't open NVM file: %s\n", fileName);
 		return;
 	}
+
+	// get file path
+	char filePath [MAX_FILE_NAME_LENGTH];
+	getDir(fileName, filePath);
+
+	char *strip = NULL;
+	char strbuf[STRING_BUFFER_LENGTH];
+	int num;
+	bool loadCamera = false;
+	bool loadPatch  = false;
+
+	while ( !file.eof() ) {
+
+		file.getline(strbuf, STRING_BUFFER_LENGTH);
+		strip = strtok(strbuf, DELIMITER);
+
+		if (strip == NULL) continue; // skip blank line
+
+		// start load camera
+		if (strcmp(strip, "NVM_V3") == 0) {
+			loadCamera = true;
+			continue;
+		}
+
+		if (loadCamera) {
+			// get number of cameras
+			strip = strtok(strbuf, DELIMITER);
+			num = atoi(strip);
+
+			cameras.reserve(num);
+			for (int i = 0; i < num; i++) {
+				printf("loading camera %d / %d\n", i+1, num);
+				cameras.push_back( loadNvm2Camera(file, filePath) );
+			}
+
+			loadCamera = false;
+			loadPatch  = true;
+
+			continue;
+		}
+
+		if (loadPatch) {
+			// get number of points
+			strip = strtok(strbuf, DELIMITER);
+			num = atoi(strip);
+
+			for (int i = 0; i < num; i++) {
+				printf("loading patch %d / %d\n", i+1, num);
+				Patch p = loadNvmPatch(file, mvs);
+				patches.insert( pair<int, Patch>(p.getId(), p) );
+			}
+
+			loadPatch = false;
+
+			break;
+		}
+	}
+
+	file.close();
 }
 
 void FileLoader::loadMVS(const char *fileName, MVS &mvs) {

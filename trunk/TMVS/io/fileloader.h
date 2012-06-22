@@ -1,7 +1,7 @@
 #ifndef __PAIS_FILE_LOADER_H__
 #define __PAIS_FILE_LOADER_H__
 
-#define STRING_BUFFER_LENGTH 1024
+#define STRING_BUFFER_LENGTH 10240
 #define DELIMITER " \t"
 
 #include <map>
@@ -26,6 +26,7 @@ namespace PAIS {
 
 		static void   getDir(const char *fileName, char *path);
 		static Camera loadNvmCamera(ifstream &file, const char* path);
+		static Camera loadNvm2Camera(ifstream &file, const char* path);
 		static Patch  loadNvmPatch(ifstream &file, const MVS &mvs);
 		static Camera loadMvsCamera(ifstream &file);
 		static Patch  loadMvsPatch(ifstream &file);
