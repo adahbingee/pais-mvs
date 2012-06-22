@@ -1,6 +1,7 @@
 #include "patch.h"
 
 using namespace PAIS;
+extern ofstream debugFile;
 
 /* static functions */
 bool Patch::isNeighbor(const Patch &pth1, const Patch &pth2) {
@@ -75,20 +76,39 @@ void Patch::reCentering() {
 	const MVS &mvs = MVS::getInstance();
 	const int camNum = getCameraNumber();
 	
-	double focalX, focalY;
+	double mu, mv;
+	Mat_<double> A = Mat_<double>::zeros(2*camNum, 4);
 	for (int i = 0 ; i < camNum; ++i) {
-		const Vec2d  &pt        = imgPoint[i];
+		//const Vec2d  &pt        = imgPoint[i];
 		const Camera &cam       = mvs.getCamera(camIdx[i]);
-		const Vec2d  &principle = cam.getPrinciplePoint();
-		const Vec3d  &camCenter = cam.getCenter();
-		
-		// get projected pixel position in world coordinate
-		Mat p3d(3, 1, CV_64FC1);
-		p3d.at<double>(0, 0) = (pt[0] - principle[0]) / focalX;
-		p3d.at<double>(1, 0) = (pt[1] - principle[1]) / focalY;
-		p3d.at<double>(2, 0) = 1.0;
-		p3d = cam.getRotation().t() * (p3d - cam.getTranslation());
+
+		Vec2d pt;
+		cam.project(center, pt);
+
+		const Mat_<double> &m   = cam.getP();
+		Mat_<double> row2       = m.row(2);
+		const double sumrow2    = sum(row2)[0];
+		mu = m.at<double>(0, 3) - sumrow2 * pt[0];
+		mv = m.at<double>(1, 3) - sumrow2 * pt[1];
+
+		A.at<double>(i*2  , 0) = m.at<double>(0, 0);
+		A.at<double>(i*2  , 1) = m.at<double>(0, 1);
+		A.at<double>(i*2  , 2) = m.at<double>(0, 2);
+		A.at<double>(i*2  , 3) = mu;
+		A.at<double>(i*2+1, 0) = m.at<double>(1, 0);
+		A.at<double>(i*2+1, 1) = m.at<double>(1, 1);
+		A.at<double>(i*2+1, 2) = m.at<double>(1, 2);
+		A.at<double>(i*2+1, 3) = mv;
 	}
+
+	SVD svd(A.t() * A, SVD::FULL_UV);
+	Mat_<double> v = svd.vt.t();
+	Mat_<double> x = v.col(3);
+	center[0] = x.at<double>(0, 0) / x.at<double>(3, 0);
+	center[1] = x.at<double>(1, 0) / x.at<double>(3, 0);
+	center[2] = x.at<double>(2, 0) / x.at<double>(3, 0);
+
+	setEstimatedNormal();
 }
 
 void Patch::refine() {
@@ -642,6 +662,11 @@ void Patch::setQuantization(const Vec3d &center, const Vec3d &normal) {
 
 /* misc */
 void Patch::showRefinedResult() const {
+	if (refCamIdx < 0) {
+		printf("reference camera not set\n");
+		return;
+	}
+
 	const MVS &mvs = MVS::getInstance();
 	const vector<Camera> &cameras = mvs.getCameras();
 	const int patchRadius = mvs.getPatchRadius();
@@ -707,6 +732,11 @@ void Patch::showRefinedResult() const {
 }
 
 void Patch::showError() const {
+	if (refCamIdx < 0) {
+		printf("reference camera not set\n");
+		return;
+	}
+
 	const MVS &mvs = MVS::getInstance();
 	const vector<Camera> &cameras = mvs.getCameras();
 	const int patchRadius = mvs.getPatchRadius();

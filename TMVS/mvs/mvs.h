@@ -97,6 +97,9 @@ namespace PAIS {
 		bool initCellMaps();
 		// initial pixel-wised distance weighting of patch
 		void initPatchDistanceWeighting();
+		// re-centering patches
+		void reCentering();
+
 
 		void expandNeighborCell(const Patch &pth);
 		void expandCell(const Camera &cam, const Patch &parent, const int cx, const int cy);
