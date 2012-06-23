@@ -14,6 +14,8 @@ bool Patch::isNeighbor(const Patch &pth1, const Patch &pth2) {
 	return false;
 	*/
 
+	const MVS &mvs = mvs.getInstance();
+
 	const Vec3d &c1 = pth1.getCenter();
 	const Vec3d &c2 = pth2.getCenter();
 	const Vec3d &n1 = pth1.getNormal();
@@ -23,7 +25,7 @@ bool Patch::isNeighbor(const Patch &pth1, const Patch &pth2) {
 	dist += abs((c1-c2).ddot(n1));
 	dist += abs((c1-c2).ddot(n2));
 
-	if (dist < 0.005) {
+	if (dist <= mvs.neighborRadius) {
 		return true;
 	} else { 
 		return false;
@@ -115,35 +117,6 @@ void Patch::reCentering() {
 	center[0] = x.at<double>(0);
 	center[1] = x.at<double>(1);
 	center[2] = x.at<double>(2);
-	/*
-	double mu, mv;
-	Mat_<double> A = Mat_<double>::zeros(2*camNum, 4);
-	for (int i = 0 ; i < camNum; ++i) {
-		const Vec2d  &pt        = imgPoint[i];
-		const Camera &cam       = mvs.getCamera(camIdx[i]);
-
-		const Mat_<double> &m   = cam.getP();
-		const double sumrow2    = m.at<double>(2, 0) + m.at<double>(2, 1) + m.at<double>(2, 2) + m.at<double>(2, 3);
-		mu = m.at<double>(0, 3) - (sumrow2 * pt[0]);
-		mv = m.at<double>(1, 3) - (sumrow2 * pt[1]);
-
-		A.at<double>(i*2  , 0) = m.at<double>(0, 0);
-		A.at<double>(i*2  , 1) = m.at<double>(0, 1);
-		A.at<double>(i*2  , 2) = m.at<double>(0, 2);
-		A.at<double>(i*2  , 3) = mu;
-		A.at<double>(i*2+1, 0) = m.at<double>(1, 0);
-		A.at<double>(i*2+1, 1) = m.at<double>(1, 1);
-		A.at<double>(i*2+1, 2) = m.at<double>(1, 2);
-		A.at<double>(i*2+1, 3) = mv;
-	}
-
-	SVD svd(A, SVD::FULL_UV);
-	Mat_<double> x = svd.vt.row(3);
-	x = x / x.at<double>(3);
-	center[0] = x.at<double>(0);
-	center[1] = x.at<double>(1);
-	center[2] = x.at<double>(2);
-	*/
 
 	setEstimatedNormal();
 }
@@ -437,7 +410,7 @@ void Patch::setReferenceCameraIndex() {
 	if (refCamIdx < 0) {
 		printf("can't set reference camera camNum: %d maxCorr: %f\n", camNum, maxCorr);
 		refCamIdx = camIdx[0];
-		system("pause");
+		// system("pause");
 	}
 }
 
@@ -474,8 +447,8 @@ void Patch::setDepthRange() {
         }
     }
 
-	depthRange[0] = depth - maxWorldDist*0.25*mvs.cellSize;
-    depthRange[1] = depth + maxWorldDist*0.25*mvs.cellSize;
+	depthRange[0] = depth - maxWorldDist*mvs.depthRangeScalar;
+    depthRange[1] = depth + maxWorldDist*mvs.depthRangeScalar;
 }
 
 void Patch::setLOD() {
@@ -644,7 +617,7 @@ void Patch::removeInvisibleCamera() {
 			continue;
 		}
 		// filter by region ratio
-		if (getHomographyRegionRatio(pt, H[i]) < 0.5) {
+		if (getHomographyRegionRatio(pt, H[i]) < mvs.minRegionRatio) {
 			printf("filter by region ratio\n");
 			removeIdx.push_back(camIdx[i]);
 			continue;

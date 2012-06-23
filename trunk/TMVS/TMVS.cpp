@@ -28,12 +28,15 @@ int main(int argc, char* argv[])
 	config.patchRadius        = 15;
 	config.distWeighting      = config.patchRadius / 3.0;
 	config.diffWeighting      = 128*128;
-	config.minCamNum          = 3;
+	config.minCamNum          = 10;
 	config.textureVariation   = 300;
 	config.visibleCorrelation = 0.87;
 	config.minCorrelation     = 0.9;
 	config.minLOD             = 0;
-	config.maxCellPatchNum    = 5;
+	config.maxCellPatchNum    = 3;
+	config.neighborRadius     = 0.005;
+	config.minRegionRatio     = 0.5;
+	config.depthRangeScalar   = config.cellSize*0.25;
 	config.particleNum        = 15;
 	config.maxIteration       = 60;
 
@@ -53,9 +56,8 @@ int main(int argc, char* argv[])
 	//end_t = clock();
 	//printf("time1\t%f\n", (double)(end_t - start_t) / CLOCKS_PER_SEC);
 	
-	viewer = new MvsViewer(mvs, true, true);
+	//viewer = new MvsViewer(mvs, true, true);
 	
-	/*
 	mvs.refineSeedPatches();
 	mvs.writeMVS("seed.mvs");
 	mvs.setCellMaps();
@@ -68,7 +70,6 @@ int main(int argc, char* argv[])
 	mvs.neighborCellFiltering(0.1, 0.25);
 	printf("patches: %d\n", mvs.getPatches().size());
 	mvs.writeMVS("filter.mvs");
-	*/
 	
 	//debugFile.close();
 	return 0;
