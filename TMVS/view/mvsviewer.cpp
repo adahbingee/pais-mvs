@@ -32,6 +32,10 @@ void keyBoardEvent(const pcl::visualization::KeyboardEvent &event, void* viewer_
 		viewer.pointSize = max(viewer.pointSize-1, 1);
 		viewer.getPclViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, (double) viewer.pointSize, NAME_PATCH);
 		break;
+	case 'D':
+	case 'd':
+		viewer.toggleAxes();
+		break;
 	}
 }
 
@@ -88,7 +92,7 @@ void MvsViewer::init() {
 	normalEnable    = false;
 	backgroundColor = false;
 	colorEnable     = true;
-	update          = true;
+	axes            = true;
 }
 
 void MvsViewer::addCameras() {
@@ -242,6 +246,17 @@ void MvsViewer::toggleColor() {
 		colorEnable = true;
 	}
 
+	pclViewer.spinOnce(1);
+}
+
+void MvsViewer::toggleAxes() {
+	if (axes) {
+		pclViewer.removeCoordinateSystem();
+		axes = false;
+	} else {
+		pclViewer.addCoordinateSystem (0.1);
+		axes = true;
+	}
 	pclViewer.spinOnce(1);
 }
 

@@ -644,7 +644,7 @@ void Patch::removeInvisibleCamera() {
 			continue;
 		}
 		// filter by region ratio
-		if (getHomographyRegionRatio(pt, H[i]) < 0.6) {
+		if (getHomographyRegionRatio(pt, H[i]) < 0.5) {
 			printf("filter by region ratio\n");
 			removeIdx.push_back(camIdx[i]);
 			continue;

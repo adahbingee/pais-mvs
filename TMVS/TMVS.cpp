@@ -25,7 +25,7 @@ int main(int argc, char* argv[])
 	// MVS configures
 	MvsConfig config;
 	config.cellSize           = 10;
-	config.patchRadius        = 30;
+	config.patchRadius        = 15;
 	config.distWeighting      = config.patchRadius / 3.0;
 	config.diffWeighting      = 128*128;
 	config.minCamNum          = 3;
@@ -34,14 +34,14 @@ int main(int argc, char* argv[])
 	config.minCorrelation     = 0.9;
 	config.minLOD             = 0;
 	config.maxCellPatchNum    = 5;
-	config.particleNum        = 30;
-	config.maxIteration       = 200;
+	config.particleNum        = 15;
+	config.maxIteration       = 60;
 
 	// set MVS instance
 	MVS &mvs = MVS::getInstance(config);
 
 	// LOAD MVS file
-	mvs.loadNVM("../../../TMVS_data/mailbox/mailbox.nvm");
+	mvs.loadNVM2("../../../TMVS_data/temple/temple.nvm2");
 	//mvs.loadNVM((char*)argv[1]);
 	//mvs.loadMVS((char*)argv[1]);
 	//mvs.loadMVS("exp.mvs");
@@ -53,8 +53,9 @@ int main(int argc, char* argv[])
 	//end_t = clock();
 	//printf("time1\t%f\n", (double)(end_t - start_t) / CLOCKS_PER_SEC);
 	
-	//viewer = new MvsViewer(mvs, true, true);
+	viewer = new MvsViewer(mvs, true, true);
 	
+	/*
 	mvs.refineSeedPatches();
 	mvs.writeMVS("seed.mvs");
 	mvs.setCellMaps();
@@ -67,6 +68,7 @@ int main(int argc, char* argv[])
 	mvs.neighborCellFiltering(0.1, 0.25);
 	printf("patches: %d\n", mvs.getPatches().size());
 	mvs.writeMVS("filter.mvs");
+	*/
 	
 	//debugFile.close();
 	return 0;
