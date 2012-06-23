@@ -34,7 +34,7 @@ namespace PAIS {
 		bool normalEnable;    // hide normal       / show normal 
 		bool backgroundColor; // black background  / white background 
 		bool colorEnable;     // hide vertex color / show vertex color
-		bool update;
+		bool axes;
 
 		void init();
 		void addCameras();
@@ -58,6 +58,7 @@ namespace PAIS {
 		void toggleBackground();
 		void toggleNormal();
 		void toggleColor();
+		void toggleAxes();
 		const Patch* getPickedPatch(const int idx) const;
 		void printPatchInformation(const Patch &pth) const;
 		void showPickedPoint(const Patch &pth);
