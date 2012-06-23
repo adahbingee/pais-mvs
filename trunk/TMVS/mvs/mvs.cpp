@@ -91,9 +91,10 @@ void MVS::setCellMaps() {
 }
 
 void MVS::reCentering() {
+	printf("recomputing center\n");
 	map<int, Patch>::iterator it;
 	for (it = patches.begin(); it != patches.end(); ++it) {
-		Patch &pth                     = it->second;
+		Patch &pth = it->second;
 		pth.reCentering();
 	}
 }
@@ -103,13 +104,13 @@ void MVS::reCentering() {
 void MVS::loadNVM(const char* fileName) {
 	FileLoader::loadNVM(fileName, *this);
 	reCentering();
-	//initCellMaps();
+	initCellMaps();
 }
 
 void MVS::loadNVM2(const char *fileName) {
 	FileLoader::loadNVM2(fileName, *this);
-	//reCentering();
-	//initCellMaps();
+	reCentering();
+	initCellMaps();
 }
 
 void MVS::loadMVS(const char* fileName) {

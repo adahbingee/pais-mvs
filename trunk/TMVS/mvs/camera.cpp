@@ -96,9 +96,9 @@ Camera::Camera(const char *fileName, const Vec2d &focal, const Vec2d &principleP
 	}
 
 	// set intrisic matrix
-	double intrisic_data [] = {focal[0],      0.0, principlePoint[0],
-	                                  0, focal[1], principlePoint[1],
-	                                  0,        0,                 1};
+	double intrisic_data [] = {focal[0],      0.0, this->principlePoint[0],
+	                                  0, focal[1], this->principlePoint[1],
+	                                  0,        0,                       1};
 	intrinsic = Mat_<double>(3, 3, intrisic_data);
 	
 	// set rotation matrix

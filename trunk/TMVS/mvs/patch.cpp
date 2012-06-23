@@ -76,20 +76,56 @@ void Patch::reCentering() {
 	const MVS &mvs = MVS::getInstance();
 	const int camNum = getCameraNumber();
 	
+	Mat_<double> A = Mat_<double>::zeros(3, 3);
+	Mat_<double> b = Mat_<double>::zeros(3, 1);
+	for (int i = 0 ; i < camNum; ++i) {
+		const Vec2d  &pt        = imgPoint[i];
+		const Camera &cam       = mvs.getCamera(camIdx[i]);
+		const Vec3d  &camCenter = cam.getCenter();
+		const Vec2d  &principle = cam.getPrinciplePoint();
+		const Vec2d  &focal     = cam.getFocalLength();
+
+		// get pixel position in world coordinate
+		Mat p3d(3, 1, CV_64FC1);
+		p3d.at<double>(0, 0) = (pt[0] - principle[0]) / focal[0];
+		p3d.at<double>(1, 0) = (pt[1] - principle[1]) / focal[1];
+		p3d.at<double>(2, 0) = 1.0;
+		p3d = cam.getRotation().t() * (p3d - cam.getTranslation());
+
+		Vec3d n(p3d.at<double>(0, 0) - camCenter[0],
+			    p3d.at<double>(1, 0) - camCenter[1],
+				p3d.at<double>(2, 0) - camCenter[2]);
+		n = n * (1.0 / norm(n));
+
+		A.at<double>(0, 0) += 1 - n[0]*n[0];
+		A.at<double>(0, 1) += -n[0]*n[1];
+		A.at<double>(0, 2) += -n[0]*n[2];
+		A.at<double>(1, 0) += -n[0]*n[1];
+		A.at<double>(1, 1) += 1 - n[1]*n[1];
+		A.at<double>(1, 2) += -n[1]*n[2];
+		A.at<double>(2, 0) += -n[0]*n[2];
+		A.at<double>(2, 1) += -n[1]*n[2];
+		A.at<double>(2, 2) += 1 - n[2]*n[2];
+		b.at<double>(0, 0) += (1-n[0]*n[0])*camCenter[0] - n[0]*n[1]*camCenter[1] - n[0]*n[2]*camCenter[2];
+		b.at<double>(1, 0) += -n[0]*n[1]*camCenter[0] + (1-n[1]*n[1])*camCenter[1] - n[1]*n[2]*camCenter[2];
+		b.at<double>(2, 0) += -n[0]*n[2]*camCenter[0] - n[1]*n[2]*camCenter[1] + (1-n[2]*n[2])*camCenter[2];
+	}
+
+	Mat_<double> x = A.inv(DECOMP_SVD)*b;
+	center[0] = x.at<double>(0);
+	center[1] = x.at<double>(1);
+	center[2] = x.at<double>(2);
+	/*
 	double mu, mv;
 	Mat_<double> A = Mat_<double>::zeros(2*camNum, 4);
 	for (int i = 0 ; i < camNum; ++i) {
-		//const Vec2d  &pt        = imgPoint[i];
+		const Vec2d  &pt        = imgPoint[i];
 		const Camera &cam       = mvs.getCamera(camIdx[i]);
 
-		Vec2d pt;
-		cam.project(center, pt);
-
 		const Mat_<double> &m   = cam.getP();
-		Mat_<double> row2       = m.row(2);
-		const double sumrow2    = sum(row2)[0];
-		mu = m.at<double>(0, 3) - sumrow2 * pt[0];
-		mv = m.at<double>(1, 3) - sumrow2 * pt[1];
+		const double sumrow2    = m.at<double>(2, 0) + m.at<double>(2, 1) + m.at<double>(2, 2) + m.at<double>(2, 3);
+		mu = m.at<double>(0, 3) - (sumrow2 * pt[0]);
+		mv = m.at<double>(1, 3) - (sumrow2 * pt[1]);
 
 		A.at<double>(i*2  , 0) = m.at<double>(0, 0);
 		A.at<double>(i*2  , 1) = m.at<double>(0, 1);
@@ -101,12 +137,13 @@ void Patch::reCentering() {
 		A.at<double>(i*2+1, 3) = mv;
 	}
 
-	SVD svd(A.t() * A, SVD::FULL_UV);
-	Mat_<double> v = svd.vt.t();
-	Mat_<double> x = v.col(3);
-	center[0] = x.at<double>(0, 0) / x.at<double>(3, 0);
-	center[1] = x.at<double>(1, 0) / x.at<double>(3, 0);
-	center[2] = x.at<double>(2, 0) / x.at<double>(3, 0);
+	SVD svd(A, SVD::FULL_UV);
+	Mat_<double> x = svd.vt.row(3);
+	x = x / x.at<double>(3);
+	center[0] = x.at<double>(0);
+	center[1] = x.at<double>(1);
+	center[2] = x.at<double>(2);
+	*/
 
 	setEstimatedNormal();
 }
@@ -415,8 +452,6 @@ void Patch::setDepthRange() {
     const int camNum = getCameraNumber();
     const Camera &refCam = mvs.getCamera(refCamIdx);
 
-	const double cellSize = mvs.cellSize;
-
     // center shift
     Vec3d c2 = ray * (depth+1.0) + refCam.getCenter();
     // projected point
@@ -439,8 +474,8 @@ void Patch::setDepthRange() {
         }
     }
 
-	depthRange[0] = depth - max(cellSize, 5.0) * maxWorldDist;
-    depthRange[1] = depth + max(cellSize, 5.0) * maxWorldDist;
+	depthRange[0] = depth - maxWorldDist*0.25*mvs.cellSize;
+    depthRange[1] = depth + maxWorldDist*0.25*mvs.cellSize;
 }
 
 void Patch::setLOD() {
