@@ -14,45 +14,8 @@ extern void addPatchView(const Patch &pth);
 namespace PAIS {
 	class Patch;
 
-	struct MvsConfig {
-		// image cell size (pixel*pixel)
-		int cellSize;
-		// patch radius in pixel
-		int patchRadius;
-		// minimum visible camera number
-		int minCamNum;
-		// normalized intensity variation in patch
-		double textureVariation;
-		// expand visible camera
-		double visibleCorrelation;
-		// minimum patch correlation when filtering patch visible camera
-		double minCorrelation;
-		// minimum LOD
-		int minLOD;
-		// maxium cell patch number
-		int maxCellPatchNum;
-		// patch distance weighting
-		double distWeighting;
-		// patch difference weighting
-		double diffWeighting;
-		// neighbor radius
-		double neighborRadius;
-		// PSO parameter
-		// particle number
-		int particleNum;
-		// maximum iteration number
-		int maxIteration;
-	};
-
-	class MVS {
-	private:
-		// instance holder
-		static MVS *instance;
-
-		// constructor
-		MVS(const MvsConfig &config);
-		~MVS(void);
-
+	class MvsConfig {
+	public:
 		// image cell size (pixel*pixel)
 		int cellSize;
 		// patch radius in pixel
@@ -77,12 +40,25 @@ namespace PAIS {
 		double diffWeighting;
 		// neighbor radius
 		double neighborRadius;
-
+		// minimum region ratio
+		double minRegionRatio;
+		// depth range scalar (pixel)
+		double depthRangeScalar;
 		// PSO parameter
 		// particle number
 		int particleNum;
 		// maximum iteration number
 		int maxIteration;
+	};
+
+	class MVS : private MvsConfig {
+	private:
+		// instance holder
+		static MVS *instance;
+
+		// constructor
+		MVS(const MvsConfig &config);
+		~MVS(void);
 
 		// camera container
 		vector<Camera>  cameras;

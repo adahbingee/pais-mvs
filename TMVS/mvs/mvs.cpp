@@ -24,6 +24,9 @@ MVS::MVS(const MvsConfig &config) {
 	this->maxCellPatchNum    = config.maxCellPatchNum;
 	this->distWeighting      = config.distWeighting;
 	this->diffWeighting      = config.diffWeighting;
+	this->neighborRadius     = config.neighborRadius;
+	this->minRegionRatio     = config.minRegionRatio;
+	this->depthRangeScalar   = config.depthRangeScalar;
 	this->particleNum        = config.particleNum;
 	this->maxIteration       = config.maxIteration;
 	
