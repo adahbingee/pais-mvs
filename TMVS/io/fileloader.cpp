@@ -152,9 +152,9 @@ Patch FileLoader::loadNvmPatch(ifstream &file, const MVS &mvs) {
 		// 2D image point
 		Vec2d p;
         strip  = strtok(NULL, DELIMITER);
-		p[0] = atof(strip) + cam.getPrinciplePoint()[0];
+		p[0] = atof(strip) + cam.getRgbImage().cols / 2;
         strip  = strtok(NULL, DELIMITER);
-		p[1] = atof(strip) + cam.getPrinciplePoint()[1];
+		p[1] = atof(strip) + cam.getRgbImage().rows / 2;
 		imgPoint.push_back(p);
 	}
 

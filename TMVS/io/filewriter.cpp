@@ -24,6 +24,7 @@ void FileWriter::writeCamera(fstream &file, const PAIS::Camera &camera) {
 	const Vec4d &quaternion       = camera.getQuaternion();
 	const Vec3d &center           = camera.getCenter();
 	const double radialDistortion = camera.getRadialDistortion();
+	const Vec2d &principle        = camera.getPrinciplePoint();
 	// write image file name length (int)
 	file.write((char*) &fileNameLength, sizeof(int));
 	// write image file name (char * length)
@@ -32,6 +33,8 @@ void FileWriter::writeCamera(fstream &file, const PAIS::Camera &camera) {
 	writeVec(file, center);
 	// wirte camera focal length
 	writeVec(file, focal);
+	// write principle point
+	writeVec(file, principle);
 	// write rotation quaternion
 	writeVec(file, quaternion);
 	// write radial distortion
