@@ -35,7 +35,7 @@ int main(int argc, char* argv[])
 	config.minLOD             = 0;
 	config.maxCellPatchNum    = 3;
 	config.neighborRadius     = 0.005;
-	config.minRegionRatio     = 0.5;
+	config.minRegionRatio     = 0.55;
 	config.depthRangeScalar   = config.cellSize*0.25;
 	config.particleNum        = 15;
 	config.maxIteration       = 60;

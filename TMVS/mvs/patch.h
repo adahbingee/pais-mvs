@@ -21,8 +21,8 @@ namespace PAIS {
 		void setCorrelationTable(const vector<Mat_<double>> &H);
 		// get homography region ratio
 		double getHomographyRegionRatio(const Vec2d &pt, const Mat_<double> &H) const;
-		// get homography texture 1D vector [true: drop, false: preserve]
-		bool getHomographyPatch(const Vec2d &pt, const Mat_<uchar> &img, const Mat_<double> &H, Mat_<double> &hp) const;
+		// get homography texture 1D vector
+		void getHomographyPatch(const Vec2d &pt, const Mat_<uchar> &img, const Mat_<double> &H, Mat_<double> &hp);
 		// expand visible camera using normal correlation
 		void expandVisibleCamera();
 		// do pso optimization 
