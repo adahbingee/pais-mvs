@@ -286,6 +286,8 @@ bool PsoSolver::setParticle(const double *pos, const double *vec, const int idx)
 void PsoSolver::run(const bool enableGLNPSO, const double minIw) {
 	this->enableGLNPSO = enableGLNPSO;
 	initFitness();
+	gBest        = particles[0].pBest;
+	gBestFitness = particles[0].pBestFitness;
 	updateGbest();
 
 	for (iteration = 0; iteration < maxIteration; iteration++) {
