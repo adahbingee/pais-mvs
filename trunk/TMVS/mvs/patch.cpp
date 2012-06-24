@@ -157,6 +157,12 @@ void Patch::refine() {
 		// do pso optimization
 		psoOptimization();
 
+		// skip fail optimization
+		if (fitness > 1000) {
+			drop = true;
+			break;
+		}
+
 		// update information
 		setReferenceCameraIndex();
 		setDepthAndRay();
@@ -217,12 +223,7 @@ void Patch::setCorrelationTable(const vector<Mat_<double>> &H) {
 	#pragma omp parallel for
 	for (int i = 0; i < camNum; i++) {
 		const Mat_<uchar> &img = cameras[camIdx[i]].getPyramidImage(LOD);
-		bool drop = false;
-		drop |= getHomographyPatch(pt, img, H[i], HP[i]);
-		#pragma omp critical 
-		{
-			this->drop |= drop;
-		}
+		getHomographyPatch(pt, img, H[i], HP[i]);
 	}
 
 	// drop patch if out of boundary
@@ -322,7 +323,10 @@ void Patch::getHomographies(const Vec3d &center, const Vec3d &normal, vector<Mat
 	}
 }
 
-bool Patch::getHomographyPatch(const Vec2d &pt, const Mat_<uchar> &img, const Mat_<double> &H, Mat_<double> &hp) const {
+void Patch::getHomographyPatch(const Vec2d &pt, const Mat_<uchar> &img, const Mat_<double> &H, Mat_<double> &hp) {
+
+	if (this->drop) return;
+
 	const MVS &mvs = MVS::getInstance();
 	const int patchRadius = mvs.patchRadius;
 	const int patchSize   = mvs.patchSize;
@@ -343,8 +347,12 @@ bool Patch::getHomographyPatch(const Vec2d &pt, const Mat_<uchar> &img, const Ma
 
 			// skip overflow cases
 			if (ix < 0 || ix >= img.cols-1 || iy < 0 || iy >= img.rows-1 || w == 0) {
-				printf("ID %d \t correlation overflow %f \t %f\n", getId(), ix, iy);
-				return true;
+				// printf("ID %d \t corr overflow x:%f \t y:%f LOD:%d fit:%f\n", getId(), ix, iy, LOD, fitness);
+				#pragma omp critical 
+				{
+					this->drop = true;
+				}
+				return;
 			}
 
 			// interpolation neighbor points
@@ -368,7 +376,7 @@ bool Patch::getHomographyPatch(const Vec2d &pt, const Mat_<uchar> &img, const Ma
 	}
 
 	hp /= sqrt(sum);
-	return false;
+	return;
 }
 
 /* setters */
@@ -549,6 +557,7 @@ void Patch::setLOD() {
 }
 
 void Patch::setPriority() {
+	if (drop) return;
 	const MVS &mvs = MVS::getInstance();
 	const int totalCamNum = (int) mvs.getCameras().size();
 	const int camNum = getCameraNumber();
@@ -557,6 +566,7 @@ void Patch::setPriority() {
 }
 
 void Patch::setImagePoint() {
+	if (drop) return;
 	const MVS &mvs                = MVS::getInstance();
 	const int camNum              = getCameraNumber();
 	const vector<Camera> &cameras = mvs.getCameras();
@@ -618,7 +628,6 @@ void Patch::removeInvisibleCamera() {
 		}
 		// filter by region ratio
 		if (getHomographyRegionRatio(pt, H[i]) < mvs.minRegionRatio) {
-			printf("filter by region ratio\n");
 			removeIdx.push_back(camIdx[i]);
 			continue;
 		}
@@ -897,7 +906,7 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 				iy = ( H[i].at<double>(1, 0) * x + H[i].at<double>(1, 1) * y + H[i].at<double>(1, 2) ) / w;
 
 				// skip overflow cases
-				if (ix < 0 || ix >= img.cols-1 || iy < 0 || iy >= img.rows-1 || w == 0) {
+				if (ix < 2 || ix >= img.cols-3 || iy < 2 || iy >= img.rows-3 || w == 0) {
 					delete [] c;
 					return DBL_MAX;
 				}
