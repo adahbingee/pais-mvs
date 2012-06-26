@@ -94,5 +94,70 @@ void FileWriter::writeMVS(const char *fileName, const MVS &mvs) {
 }
 
 void FileWriter::writePLY(const char *fileName, const MVS &mvs) {
-	
+	const map<int, Patch> &patches = mvs.getPatches();
+	map<int, Patch>::const_iterator it;
+	ofstream file;
+	file.open(fileName, ofstream::out);
+	if ( !file.is_open() ) {
+		printf("Can't open file %s\n", fileName);
+		return;
+	}
+
+	file << "ply" << endl;
+	file << "format ascii 1.0"             << endl;
+	file << "element vertex " << patches.size() << endl;
+	file << "property float x"             << endl;
+	file << "property float y"             << endl;
+	file << "property float z"             << endl;
+	file << "property float nx"             << endl;
+	file << "property float ny"             << endl;
+	file << "property float nz"             << endl;
+	file << "property uchar diffuse_red"   << endl;
+	file << "property uchar diffuse_green" << endl;
+	file << "property uchar diffuse_blue"  << endl;
+	file << "end_header"                   << endl;
+
+	for (it = patches.begin(); it != patches.end(); ++it) {
+		const Patch &pth = it->second;
+		const Vec3d &p   = pth.getCenter();
+		const Vec3d &n   = pth.getNormal();
+		const Vec3b &c   = pth.getColor();
+		file << p[0] << " " << p[1] << " " << p[2] << " ";
+		file << n[0] << " " << n[1] << " " << n[2] << " ";
+		file << int(c[2]) << " " << int(c[1]) << " " << int(c[0]) << endl;
+	}
+
+	file.close();
+}
+
+void FileWriter::wirtePSR(const char *fileName, const MVS &mvs) {
+	const map<int, Patch> &patches = mvs.getPatches();
+	map<int, Patch>::const_iterator it;
+	ofstream file;
+	file.open(fileName, ofstream::binary);
+	if ( !file.is_open() ) {
+		printf("Can't open file %s\n", fileName);
+		return;
+	}
+
+	for (it = patches.begin(); it != patches.end(); ++it) {
+		const Patch &pth = it->second;
+		const Vec3d &p   = pth.getCenter();
+		const Vec3d &n   = pth.getNormal();
+		float num;
+		num = p[0];
+		file.write((char*) &num, sizeof(float));
+		num = p[1];
+		file.write((char*) &num, sizeof(float));
+		num = p[2];
+		file.write((char*) &num, sizeof(float));
+		num = n[0];
+		file.write((char*) &num, sizeof(float));
+		num = n[1];
+		file.write((char*) &num, sizeof(float));
+		num = n[2];
+		file.write((char*) &num, sizeof(float));
+	}
+
+	file.close();
 }
