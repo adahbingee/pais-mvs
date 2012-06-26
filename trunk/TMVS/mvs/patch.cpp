@@ -5,15 +5,6 @@ extern ofstream debugFile;
 
 /* static functions */
 bool Patch::isNeighbor(const Patch &pth1, const Patch &pth2) {
-	/*
-	const Vec3d &n1 = pth1.getNormal();
-	const Vec3d &n2 = pth2.getNormal();
-	if (n1.ddot(n2) > 0.99) {
-		return true;
-	}
-	return false;
-	*/
-
 	const MVS &mvs = mvs.getInstance();
 
 	const Vec3d &c1 = pth1.getCenter();
@@ -847,8 +838,8 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 	int LOD = patch.getLOD();
 
 	// camera parameters
-	const Camera &refCam  = mvs.getCamera(patch.getReferenceCameraIndex());
-	const int camNum = patch.getCameraNumber();
+	const Camera &refCam       = mvs.getCamera(patch.getReferenceCameraIndex());
+	const int camNum           = patch.getCameraNumber();
 	const Mat_<uchar> &edgeImg = refCam.getPyramidEdge(LOD);
 
 	// given patch normal

@@ -121,8 +121,16 @@ void MVS::loadMVS(const char* fileName) {
 	initCellMaps();
 }
 
-void MVS::writeMVS(const char* fileName) {
+void MVS::writeMVS(const char* fileName) const {
 	FileWriter::writeMVS(fileName, *this);
+}
+
+void MVS::writePLY(const char *fileName) const {
+	FileWriter::writePLY(fileName, *this);
+}
+
+void MVS::writePSR(const char *fileName) const {
+	FileWriter::wirtePSR(fileName, *this);
 }
 
 /* main functions */
@@ -435,6 +443,8 @@ void MVS::expandNeighborCell(const Patch &pth) {
 
 	int cx, cy;
 	for (int i = 0; i < camNum; ++i) {
+		// only expansion visible image cell
+		if (camIdx[i] != pth.getReferenceCameraIndex()) continue;
 		// camera
 		const Camera &cam = cameras[camIdx[i]];
 		// cell map
