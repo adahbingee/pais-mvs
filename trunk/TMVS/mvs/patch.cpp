@@ -291,8 +291,8 @@ void Patch::getHomographies(const Vec3d &center, const Vec3d &normal, vector<Mat
 
 	// LOD scalar for camera intrisic matrix K
 	Mat_<double> LODM = Mat_<double>::zeros(3, 3);
-	LODM.at<double>(0, 0) = 1.0/(1<<LOD);
-	LODM.at<double>(1, 1) = 1.0/(1<<LOD);
+	LODM.at<double>(0, 0) = pow(mvs.lodRatio, LOD);
+	LODM.at<double>(1, 1) = pow(mvs.lodRatio, LOD);
 	LODM.at<double>(2, 2) = 1.0;
 
 	// get homography from reference to target image
@@ -337,7 +337,7 @@ void Patch::getHomographyPatch(const Vec2d &pt, const Mat_<uchar> &img, const Ma
 			iy = ( H.at<double>(1, 0) * x + H.at<double>(1, 1) * y + H.at<double>(1, 2) ) / w;
 
 			// skip overflow cases
-			if (ix < 0 || ix >= img.cols-1 || iy < 0 || iy >= img.rows-1 || w == 0) {
+			if (ix < 0 || ix >= img.cols-1 || iy < 0 || iy >= img.rows-1 || w == 0 || this->drop) {
 				// printf("ID %d \t corr overflow x:%f \t y:%f LOD:%d fit:%f\n", getId(), ix, iy, LOD, fitness);
 				#pragma omp critical 
 				{
@@ -355,7 +355,7 @@ void Patch::getHomographyPatch(const Vec2d &pt, const Mat_<uchar> &img, const Ma
 			py[2] = py[0] + 1;
 			px[3] = px[0] + 1;
 			py[3] = py[0] + 1;
-				
+
 			hp.at<double>(count, 0) = (double) img.at<uchar>(py[0], px[0])*(px[1]-ix)*(py[2]-iy) + 
 					                  (double) img.at<uchar>(py[1], px[1])*(ix-px[0])*(py[2]-iy) + 
 					                  (double) img.at<uchar>(py[2], px[2])*(px[1]-ix)*(iy-py[0]) + 
@@ -529,21 +529,21 @@ void Patch::setLOD() {
     }
 
     /* show pyramid */
-    /*
+	/*
     if (LOD > 0) {
         char title[30];
         for (int l = 0; l <= LOD; l++) {
             refCam.project(center, pt, l);
             sprintf(title, "LOD %d", l);
-            Mat img = pyramid[l].clone();
-            circle(img, Point(cvRound(pt[0]), cvRound(pt[1])), max(patchRadius, 5), Scalar(255,255,255), 2, CV_AA);
+			Mat img = refCam.getPyramidEdge(l).clone();
+            circle(img, Point(cvRound(pt[0]), cvRound(pt[1])), max(patchRadius, 5), Scalar(255,0,0), 1, CV_AA);
             imshow(title, img);
             cvMoveWindow(title, 0, 0);
         }
         waitKey();
         destroyAllWindows();
     }
-    */
+	*/
     delete [] textures;
 }
 
@@ -698,10 +698,10 @@ void Patch::showRefinedResult() const {
 	for (int i = 0; i < camNum; i++) {
 		const Camera &cam = mvs.getCameras()[camIdx[i]];
 		Mat_<Vec3b> img = cam.getRgbImage().clone();
-		resize(img, img, Size(img.cols/(1<<LOD), img.rows/(1<<LOD) ) );
+		resize(img, img, Size(img.cols*pow(mvs.lodRatio, LOD), img.rows*pow(mvs.lodRatio, LOD) ) );
 
 		// homography projection
-		Mat F = Utility::getFundamental(refCam, cam);
+		// Mat F = Utility::getFundamental(refCam, cam);
 		for (int c = 0; c < 5; c++) {
 			w  =   H[i].at<double>(2, 0) * x[c] + H[i].at<double>(2, 1) * y[c] + H[i].at<double>(2, 2);
 			ix[c] = ( H[i].at<double>(0, 0) * x[c] + H[i].at<double>(0, 1) * y[c] + H[i].at<double>(0, 2) ) / w;
@@ -840,7 +840,7 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 	// camera parameters
 	const Camera &refCam       = mvs.getCamera(patch.getReferenceCameraIndex());
 	const int camNum           = patch.getCameraNumber();
-	const Mat_<uchar> &edgeImg = refCam.getPyramidEdge(LOD);
+	const Mat_<double> &edgeImg = refCam.getPyramidEdge(LOD);
 
 	// given patch normal
 	Vec3d normal;
@@ -884,7 +884,11 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 			mean   = 0;
 			avgSad = 0;
 
-			weight = (double) edgeImg.at<uchar>(cvRound(y), cvRound(x));
+			if (x < 2 || x >= edgeImg.cols-3 || y < 2 || y >= edgeImg.rows-3) {
+				delete [] c;
+				return DBL_MAX;
+			}
+			weight = (double) edgeImg.at<double>(cvRound(y), cvRound(x));
 
 			if (weight == 0) continue;
 

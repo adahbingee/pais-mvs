@@ -21,6 +21,8 @@ MVS::MVS(const MvsConfig &config) {
 	this->textureVariation   = config.textureVariation;
 	this->minCorrelation     = config.minCorrelation;
 	this->minLOD             = config.minLOD;
+	this->maxLOD             = config.maxLOD;
+	this->lodRatio           = config.lodRatio;
 	this->maxCellPatchNum    = config.maxCellPatchNum;
 	this->distWeighting      = config.distWeighting;
 	this->diffWeighting      = config.diffWeighting;
@@ -107,18 +109,15 @@ void MVS::reCentering() {
 void MVS::loadNVM(const char* fileName) {
 	FileLoader::loadNVM(fileName, *this);
 	reCentering();
-	initCellMaps();
 }
 
 void MVS::loadNVM2(const char *fileName) {
 	FileLoader::loadNVM2(fileName, *this);
 	reCentering();
-	initCellMaps();
 }
 
 void MVS::loadMVS(const char* fileName) {
 	FileLoader::loadMVS(fileName, *this);
-	initCellMaps();
 }
 
 void MVS::writeMVS(const char* fileName) const {
@@ -168,6 +167,8 @@ void MVS::refineSeedPatches() {
 }
 
 void MVS::expansionPatches() {
+	setCellMaps();
+
 	int pthId = getTopPriorityPatchId();
 	int count = 0;
 	while ( pthId >= 0) {
@@ -610,14 +611,15 @@ int MVS::getTopPriorityPatchId() const {
 }
 
 bool MVS::patchFilter(const Patch &pth) const {
-	if (pth.isDropped())                   return false;
-	if (pth.getCameraNumber() < minCamNum) return false;
-	if (pth.getFitness() >= 10000)         return false;
-	if (pth.getFitness() == 0.0)           return false;
-	if (pth.getPriority() > 10000)         return false;
-	if (_isnan(pth.getFitness()))          return false;
-	if (_isnan(pth.getPriority()))         return false;
-	if (_isnan(pth.getCorrelation()))      return false;
+	if (pth.isDropped())                       return false;
+	if (pth.getCameraNumber() < minCamNum)     return false;
+	if (pth.getFitness() >= 10000)             return false;
+	if (pth.getFitness() == 0.0)               return false;
+	if (pth.getPriority() > 10000)             return false;
+	if (_isnan(pth.getFitness()))              return false;
+	if (_isnan(pth.getPriority()))             return false;
+	if (_isnan(pth.getCorrelation()))          return false;
+	if (pth.getCorrelation() < minCorrelation) return false;
 
 	// skip background
 	Vec2d pt;

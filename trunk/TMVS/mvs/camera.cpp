@@ -45,6 +45,8 @@ Camera::~Camera(void) {
 Camera::Camera(const char *fileName, const Vec2d &focal, const Vec2d &principlePoint, const Vec4d &quaternion, const Vec3d &center, const double radialDistortion) {
 	_isAvaliable = false;
 
+	const MVS &mvs = MVS::getInstance();
+
 	// read RGB image
 	imgRGB = imread(fileName);
 
@@ -58,27 +60,35 @@ Camera::Camera(const char *fileName, const Vec2d &focal, const Vec2d &principleP
 	strcpy(this->fileName, fileName);
 
 	// get max level of detail
-	maxLOD = (int) ( log( (double) max(imgRGB.cols, imgRGB.rows) ) / log(2.0) );
-	maxLOD = min(maxLOD, 5);
+	maxLOD = (int) ( log( (double) max(imgRGB.cols, imgRGB.rows) ) / log(1.0/mvs.lodRatio) );
+	maxLOD = min(maxLOD, mvs.maxLOD);
 
 	// read gray level image pyramid
-	imgPyramid.resize(maxLOD);
-	edgePyramid.resize(maxLOD);
+	imgPyramid.resize(maxLOD+1);
+	edgePyramid.resize(maxLOD+1);
 	imgPyramid[0] = imread(fileName, 0);
 
-	Mat_<uchar> gradientX, gradientY;
-	Sobel(imgPyramid[0], gradientX, CV_8U, 1, 0, 1);
-	Sobel(imgPyramid[0], gradientY, CV_8U, 0, 1, 1);
-	edgePyramid[0] = abs(gradientX + gradientY);
-	
+	Mat_<double> gradientX, gradientY;
+	Sobel(imgPyramid[0], gradientX, CV_64F, 1, 0, 1);
+	Sobel(imgPyramid[0], gradientY, CV_64F, 0, 1, 1);
+	sqrt(gradientX.mul(gradientX) + gradientY.mul(gradientY), edgePyramid[0]);
+	double minG, maxG;
+	minMaxLoc(edgePyramid[0], &minG, &maxG);
+	edgePyramid[0] = (edgePyramid[0] - minG) / (maxG - minG);
+
 	#pragma omp parallel for
-	for (int i = 1; i < maxLOD; i++) {
-		double size = 1.0 / (1<<i);
-		resize(imgPyramid[0], imgPyramid[i], Size(), size, size, INTER_AREA);
+	for (int i = 1; i <= maxLOD; i++) {
+		double size = pow(mvs.lodRatio, i);
 		Mat_<uchar> gradientX, gradientY;
-		Sobel(imgPyramid[i], gradientX, CV_8U, 1, 0, 1);
-		Sobel(imgPyramid[i], gradientY, CV_8U, 0, 1, 1);
-		edgePyramid[i] = abs(gradientX + gradientY);
+		double minG, maxG;
+
+		resize(imgPyramid[0], imgPyramid[i], Size(), size, size, INTER_AREA);
+
+		Sobel(imgPyramid[i], gradientX, CV_64F, 1, 0, 1);
+		Sobel(imgPyramid[i], gradientY, CV_64F, 0, 1, 1);
+		sqrt(gradientX.mul(gradientX) + gradientY.mul(gradientY), edgePyramid[i]);
+		minMaxLoc(edgePyramid[i], &minG, &maxG);
+		edgePyramid[i] = (edgePyramid[i] - minG) / (maxG - minG);
 	}
 
 	// set focal length
@@ -126,6 +136,8 @@ Camera::Camera(const char *fileName, const Vec2d &focal, const Vec2d &principleP
 }
 
 bool Camera::project(const Vec3d &in3D, Vec2d &out2D, const int LOD, const bool applyDistortion) const {
+	const MVS &mvs = MVS::getInstance();
+
 	Mat X2 = rotation * Mat(in3D, false) + translation;
 	
 	if ( !applyDistortion ) {
@@ -142,8 +154,7 @@ bool Camera::project(const Vec3d &in3D, Vec2d &out2D, const int LOD, const bool 
 		out2D[1]  = (1.0+r) * focal[1] * out2D[1] + principlePoint[1];
     }
 
-	out2D[0] /= 1<<LOD;
-    out2D[1] /= 1<<LOD;
+	out2D *= pow(mvs.lodRatio, LOD);
 
 	return inImage(out2D, LOD);
 }

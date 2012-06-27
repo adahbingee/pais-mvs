@@ -8,6 +8,8 @@ using namespace PAIS;
 
 namespace PAIS {
 
+	class Camera;
+
 	typedef vector<vector<vector<int> > > Map;
 
 	class CellMap {

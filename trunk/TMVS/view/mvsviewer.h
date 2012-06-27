@@ -31,10 +31,11 @@ namespace PAIS {
 
 		// viewer flags (default:false)
 		// false/true
-		bool normalEnable;    // hide normal       / show normal 
-		bool backgroundColor; // black background  / white background 
-		bool colorEnable;     // hide vertex color / show vertex color
-		bool axes;
+		bool normalEnable;    // hide normal          / show normal 
+		bool backgroundColor; // black background     / white background 
+		bool colorEnable;     // hide vertex color    / show vertex color
+		bool cameraEnable;    // hide cameras         / show cameras
+		bool axes;            // hide coordinate axes / show coordinate axes
 
 		void init();
 		void addCameras();
