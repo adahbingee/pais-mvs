@@ -4,10 +4,10 @@
 
 #include <opencv2\opencv.hpp>
 
-#include "camera.h"
+//#include "camera.h"
 
+//using namespace PAIS;
 using namespace cv;
-using namespace PAIS;
 
 namespace PAIS {
 
@@ -28,6 +28,7 @@ namespace PAIS {
             out[2] = cos(in[0]);
         }
 
+		/*
 		// get fundamental matrix xT'*F*xF = 0
 		inline static Mat getFundamental(const Camera &camFrom, const Camera &camTo) {
 			// F = eTx * pT * pF^-1;
@@ -45,6 +46,7 @@ namespace PAIS {
 			const Mat pFinv = pF.inv(DECOMP_SVD);
 			return exT*pT*pFinv;
 		}
+		*/
 	};
 };
 

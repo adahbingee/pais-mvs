@@ -12,6 +12,8 @@
 extern void addPatchView(const Patch &pth);
 
 namespace PAIS {
+	class CellMap;
+	class Camera;
 	class Patch;
 
 	class MvsConfig {
@@ -30,8 +32,12 @@ namespace PAIS {
 		double visibleCorrelation;
 		// minimum patch correlation when filtering patch visible camera
 		double minCorrelation;
+		// LOD ratio
+		double lodRatio;
 		// minimum LOD
 		int minLOD;
+		// maximum LOD
+		int maxLOD;
 		// maxium cell patch number
 		int maxCellPatchNum;
 		// patch distance weighting
@@ -75,6 +81,8 @@ namespace PAIS {
 		void initPatchDistanceWeighting();
 		// re-centering patches
 		void reCentering();
+		// set initialize cell maps and project inti cells
+		void setCellMaps();
 
 
 		void expandNeighborCell(const Patch &pth);
@@ -96,6 +104,7 @@ namespace PAIS {
 	public:
 		friend class FileLoader;
 		friend class Patch;
+		friend class Camera;
 
 		static MVS& getInstance() { return *instance; }
 		static MVS& getInstance(const MvsConfig &config);
@@ -125,7 +134,6 @@ namespace PAIS {
 		double getDistanceWeight()     const { return distWeighting;      }
 		int    getMinLOD()             const { return minLOD;             }
 
-		void setCellMaps();
 		void refineSeedPatches();
 		void expansionPatches();
 		void patchQuantization(const int thetaNum, const int phiNum, const int distNum);

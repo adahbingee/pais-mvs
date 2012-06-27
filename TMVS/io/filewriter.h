@@ -12,6 +12,7 @@ using namespace cv;
 
 namespace PAIS {
 	class MVS;
+	class Camera;
 	class Patch;
 
 	class FileWriter {

@@ -6,6 +6,7 @@
 #include <vector>
 
 #include <opencv2\opencv.hpp>
+#include "mvs.h"
 
 using namespace std;
 using namespace cv;
@@ -30,7 +31,7 @@ namespace PAIS {
 
 		// gray level image pyramid from 0 = original size to vector size = 1 pixel size
 		vector<Mat_<uchar> > imgPyramid;
-		vector<Mat_<uchar> > edgePyramid;
+		vector<Mat_<double> > edgePyramid;
 
 		// camera focal length, K = [fx, 0, cx; 0 fy cy; 0 0 1]
 		Vec2d focal;
@@ -73,13 +74,13 @@ namespace PAIS {
 		~Camera(void);
 
 		// get image information
-		const char* getFileName()                       const { return fileName;         }
-		const Mat_<Vec3b>& getRgbImage()                const { return imgRGB;           }
-		const Mat_<bool>& getMaskImage()                const { return imgMask;          }
-		const vector<Mat_<uchar> >& getPyramidImage()   const { return imgPyramid;       }
-		const Mat_<uchar>& getPyramidImage(const int i) const { return imgPyramid[i];    }
-		const vector<Mat_<uchar> >& getPyramidEdge()    const { return edgePyramid;      }
-		const Mat_<uchar>& getPyramidEdge(const int i)  const { return edgePyramid[i];   }
+		const char* getFileName()                         const { return fileName;         }
+		const Mat_<Vec3b>& getRgbImage()                  const { return imgRGB;           }
+		const Mat_<bool>& getMaskImage()                  const { return imgMask;          }
+		const vector<Mat_<uchar> >& getPyramidImage()     const { return imgPyramid;       }
+		const Mat_<uchar>& getPyramidImage(const int LOD) const { return imgPyramid[LOD];  }
+		const vector<Mat_<double> >& getPyramidEdge()      const { return edgePyramid;      }
+		const Mat_<double>& getPyramidEdge(const int LOD)  const { return edgePyramid[LOD]; }
 
 		// get intrinsic information
 		const Vec2d& getFocalLength()                   const { return focal;            }
@@ -110,6 +111,10 @@ namespace PAIS {
 		
 		// get 2d point is in image or not using a specified level of detail image (0 for original size) 
 		bool inImage(const Vec2d &in2D, const int LOD) const {
+			if (LOD >= maxLOD) {
+				printf("LOD index out of bound\n");
+			}
+			
 			if (_isnan(in2D[0]) || _isnan(in2D[1])) {
 				return false;
 			}
@@ -122,6 +127,10 @@ namespace PAIS {
 		}
 
 		bool inImage(const int x, const int y, const int LOD) const {
+			if (LOD >= maxLOD) {
+				printf("LOD index out of bound\n");
+			}
+
 			if (_isnan(x) || _isnan(y)) {
 				return false;
 			}
