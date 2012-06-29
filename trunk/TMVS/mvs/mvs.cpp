@@ -14,6 +14,16 @@ MVS& MVS::getInstance(const MvsConfig &config) {
 }
 
 MVS::MVS(const MvsConfig &config) {
+	setConfig(config);
+}
+
+MVS::~MVS(void) {
+
+}
+
+/* initialize */
+
+void MVS::setConfig(const MvsConfig &config) {
 	this->cellSize           = config.cellSize;
 	this->patchRadius        = config.patchRadius;
 	this->minCamNum          = config.minCamNum;
@@ -31,16 +41,12 @@ MVS::MVS(const MvsConfig &config) {
 	this->depthRangeScalar   = config.depthRangeScalar;
 	this->particleNum        = config.particleNum;
 	this->maxIteration       = config.maxIteration;
-	
-	this->patchSize        = (patchRadius<<1)+1;
+	this->patchSize          = (patchRadius<<1)+1;
+
+	printConfig();
+
 	initPatchDistanceWeighting();
 }
-
-MVS::~MVS(void) {
-
-}
-
-/* initialize */
 
 bool MVS::initCellMaps() {
 	if (cameras.empty()) {
@@ -96,12 +102,15 @@ void MVS::setCellMaps() {
 }
 
 void MVS::reCentering() {
-	printf("recomputing center\n");
+	int count = 1;
+	int num   = (int) patches.size();
 	map<int, Patch>::iterator it;
-	for (it = patches.begin(); it != patches.end(); ++it) {
+	for (it = patches.begin(); it != patches.end(); ++it, ++count) {
+		printf("\rre-triangulation: %d / %d", count, num);
 		Patch &pth = it->second;
 		pth.reCentering();
 	}
+	printf("\n");
 }
 
 /* io */
@@ -157,6 +166,7 @@ void MVS::refineSeedPatches() {
 			continue;
 		}
 
+		// dispatch viewer update event
 		addPatchView(pth);
 
 		printf("ID: %d \t LOD: %d \t fit: %.2f \t pri: %.2f\n", pth.getId(), pth.getLOD(), pth.getFitness(), pth.getPriority());
@@ -167,6 +177,7 @@ void MVS::refineSeedPatches() {
 }
 
 void MVS::expansionPatches() {
+	// initialize cell maps (project seed patches)
 	setCellMaps();
 
 	int pthId = getTopPriorityPatchId();
@@ -182,6 +193,7 @@ void MVS::expansionPatches() {
 		
 		// skip
 		if ( !runtimeFiltering(pth) ) {
+			printf("Top priority patch deleted\n");
 			deletePatch(pth);
 			continue;
 		}
@@ -347,8 +359,8 @@ void MVS::neighborCellFiltering(const double neighborDist,  const double neighbo
 				const vector<int> &cell = map.getCell(x, y);
 				vector<int> removeIdx;
 
-				// neighbor cell
-				int nx [] = {x, x-1, x+1, x-1, x+1, x+1, x  , x-1, x};
+				// neighbor cells
+				int nx [] = {x, x-1, x+1, x-1, x+1, x+1, x  , x-1, x  };
 				int ny [] = {y, y-1, y-1, y+1, y+1, y  , y+1, y  , y-1};
 
 				const int pthNum = (int) cell.size();
@@ -465,7 +477,7 @@ void MVS::expandNeighborCell(const Patch &pth) {
 
 			// skip neighbor cell with exist neighbor patch or discontinuous
 			const vector<int> &cell = map.getCell(nx[j], ny[j]);
-			if ( hasNeighborPatch(cell, pth) ) continue;
+			if ( skipNeighborCell(cell, pth) ) continue;
 
 			// expand neighbor cell (create expansion patch)
 			expandCell(cam, pth, nx[j], ny[j]);
@@ -503,6 +515,7 @@ void MVS::insertPatch(const Patch &pth) {
 		cellMaps[camIdx[i]].insert(cx, cy, pth.getId());
 	}
 
+	// dispatch viewer update event
 	addPatchView(pth);
 }
 
@@ -531,12 +544,16 @@ map<int, Patch>::iterator MVS::deletePatch(const int id) {
 
 /* const function */
 
-bool MVS::hasNeighborPatch(const vector<int> &cell, const Patch &refPth) const {
+bool MVS::skipNeighborCell(const vector<int> &cell, const Patch &refPth) const {
 	const int pthNum = (int) cell.size();
+	// skip if full cell
 	if (pthNum >= maxCellPatchNum) return true;
+
 	for (int k = 0; k < pthNum; k++) {
 		const Patch &pth = getPatch(cell[k]);
+		// skip if has robust neighbor (but depth discontinuous)
 		if ( pth.getCorrelation() > minCorrelation ) return true;
+		// skip if has near neighbor
 		if ( Patch::isNeighbor(refPth, pth) )        return true;
 	}
 	return false;
@@ -634,7 +651,7 @@ bool MVS::runtimeFiltering(const Patch &pth) const {
 	if (count < minCamNum) return false;
 
 	// cell patch number filtering
-	if (cellMaps.empty()) return true; // skip if not set cell maps
+	if (cellMaps.empty()) return true; // skip if not set cell maps (during seed patch refinement)
 	const vector<Vec2d> &imgPoints = pth.getImagePoints();
 	const vector<int>   &camIdx    = pth.getCameraIndices();
 	int cx, cy;
@@ -649,4 +666,28 @@ bool MVS::runtimeFiltering(const Patch &pth) const {
 	if (fullCellCounter >= camNum) return false;
 
 	return true;
+}
+
+void MVS::printConfig() const {
+	printf("MVS config\n");
+	printf("-------------------------------\n");
+	printf("cell size:\t%d pixel\n", cellSize);
+	printf("patch radius:\t%d pixel\n", patchRadius);
+	printf("patch size:\t%d pixel\n", patchSize);
+	printf("minimum camera number:\t%d\n", minCamNum);
+	printf("texture variation:\t%f\n", textureVariation);
+	printf("visible correlation:\t%f\n", visibleCorrelation);
+	printf("minimum correlation:\t%f\n", minCorrelation);
+	printf("LOD ratio:\t%f\n", lodRatio);
+	printf("minimum LOD:\t%d\n", minLOD);
+	printf("maximum LOD:\t%d\n", maxLOD);
+	printf("maximum cell patch number:\t%d patch/cell\n", maxCellPatchNum);
+	printf("distance weighting:\t%f\n", distWeighting);
+	printf("difference weighting:\t%f\n", diffWeighting);
+	printf("neighbor radius:\t%f\n", neighborRadius);
+	printf("minimum region ratio:\t%f\n", minRegionRatio);
+	printf("depth range scalar:\t%f\n", depthRangeScalar);
+	printf("particle number:\t%f\n", particleNum);
+	printf("maximum iteration number:\t%d\n", maxIteration);
+	printf("-------------------------------\n");
 }

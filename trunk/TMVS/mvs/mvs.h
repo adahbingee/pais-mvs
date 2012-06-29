@@ -95,12 +95,13 @@ namespace PAIS {
 		// get top priority patch id to expansion
 		int getTopPriorityPatchId() const;
 		// check neighbor patches in cell
-		bool hasNeighborPatch(const vector<int> &cell, const Patch &refPth) const;
+		bool skipNeighborCell(const vector<int> &cell, const Patch &refPth) const;
 		// get new expansion center
 		void getExpansionPatchCenter(const Camera &cam, const Patch &parent, const int cx, const int cy, Vec3d &center) const;
 		// patch filter (false: filter out)
 		bool runtimeFiltering(const Patch &pth) const;
-
+		// print config information
+		void printConfig() const;
 	public:
 		friend class FileWriter;
 		friend class FileLoader;
@@ -109,6 +110,8 @@ namespace PAIS {
 
 		static MVS& getInstance() { return *instance; }
 		static MVS& getInstance(const MvsConfig &config);
+
+		void setConfig(const MvsConfig &config);
 
 		void loadNVM(const char *fileName);
 		void loadNVM2(const char *fileName);

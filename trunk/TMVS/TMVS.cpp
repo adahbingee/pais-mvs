@@ -38,7 +38,7 @@ int main(int argc, char* argv[])
 	config.maxCellPatchNum    = 3;
 	config.neighborRadius     = 0.005;
 	config.minRegionRatio     = 0.55;
-	config.depthRangeScalar   = 3;
+	config.depthRangeScalar   = 1.5;
 	config.particleNum        = 15;
 	config.maxIteration       = 60;
 
