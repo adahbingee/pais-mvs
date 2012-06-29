@@ -1,6 +1,9 @@
 #include "filewriter.h"
 
 void FileWriter::writeMvsConfig(fstream &file, const MVS &mvs) {
+	MvsConfig config = (MvsConfig) mvs;
+	file.write((char*) &config, sizeof(MvsConfig));
+	/*
 	// write cell size
 	file.write((char*) &mvs.cellSize, sizeof(int));
 	// write patch radius
@@ -19,7 +22,24 @@ void FileWriter::writeMvsConfig(fstream &file, const MVS &mvs) {
 	file.write((char*) &mvs.minLOD, sizeof(int));
 	// write maximum LOD
 	file.write((char*) &mvs.maxLOD, sizeof(int));
-	// write
+	// write maximum cell patch number
+	file.write((char*) &mvs.maxCellPatchNum, sizeof(int));
+	// write patch distance wieghting
+	file.write((char*) &mvs.distWeighting, sizeof(double));
+	// wirte patch difference weighting
+	file.write((char*) &mvs.diffWeighting, sizeof(double));
+	// write neighbor radius
+	file.write((char*) &mvs.neighborRadius, sizeof(double));
+	// write minimum region ratio
+	file.write((char*) &mvs.minRegionRatio, sizeof(double));
+	// write depth range scalar (pixel)
+	file.write((char*) &mvs.depthRangeScalar, sizeof(double));
+	// PSO parameter
+	// particle number
+	file.write((char*) &mvs.particleNum, sizeof(int));
+	// maximum iteration number
+	file.write(((char*) &mvs.maxIteration), sizeof(int));
+	*/
 }
 
 void FileWriter::writeVec(fstream &file, const Vec4d &vec) {
@@ -94,6 +114,9 @@ void FileWriter::writeMVS(const char *fileName, const MVS &mvs) {
 
 	// write MVS header
 	file << "MVS_V2" << endl;
+
+	// write MVS config
+	writeMvsConfig(file, mvs);
 
 	// write cameras
 	const int camNum = (int) mvs.getCameras().size();

@@ -16,6 +16,7 @@ using namespace PAIS;
 using namespace cv;
 
 namespace PAIS {
+	class MvsConfig;
 	class MVS;
 	class Camera;
 	class Patch;
@@ -29,6 +30,7 @@ namespace PAIS {
 		static Camera loadNvmCamera(ifstream &file, const char* path);
 		static Camera loadNvm2Camera(ifstream &file, const char* path);
 		static Patch  loadNvmPatch(ifstream &file, const MVS &mvs);
+		static MvsConfig loadMvsConfig(ifstream &file);
 		static Camera loadMvsCamera(ifstream &file);
 		static Patch  loadMvsPatch(ifstream &file);
 		static void   loadMvsVec(ifstream &file, Vec2d &v);

@@ -161,6 +161,49 @@ Patch FileLoader::loadNvmPatch(ifstream &file, const MVS &mvs) {
 	return Patch(center, color, camIdx, imgPoint);
 }
 
+MvsConfig FileLoader::loadMvsConfig(ifstream &file) {
+	MvsConfig config;
+	file.read((char*) &config, sizeof(MvsConfig));
+	/*
+	// read cell size
+	file.read((char*) &config.cellSize, sizeof(int));
+	// read patch radius
+	file.read((char*) &config.patchRadius, sizeof(int));
+	// read minimum visible camera number
+	file.read((char*) &config.minCamNum, sizeof(int));
+	// read intensity variation in patch for LOD
+	file.read((char*) &config.textureVariation, sizeof(double));
+	// read visible camera correlation for expand visible camera
+	file.read((char*) &config.visibleCorrelation, sizeof(double));
+	// read minimum patch correlation when filtering patch visible camera
+	file.read((char*) &config.minCorrelation, sizeof(double));
+	// read LOD ratio
+	file.read((char*) &config.lodRatio, sizeof(double));
+	// read minimum LOD
+	file.read((char*) &config.minLOD, sizeof(int));
+	// read maximum LOD
+	file.read((char*) &config.maxLOD, sizeof(int));
+	// read maximum cell patch number
+	file.read((char*) &config.maxCellPatchNum, sizeof(int));
+	// read patch distance wieghting
+	file.read((char*) &config.distWeighting, sizeof(double));
+	// wirte patch difference weighting
+	file.read((char*) &config.diffWeighting, sizeof(double));
+	// read neighbor radius
+	file.read((char*) &config.neighborRadius, sizeof(double));
+	// read minimum region ratio
+	file.read((char*) &config.minRegionRatio, sizeof(double));
+	// read depth range scalar (pixel)
+	file.read((char*) &config.depthRangeScalar, sizeof(double));
+	// PSO parameter
+	// particle number
+	file.read((char*) &config.particleNum, sizeof(int));
+	// maximum iteration number
+	file.read(((char*) &config.maxIteration), sizeof(int));
+	*/
+	return config;
+}
+
 PAIS::Camera FileLoader::loadMvsCamera(ifstream &file) {
 	int fileNameLength;
 	char *fileName;
@@ -285,9 +328,10 @@ void FileLoader::loadNVM(const char *fileName, MVS &mvs) {
 
 			cameras.reserve(num);
 			for (int i = 0; i < num; i++) {
+				printf("\rloading cameras: %d / %d", i+1, num);
 				cameras.push_back( loadNvmCamera(file, filePath) );
 			}
-
+			printf("\n");
 			loadCamera = false;
 			loadPatch  = true;
 
@@ -300,10 +344,11 @@ void FileLoader::loadNVM(const char *fileName, MVS &mvs) {
 			num = atoi(strip);
 
 			for (int i = 0; i < num; i++) {
+				printf("\rloading patches: %d / %d", i+1, num);
 				Patch p = loadNvmPatch(file, mvs);
 				patches.insert( pair<int, Patch>(p.getId(), p) );
 			}
-
+			printf("\n");
 			loadPatch = false;
 
 			break;
@@ -359,10 +404,10 @@ void FileLoader::loadNVM2(const char *fileName, MVS &mvs) {
 
 			cameras.reserve(num);
 			for (int i = 0; i < num; i++) {
-				printf("loading camera %d / %d\n", i+1, num);
+				printf("\rloading cameras: %d / %d", i+1, num);
 				cameras.push_back( loadNvm2Camera(file, filePath) );
 			}
-
+			printf("\n");
 			loadCamera = false;
 			loadPatch  = true;
 
@@ -375,11 +420,11 @@ void FileLoader::loadNVM2(const char *fileName, MVS &mvs) {
 			num = atoi(strip);
 
 			for (int i = 0; i < num; i++) {
-				printf("loading patch %d / %d\n", i+1, num);
+				printf("\rloading patches: %d / %d", i+1, num);
 				Patch p = loadNvmPatch(file, mvs);
 				patches.insert( pair<int, Patch>(p.getId(), p) );
 			}
-
+			printf("\n");
 			loadPatch = false;
 
 			break;
@@ -417,32 +462,37 @@ void FileLoader::loadMVS(const char *fileName, MVS &mvs) {
 
 		if (strip == NULL) continue; // skip blank line
 
-		// start load camera
+		// set config and start load camera
 		if (strcmp(strip, "MVS_V2") == 0) {
+			MvsConfig config = loadMvsConfig(file);
+			mvs.setConfig(config);
 			loadCamera = true;
 			continue;
 		}
 
 		if (loadCamera) {
-			printf("%s\n", strip);
 			strip = strtok(NULL, DELIMITER);
 			num = atoi(strip);
 			for (int i = 0; i < num; ++i) {
+				printf("\rloading cameras: %d / %d", i+1, num);
 				cameras.push_back( loadMvsCamera(file) );
 			}
+			printf("\n");
 			loadCamera = false;
 			loadPatch  = true;
 			continue;
 		}
 
 		if (loadPatch) {
-			printf("%s\n", strip);
 			strip = strtok(NULL, DELIMITER);
 			num = atoi(strip);
 			for (int i = 0; i < num; ++i) {
+				printf("\rloading patches: %d / %d", i+1, num);
 				Patch pth = loadMvsPatch(file);
 				patches.insert( pair<int, Patch>(pth.getId(), pth) );
 			}
+			printf("\n");
+			loadPatch = false;
 		}
 	}
 
