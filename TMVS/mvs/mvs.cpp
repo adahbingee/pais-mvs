@@ -687,7 +687,7 @@ void MVS::printConfig() const {
 	printf("neighbor radius:\t%f\n", neighborRadius);
 	printf("minimum region ratio:\t%f\n", minRegionRatio);
 	printf("depth range scalar:\t%f\n", depthRangeScalar);
-	printf("particle number:\t%f\n", particleNum);
+	printf("particle number:\t%d\n", particleNum);
 	printf("maximum iteration number:\t%d\n", maxIteration);
 	printf("-------------------------------\n");
 }
