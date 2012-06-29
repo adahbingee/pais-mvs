@@ -17,6 +17,7 @@ namespace PAIS {
 
 	class FileWriter {
 	private:
+		static void writeMvsConfig(fstream &file, const MVS &mvs);
 		static void writeCamera(fstream &file, const Camera &camera);
 		static void writePatch(fstream &file, const Patch &patch);
 		static void writeVec(fstream &file, const Vec4d &vec);

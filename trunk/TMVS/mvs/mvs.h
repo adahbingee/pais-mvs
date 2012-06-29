@@ -26,7 +26,7 @@ namespace PAIS {
 		int patchSize;
 		// minimum visible camera number
 		int minCamNum;
-		// normalized intensity variation in patch
+		// intensity variation in patch for LOD
 		double textureVariation;
 		// expand visible camera
 		double visibleCorrelation;
@@ -99,9 +99,10 @@ namespace PAIS {
 		// get new expansion center
 		void getExpansionPatchCenter(const Camera &cam, const Patch &parent, const int cx, const int cy, Vec3d &center) const;
 		// patch filter (false: filter out)
-		bool patchFilter(const Patch &pth) const;
+		bool runtimeFiltering(const Patch &pth) const;
 
 	public:
+		friend class FileWriter;
 		friend class FileLoader;
 		friend class Patch;
 		friend class Camera;

@@ -11,6 +11,8 @@ void keyBoardEvent(const pcl::visualization::KeyboardEvent &event, void* viewer_
 		printf("\tA, a toggle point color\n");
 		printf("\tB, b toggle background color\n");
 		printf("\tN, n toggle normal display\n");
+		printf("\tD, d toggle axes display\n");
+		printf("\tW, w toggle cameras display\n");
 		break;
 	case 'A':
 	case 'a':
@@ -35,6 +37,10 @@ void keyBoardEvent(const pcl::visualization::KeyboardEvent &event, void* viewer_
 	case 'D':
 	case 'd':
 		viewer.toggleAxes();
+		break;
+	case 'W':
+	case 'w':
+		viewer.toggleCameras();
 		break;
 	}
 }
@@ -258,6 +264,10 @@ void MvsViewer::toggleAxes() {
 		axes = true;
 	}
 	pclViewer.spinOnce(1);
+}
+
+void MvsViewer::toggleCameras() {
+
 }
 
 const Patch* MvsViewer::getPickedPatch(const int idx) const {
