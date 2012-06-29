@@ -152,7 +152,7 @@ void MVS::refineSeedPatches() {
 
 		pth.refine();
 
-		if ( !patchFilter(pth) ) {
+		if ( !runtimeFiltering(pth) ) {
 			it = patches.erase(it);
 			continue;
 		}
@@ -181,7 +181,7 @@ void MVS::expansionPatches() {
 		printf("parent: fit: %f \t pri: %f \t camNum: %d\n", pth.getFitness(), pth.getPriority(), pth.getCameraNumber());
 		
 		// skip
-		if ( !patchFilter(pth) ) {
+		if ( !runtimeFiltering(pth) ) {
 			deletePatch(pth);
 			continue;
 		}
@@ -482,32 +482,16 @@ void MVS::expandCell(const PAIS::Camera &cam, const Patch &parent, const int cx,
 	Patch expPatch(center, parent);
 	expPatch.refine();
 
-	if ( !patchFilter(expPatch) ) return;
-
 	insertPatch(expPatch);
 }
 
 void MVS::insertPatch(const Patch &pth) {
-	if ( !patchFilter(pth) ) return;
+	if ( !runtimeFiltering(pth) ) return;
 
 	const int camNum = pth.getCameraNumber();
 	const vector<Vec2d> &imgPoints = pth.getImagePoints();
 	const vector<int>   &camIdx    = pth.getCameraIndices();
 	int cx, cy;
-
-	int fullCellCounter = 0;
-	for (int i = 0; i < camNum; ++i) {
-		cx = (int) (imgPoints[i][0] / cellSize);
-		cy = (int) (imgPoints[i][1] / cellSize);
-		if ( cellMaps[camIdx[i]].getCell(cx, cy).size() >= maxCellPatchNum) {
-			++fullCellCounter;
-		}
-	}
-
-	if (fullCellCounter >= camNum) {
-		printf("full cell\n");
-		return;
-	}
 
 	// insert into patches container
 	patches.insert(pair<int, Patch>(pth.getId(), pth));
@@ -610,7 +594,7 @@ int MVS::getTopPriorityPatchId() const {
 	return topId;
 }
 
-bool MVS::patchFilter(const Patch &pth) const {
+bool MVS::runtimeFiltering(const Patch &pth) const {
 	if (pth.isDropped())                       return false;
 	if (pth.getCameraNumber() < minCamNum)     return false;
 	if (pth.getFitness() >= 10000)             return false;
@@ -626,23 +610,43 @@ bool MVS::patchFilter(const Patch &pth) const {
 	for (int i = 0; i < cameras.size(); i++) {
 		const Camera &cam = cameras[i];
 		const Mat_<uchar> &img = cam.getPyramidImage(0);
+		// out of image bound
 		if ( !cam.project(pth.getCenter(), pt) ) {
 			return false;
 		}
+
+		// in background
 		if (img.at<uchar>(cvRound(pt[1]), cvRound(pt[0])) == 0) {
 			return false;
 		}
 	}
 
+	const int camNum = pth.getCameraNumber();
+
 	// skip invisible cameras 
 	int count = 0;
-	for (int i = 0; i < pth.getCameraNumber(); ++i) {
+	for (int i = 0; i < camNum; ++i) {
 		const Camera &cam = getCamera(pth.getCameraIndices()[i]);
 		if (pth.getNormal().ddot(-cam.getOpticalNormal()) > 0) {
 			count++;
 		}
 	}
 	if (count < minCamNum) return false;
+
+	// cell patch number filtering
+	if (cellMaps.empty()) return true; // skip if not set cell maps
+	const vector<Vec2d> &imgPoints = pth.getImagePoints();
+	const vector<int>   &camIdx    = pth.getCameraIndices();
+	int cx, cy;
+	int fullCellCounter = 0;
+	for (int i = 0; i < camNum; ++i) {
+		cx = (int) (imgPoints[i][0] / cellSize);
+		cy = (int) (imgPoints[i][1] / cellSize);
+		if ( cellMaps[camIdx[i]].getCell(cx, cy).size() >= maxCellPatchNum) {
+			++fullCellCounter;
+		}
+	}
+	if (fullCellCounter >= camNum) return false;
 
 	return true;
 }

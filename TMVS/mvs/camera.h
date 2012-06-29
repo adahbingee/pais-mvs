@@ -74,13 +74,14 @@ namespace PAIS {
 		~Camera(void);
 
 		// get image information
-		const char* getFileName()                         const { return fileName;         }
-		const Mat_<Vec3b>& getRgbImage()                  const { return imgRGB;           }
-		const Mat_<bool>& getMaskImage()                  const { return imgMask;          }
-		const vector<Mat_<uchar> >& getPyramidImage()     const { return imgPyramid;       }
-		const Mat_<uchar>& getPyramidImage(const int LOD) const { return imgPyramid[LOD];  }
+		const char* getFileName()                          const { return fileName;         }
+		const Mat_<Vec3b>& getRgbImage()                   const { return imgRGB;           }
+		const Mat_<bool>& getMaskImage()                   const { return imgMask;          }
+		const vector<Mat_<uchar> >& getPyramidImage()      const { return imgPyramid;       }
+		const Mat_<uchar>& getPyramidImage(const int LOD)  const { return imgPyramid[LOD];  }
 		const vector<Mat_<double> >& getPyramidEdge()      const { return edgePyramid;      }
 		const Mat_<double>& getPyramidEdge(const int LOD)  const { return edgePyramid[LOD]; }
+		const int getMaxLOD()                              const { return maxLOD;           }
 
 		// get intrinsic information
 		const Vec2d& getFocalLength()                   const { return focal;            }
@@ -111,8 +112,9 @@ namespace PAIS {
 		
 		// get 2d point is in image or not using a specified level of detail image (0 for original size) 
 		bool inImage(const Vec2d &in2D, const int LOD) const {
-			if (LOD >= maxLOD) {
-				printf("LOD index out of bound\n");
+			if (LOD > maxLOD) {
+				printf("LOD %d index out of bound\n", LOD);
+				return false;
 			}
 			
 			if (_isnan(in2D[0]) || _isnan(in2D[1])) {
@@ -127,8 +129,9 @@ namespace PAIS {
 		}
 
 		bool inImage(const int x, const int y, const int LOD) const {
-			if (LOD >= maxLOD) {
-				printf("LOD index out of bound\n");
+			if (LOD > maxLOD) {
+				printf("LOD %d index out of bound\n", LOD);
+				return false;
 			}
 
 			if (_isnan(x) || _isnan(y)) {

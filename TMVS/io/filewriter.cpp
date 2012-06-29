@@ -1,5 +1,27 @@
 #include "filewriter.h"
 
+void FileWriter::writeMvsConfig(fstream &file, const MVS &mvs) {
+	// write cell size
+	file.write((char*) &mvs.cellSize, sizeof(int));
+	// write patch radius
+	file.write((char*) &mvs.patchRadius, sizeof(int));
+	// write minimum visible camera number
+	file.write((char*) &mvs.minCamNum, sizeof(int));
+	// write intensity variation in patch for LOD
+	file.write((char*) &mvs.textureVariation, sizeof(double));
+	// write visible camera correlation for expand visible camera
+	file.write((char*) &mvs.visibleCorrelation, sizeof(double));
+	// write minimum patch correlation when filtering patch visible camera
+	file.write((char*) &mvs.minCorrelation, sizeof(double));
+	// write LOD ratio
+	file.write((char*) &mvs.lodRatio, sizeof(double));
+	// write minimum LOD
+	file.write((char*) &mvs.minLOD, sizeof(int));
+	// write maximum LOD
+	file.write((char*) &mvs.maxLOD, sizeof(int));
+	// write
+}
+
 void FileWriter::writeVec(fstream &file, const Vec4d &vec) {
 	file.write((char*) &vec[0], sizeof(double));
 	file.write((char*) &vec[1], sizeof(double));

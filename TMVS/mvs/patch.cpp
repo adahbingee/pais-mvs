@@ -487,7 +487,8 @@ void Patch::setLOD() {
         LOD++;
 
         // return if reach the max LOD
-        if (LOD >= pyramid.size()) {
+        if (LOD >= refCam.getMaxLOD()) {
+			LOD = refCam.getMaxLOD();
             delete [] textures;
             return;
         }
@@ -864,6 +865,14 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 		return DBL_MAX;
 	}
 
+	// skip out of reference image bound patch
+	if (pt[0]-patchRadius < 2 || 
+		pt[0]+patchRadius >= edgeImg.cols-3 || 
+		pt[1]-patchRadius < 2 || 
+		pt[1]+patchRadius >= edgeImg.rows-3) {
+		return DBL_MAX;
+	}
+
 	// warping (get pixel-wised variance)
 	double mean, avgSad;             // pixel-wised mean, average sad
 	double w, ix, iy;                // position on target image
@@ -884,11 +893,7 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 			mean   = 0;
 			avgSad = 0;
 
-			if (x < 2 || x >= edgeImg.cols-3 || y < 2 || y >= edgeImg.rows-3) {
-				delete [] c;
-				return DBL_MAX;
-			}
-			weight = (double) edgeImg.at<double>(cvRound(y), cvRound(x));
+			weight = 1; //(double) edgeImg.at<double>(cvRound(y), cvRound(x));
 
 			if (weight == 0) continue;
 

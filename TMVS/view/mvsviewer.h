@@ -60,6 +60,7 @@ namespace PAIS {
 		void toggleNormal();
 		void toggleColor();
 		void toggleAxes();
+		void toggleCameras();
 		const Patch* getPickedPatch(const int idx) const;
 		void printPatchInformation(const Patch &pth) const;
 		void showPickedPoint(const Patch &pth);
