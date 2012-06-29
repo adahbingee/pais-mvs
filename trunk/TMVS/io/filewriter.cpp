@@ -113,7 +113,7 @@ void FileWriter::writeMVS(const char *fileName, const MVS &mvs) {
 	}
 
 	// write MVS header
-	file << "MVS_V2" << endl;
+	file << "MVS_V3" << endl;
 
 	// write MVS config
 	writeMvsConfig(file, mvs);

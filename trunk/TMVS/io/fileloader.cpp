@@ -462,8 +462,14 @@ void FileLoader::loadMVS(const char *fileName, MVS &mvs) {
 
 		if (strip == NULL) continue; // skip blank line
 
-		// set config and start load camera
+		// start load camera
 		if (strcmp(strip, "MVS_V2") == 0) {
+			loadCamera = true;
+			continue;
+		}
+
+		// set config and start load camera
+		if (strcmp(strip, "MVS_V3") == 0) {
 			MvsConfig config = loadMvsConfig(file);
 			mvs.setConfig(config);
 			loadCamera = true;
