@@ -612,14 +612,15 @@ void Patch::removeInvisibleCamera() {
 	vector<int> removeIdx;
 	// mark idx
 	for (int i = 0; i < camNum; ++i) {
-		if (i == maxIdx) continue;
-		// filter by correlation
-		if (corrTable.at<double>(maxIdx, i) < mvs.minCorrelation) {
+		// filter by region ratio
+		if (getHomographyRegionRatio(pt, H[i]) < mvs.minRegionRatio) {
 			removeIdx.push_back(camIdx[i]);
 			continue;
 		}
-		// filter by region ratio
-		if (getHomographyRegionRatio(pt, H[i]) < mvs.minRegionRatio) {
+
+		// filter by correlation
+		if (i == maxIdx) continue;
+		if (corrTable.at<double>(maxIdx, i) < mvs.minCorrelation) {
 			removeIdx.push_back(camIdx[i]);
 			continue;
 		}
@@ -702,25 +703,12 @@ void Patch::showRefinedResult() const {
 		resize(img, img, Size(img.cols*pow(mvs.lodRatio, LOD), img.rows*pow(mvs.lodRatio, LOD) ) );
 
 		// homography projection
-		// Mat F = Utility::getFundamental(refCam, cam);
 		for (int c = 0; c < 5; c++) {
-			w  =   H[i].at<double>(2, 0) * x[c] + H[i].at<double>(2, 1) * y[c] + H[i].at<double>(2, 2);
+			w     =   H[i].at<double>(2, 0) * x[c] + H[i].at<double>(2, 1) * y[c] + H[i].at<double>(2, 2);
 			ix[c] = ( H[i].at<double>(0, 0) * x[c] + H[i].at<double>(0, 1) * y[c] + H[i].at<double>(0, 2) ) / w;
 			iy[c] = ( H[i].at<double>(1, 0) * x[c] + H[i].at<double>(1, 1) * y[c] + H[i].at<double>(1, 2) ) / w;
 			ix[c] = cvRound(ix[c]);
 			iy[c] = cvRound(iy[c]);
-
-			// draw epipolar line
-			/*
-			Mat_<double> pF(3, 1);
-			pF.at<double>(0,0) = x[c];
-			pF.at<double>(1,0) = y[c];
-			pF.at<double>(2,0) = 1;
-			Mat epiLine = F*pF;
-			double yStart = -epiLine.at<double>(0, 2)/epiLine.at<double>(0, 1);
-			double yEnd   = (-epiLine.at<double>(0, 2)-epiLine.at<double>(0, 0)*img.cols) / epiLine.at<double>(0, 1);
-			line(img, Point(0, cvRound(yStart)), Point( img.cols, cvRound(yEnd)), Scalar(0,255,0, 0.5));
-			*/
 		}
 
 		// draw patch
@@ -737,6 +725,7 @@ void Patch::showRefinedResult() const {
 			sprintf(title, "reference id: %d cam: %d ratio: %f", getId(), camIdx[i], regionRatio);
 		}
 		imshow(title, img);
+		cvMoveWindow(title, 0, 0);
 	}
 }
 
@@ -820,6 +809,7 @@ void Patch::showError() const {
 	sprintf(title, "error%d.png", getId());
 	resize(error, error, Size(200, 200), 0, 0, CV_INTER_NN);
 	imshow(title, error);
+	cvMoveWindow(title, 0, 0);
 }
 
 /* fitness function */
@@ -839,9 +829,10 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 	int LOD = patch.getLOD();
 
 	// camera parameters
-	const Camera &refCam       = mvs.getCamera(patch.getReferenceCameraIndex());
-	const int camNum           = patch.getCameraNumber();
+	const Camera &refCam        = mvs.getCamera(patch.getReferenceCameraIndex());
+	const int camNum            = patch.getCameraNumber();
 	const Mat_<double> &edgeImg = refCam.getPyramidEdge(LOD);
+	const Mat_<uchar>  &refImg  = refCam.getPyramidImage(LOD);
 
 	// given patch normal
 	Vec3d normal;
@@ -893,9 +884,10 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 			mean   = 0;
 			avgSad = 0;
 
-			weight = 1; //(double) edgeImg.at<double>(cvRound(y), cvRound(x));
-
-			if (weight == 0) continue;
+			// skip background
+			if (refImg.at<uchar>(cvRound(y), cvRound(x)) == 0) continue;
+			// skip no gradient
+			if (edgeImg.at<double>(cvRound(y), cvRound(x)) == 0.0) continue;
 
 			for (int i = 0; i < camNum; ++i) {
 				const Mat_<uchar> &img = cameras[camIdx[i]].getPyramidImage(LOD);
@@ -936,7 +928,7 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 			}
 			avgSad /= camNum;
 
-			weight    *= (*it++) * exp(-avgSad*avgSad/diffWeighting);
+			weight     = (*it++) * exp(-avgSad*avgSad/diffWeighting);
 			sumWeight += weight;
 			fitness   += weight * avgSad;
 		} // end of warping y

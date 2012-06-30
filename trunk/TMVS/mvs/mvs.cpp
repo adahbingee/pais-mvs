@@ -644,7 +644,7 @@ bool MVS::runtimeFiltering(const Patch &pth) const {
 	int count = 0;
 	for (int i = 0; i < camNum; ++i) {
 		const Camera &cam = getCamera(pth.getCameraIndices()[i]);
-		if (pth.getNormal().ddot(-cam.getOpticalNormal()) > 0) {
+		if (pth.getNormal().ddot(-cam.getOpticalNormal()) > visibleCorrelation/2.0) {
 			count++;
 		}
 	}
@@ -659,7 +659,12 @@ bool MVS::runtimeFiltering(const Patch &pth) const {
 	for (int i = 0; i < camNum; ++i) {
 		cx = (int) (imgPoints[i][0] / cellSize);
 		cy = (int) (imgPoints[i][1] / cellSize);
-		if ( cellMaps[camIdx[i]].getCell(cx, cy).size() >= maxCellPatchNum) {
+		const vector<int> &cell = cellMaps[camIdx[i]].getCell(cx, cy);
+		// find this patch in cell
+		vector<int>::const_iterator it = find(cell.begin(), cell.end(), pth.getId());
+		if (it != cell.end()) return true;
+		// cell is full and not contain this patch
+		if ( cell.size() >= maxCellPatchNum && it == cell.end()) {
 			++fullCellCounter;
 		}
 	}
