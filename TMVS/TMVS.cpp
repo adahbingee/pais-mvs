@@ -58,7 +58,7 @@ int main(int argc, char* argv[])
 	//end_t = clock();
 	//printf("time1\t%f\n", (double)(end_t - start_t) / CLOCKS_PER_SEC);
 	
-	viewer = new MvsViewer(mvs, true, true);
+	viewer = new MvsViewer(mvs, true, true, true);
 	
 	/*
 	mvs.writeMVS("init.mvs");

@@ -57,18 +57,27 @@ void pointPickEvent(const pcl::visualization::PointPickingEvent &event, void* vi
 	waitKey(1);
 }
 
-MvsViewer::MvsViewer(const MVS &mvs, bool initPatch, bool show) {
+MvsViewer::MvsViewer(const MVS &mvs, bool initPatch, bool show, bool animate) {
 	// set instance holder
 	this->mvs = &mvs;
+
+	this->animate = animate;
 
 	// initialize viewer
 	init();
 
 	// add MVS cameras
 	addCameras();
+
+	// add patches
 	if (initPatch) {
-		// add MVS patches
-		addPatches();
+		if ( !animate ) {
+			// add MVS patches show final result
+			addPatches();
+		} else {
+			// add MVS patches show growing result
+			addPatchesAnimate();
+		}
 	}
 
 	if (show) open();
@@ -211,6 +220,15 @@ void MvsViewer::addPatches() {
 	// set normal color
 	pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1.0, 1.0, 0.0, NAME_NORMAL);
     pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, 0.0, NAME_NORMAL);
+}
+
+void MvsViewer::addPatchesAnimate() {
+	const map<int, Patch> &patches = mvs->getPatches();
+	const int pthNum = (int) mvs->getPatches().size();
+	map<int, Patch>::const_iterator it;
+	for (it = patches.begin(); it != patches.end(); ++it) {
+		addPatch(it->second);
+	}
 }
 
 void MvsViewer::open() {
