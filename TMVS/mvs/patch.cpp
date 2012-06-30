@@ -879,7 +879,7 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 	double sumWeight = 0;
 
 	for (double x = pt[0]-patchRadius; x <= pt[0]+patchRadius; ++x) {
-		for (double y = pt[1]-patchRadius; y <= pt[1]+patchRadius; ++y) {
+		for (double y = pt[1]-patchRadius; y <= pt[1]+patchRadius; ++y, ++it) {
 			// clear
 			mean   = 0;
 			avgSad = 0;
@@ -928,7 +928,7 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 			}
 			avgSad /= camNum;
 
-			weight     = (*it++) * exp(-avgSad*avgSad/diffWeighting);
+			weight     = (*it) * exp(-avgSad*avgSad/diffWeighting);
 			sumWeight += weight;
 			fitness   += weight * avgSad;
 		} // end of warping y
