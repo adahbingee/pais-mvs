@@ -36,16 +36,18 @@ namespace PAIS {
 		bool colorEnable;     // hide vertex color    / show vertex color
 		bool cameraEnable;    // hide cameras         / show cameras
 		bool axes;            // hide coordinate axes / show coordinate axes
+		bool animate;         // show animate
 
 		void init();
 		void addCameras();
 		void addPatches();
+		void addPatchesAnimate();
 	public:
 
 		int pointSize;
 
 		// constructor
-		MvsViewer(const MVS &mvs, bool initPatch = true, bool show = false);
+		MvsViewer(const MVS &mvs, bool initPatch = true, bool show = false, bool animate = false);
 		// descructor
 		~MvsViewer(void);
 
