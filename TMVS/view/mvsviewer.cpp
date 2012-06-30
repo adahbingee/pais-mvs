@@ -363,9 +363,11 @@ void MvsViewer::showVisibleCamera(const Patch &pth) {
 }
 
 void MvsViewer::printPatchInformation(const Patch &pth) const {
-	const Vec3d &center = pth.getCenter();
-	const Vec3d &normal = pth.getNormal();
-	const Vec2d &normalS = pth.getSphericalNormal();
+	const Vec3d &center       = pth.getCenter();
+	const Vec3d &normal       = pth.getNormal();
+	const Vec2d &normalS      = pth.getSphericalNormal();
+	const vector<int> &camIdx = pth.getCameraIndices();
+	const int camNum          = pth.getCameraNumber();
 
 	printf("\n");
 	printf("ID: %d\n", pth.getId());
@@ -380,6 +382,13 @@ void MvsViewer::printPatchInformation(const Patch &pth) const {
 	printf("visible camera number: %d\n", pth.getCameraNumber());
 	printf("depth: %f\n", pth.getDepth());
 	printf("depth range: %f ~ %f\n", pth.getDepthRange()[0], pth.getDepthRange()[1]);
+
+	double corr;
+	for (int i = 0; i < camNum; ++i) {
+		const Camera &cam = mvs->getCamera(camIdx[i]);
+		corr = normal.ddot(-cam.getOpticalNormal());
+		printf("visible correlation %d: %f\n", camIdx[i], corr);
+	}
 
 	pth.showRefinedResult();
 	pth.showError();
