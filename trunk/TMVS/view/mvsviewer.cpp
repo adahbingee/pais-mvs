@@ -360,6 +360,8 @@ void MvsViewer::printPatchInformation(const Patch &pth) const {
 	printf("fitness: %f\n", pth.getFitness());
 	printf("priority: %f\n", pth.getPriority());
 	printf("visible camera number: %d\n", pth.getCameraNumber());
+	printf("depth: %f\n", pth.getDepth());
+	printf("depth range: %f ~ %f\n", pth.getDepthRange()[0], pth.getDepthRange()[1]);
 
 	pth.showRefinedResult();
 	pth.showError();

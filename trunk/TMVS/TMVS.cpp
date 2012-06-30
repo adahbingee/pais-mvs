@@ -24,14 +24,14 @@ int main(int argc, char* argv[])
 {
 	// MVS configures
 	MvsConfig config;
-	config.cellSize           = 1;
+	config.cellSize           = 2;
 	config.patchRadius        = 15;
 	config.distWeighting      = config.patchRadius / 3.0;
 	config.diffWeighting      = 128*128;
 	config.minCamNum          = 10;
 	config.textureVariation   = 36;
 	config.visibleCorrelation = 0.87;
-	config.minCorrelation     = 0.9;
+	config.minCorrelation     = 0.95;
 	config.minLOD             = 0;
 	config.maxLOD             = 10;
 	config.lodRatio           = 0.8;
@@ -46,9 +46,9 @@ int main(int argc, char* argv[])
 	MVS &mvs = MVS::getInstance(config);
 
 	// LOAD MVS file
-	mvs.loadNVM2("../../../TMVS_data/temple/temple.nvm2");
+	//mvs.loadNVM2("../../../TMVS_data/temple/temple.nvm2");
 	//mvs.loadNVM((char*)argv[1]);
-	//mvs.loadMVS((char*)argv[1]);
+	mvs.loadMVS((char*)argv[1]);
 	//mvs.loadMVS("init.mvs");
 	// printf("patches: %d\n", mvs.getPatches().size());
 
@@ -58,8 +58,9 @@ int main(int argc, char* argv[])
 	//end_t = clock();
 	//printf("time1\t%f\n", (double)(end_t - start_t) / CLOCKS_PER_SEC);
 	
-	//viewer = new MvsViewer(mvs, true, true);
+	viewer = new MvsViewer(mvs, true, true);
 	
+	/*
 	mvs.writeMVS("init.mvs");
 	mvs.refineSeedPatches();
 	mvs.writeMVS("seed.mvs");
@@ -74,7 +75,7 @@ int main(int argc, char* argv[])
 	mvs.writeMVS("filter.mvs");
 	mvs.writePLY("cloud.ply");
 	mvs.writePSR("cloud.psr");
-	
+	*/
 	
 	//debugFile.close();
 	return 0;
