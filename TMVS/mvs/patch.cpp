@@ -446,8 +446,8 @@ void Patch::setDepthRange() {
         }
     }
 
-	depthRange[0] = depth - maxWorldDist*mvs.depthRangeScalar;
-    depthRange[1] = depth + maxWorldDist*mvs.depthRangeScalar;
+	depthRange[0] = max(depth - maxWorldDist*mvs.depthRangeScalar, 0.0);
+	depthRange[1] = depth + min(maxWorldDist*mvs.depthRangeScalar, mvs.neighborRadius*1.5);
 }
 
 void Patch::setLOD() {
