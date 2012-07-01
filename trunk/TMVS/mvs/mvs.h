@@ -142,7 +142,7 @@ namespace PAIS {
 		void expansionPatches();
 		void patchQuantization(const int thetaNum, const int phiNum, const int distNum);
 		void cellFiltering();
-		void neighborCellFiltering(const double neighborDist, const double neighborRatio);
+		void neighborCellFiltering(const double neighborRatio);
 		void visibilityFiltering();
 	};
 };

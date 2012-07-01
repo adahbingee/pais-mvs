@@ -887,7 +887,7 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 			// skip background
 			if (refImg.at<uchar>(cvRound(y), cvRound(x)) == 0) continue;
 			// skip no gradient
-			if (edgeImg.at<double>(cvRound(y), cvRound(x)) == 0.0) continue;
+			// if (edgeImg.at<double>(cvRound(y), cvRound(x)) == 0.0) continue;
 
 			for (int i = 0; i < camNum; ++i) {
 				const Mat_<uchar> &img = cameras[camIdx[i]].getPyramidImage(LOD);
