@@ -59,7 +59,7 @@ int main(int argc, char* argv[])
 	//end_t = clock();
 	//printf("time1\t%f\n", (double)(end_t - start_t) / CLOCKS_PER_SEC);
 	
-	//viewer = new MvsViewer(mvs, true, true);
+	//viewer = new MvsViewer(mvs, true, true, true);
 	
 	mvs.writeMVS("init.mvs");
 	mvs.refineSeedPatches();
@@ -70,7 +70,7 @@ int main(int argc, char* argv[])
 	printf("patches: %d\n", mvs.getPatches().size());
 	mvs.visibilityFiltering();
 	printf("patches: %d\n", mvs.getPatches().size());
-	mvs.neighborCellFiltering(0.1, 0.25);
+	mvs.neighborCellFiltering(0.25);
 	printf("patches: %d\n", mvs.getPatches().size());
 	mvs.writeMVS("filter.mvs");
 	mvs.writePLY("cloud.ply");

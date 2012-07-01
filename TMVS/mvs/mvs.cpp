@@ -345,7 +345,7 @@ void MVS::cellFiltering() {
 	}
 }
 
-void MVS::neighborCellFiltering(const double neighborDist,  const double neighborRatio) {
+void MVS::neighborCellFiltering(const double neighborRatio) {
 	const int camNum = (int) cameras.size();
 	int mapWidth, mapHeight;
 	for (int i = 0; i < camNum; ++i) {
