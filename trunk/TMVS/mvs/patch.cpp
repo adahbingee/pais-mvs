@@ -128,6 +128,8 @@ void Patch::refine() {
 	setDepthRange();
 	setLOD();
 
+	if (drop) return;
+
 	int beforeRefCamIdx = refCamIdx;
 	int afterRefCamIdx  = -1;
 	int beforeCamNum    = getCameraNumber();
@@ -151,7 +153,7 @@ void Patch::refine() {
 		// skip fail optimization
 		if (fitness > 1000) {
 			drop = true;
-			break;
+			return;
 		}
 
 		// update information
@@ -193,6 +195,8 @@ void Patch::psoOptimization() {
     setNormal(Vec2d(gBest[0], gBest[1]));
     depth  = gBest[2];
 	center = ray * depth + mvs.getCamera(refCamIdx).getCenter();
+
+	// debugFile << fitness << " " << solver.getIteration() << endl; 
 }
 
 void Patch::setCorrelationTable(const vector<Mat_<double>> &H) {
@@ -393,6 +397,11 @@ void Patch::setReferenceCameraIndex() {
 	const MVS &mvs = MVS::getInstance();
     const int camNum = getCameraNumber();
 
+	if (camNum == 0) {
+		printf("no visible camera\n");
+		return;
+	}
+
     refCamIdx = -1;
     double maxCorr = -DBL_MAX;
     double corr;
@@ -414,6 +423,11 @@ void Patch::setReferenceCameraIndex() {
 }
 
 void Patch::setDepthAndRay() {
+	if (refCamIdx < 0) {
+		printf("no reference camera\n");
+		return;
+	}
+
     ray = center - MVS::getInstance().getCamera(refCamIdx).getCenter();
     depth = norm(ray);
     ray = ray * (1.0 / depth);
@@ -422,6 +436,12 @@ void Patch::setDepthAndRay() {
 void Patch::setDepthRange() {
 	const MVS &mvs   = MVS::getInstance();
     const int camNum = getCameraNumber();
+
+	if (camNum == 0) {
+		printf("no visible camera\n");
+		return;
+	}
+
     const Camera &refCam = mvs.getCamera(refCamIdx);
 
     // center shift
@@ -429,7 +449,7 @@ void Patch::setDepthRange() {
     // projected point
     Vec2d p1, p2;
 
-    double worldDist;
+    double worldDist, imgDist;
     double maxWorldDist = -DBL_MAX;
     for (int i = 0; i < camNum; i++) {
         if (camIdx[i] == refCamIdx) continue;
@@ -439,15 +459,23 @@ void Patch::setDepthRange() {
         cam.project(center, p1);
 		cam.project(c2, p2);
 
-        worldDist = 1.0 / norm(p1-p2);
+		imgDist   = norm(p1-p2);
+        worldDist = 1.0 / imgDist;
 
-        if (worldDist > maxWorldDist) {
+		// fix for small baseline
+        if (worldDist > maxWorldDist && imgDist >= 1) {
             maxWorldDist = worldDist;
         }
     }
 
+	// skip small baseline view
+	if (maxWorldDist == -DBL_MAX) {
+		drop = true;
+		return;
+	}
+
 	depthRange[0] = max(depth - maxWorldDist*mvs.depthRangeScalar, 0.0);
-	depthRange[1] = depth + min(maxWorldDist*mvs.depthRangeScalar, mvs.neighborRadius*1.5);
+	depthRange[1] = depth + min(maxWorldDist*mvs.depthRangeScalar, mvs.neighborRadius * 100);
 }
 
 void Patch::setLOD() {
@@ -561,6 +589,12 @@ void Patch::setImagePoint() {
 	if (drop) return;
 	const MVS &mvs                = MVS::getInstance();
 	const int camNum              = getCameraNumber();
+
+	if (camNum == 0) {
+		printf("no visible camera\n");
+		return;
+	}
+
 	const vector<Camera> &cameras = mvs.getCameras();
 	const Camera &refCam          = cameras[refCamIdx];
 	const Mat_<Vec3b> &img        = refCam.getRgbImage();

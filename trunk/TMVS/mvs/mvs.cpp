@@ -458,6 +458,7 @@ void MVS::expandNeighborCell(const Patch &pth) {
 	for (int i = 0; i < camNum; ++i) {
 		// only expansion visible image cell
 		if (camIdx[i] != pth.getReferenceCameraIndex()) continue;
+
 		// camera
 		const Camera &cam = cameras[camIdx[i]];
 		// cell map
@@ -644,7 +645,7 @@ bool MVS::runtimeFiltering(const Patch &pth) const {
 	int count = 0;
 	for (int i = 0; i < camNum; ++i) {
 		const Camera &cam = getCamera(pth.getCameraIndices()[i]);
-		if (pth.getNormal().ddot(-cam.getOpticalNormal()) > visibleCorrelation/2.0) {
+		if (pth.getNormal().ddot(-cam.getOpticalNormal()) > 0) {
 			count++;
 		}
 	}

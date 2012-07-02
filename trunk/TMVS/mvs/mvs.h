@@ -81,8 +81,6 @@ namespace PAIS {
 		void initPatchDistanceWeighting();
 		// re-centering patches
 		void reCentering();
-		// set initialize cell maps and project inti cells
-		void setCellMaps();
 
 
 		void expandNeighborCell(const Patch &pth);
@@ -138,8 +136,12 @@ namespace PAIS {
 		double getDistanceWeight()     const { return distWeighting;      }
 		int    getMinLOD()             const { return minLOD;             }
 
+		// refine seed patches
 		void refineSeedPatches();
+		// expand neighbor cell patches
 		void expansionPatches();
+		// set initialize cell maps and project inti cells
+		void setCellMaps();
 		void patchQuantization(const int thetaNum, const int phiNum, const int distNum);
 		void cellFiltering();
 		void neighborCellFiltering(const double neighborRatio);
