@@ -28,17 +28,17 @@ int main(int argc, char* argv[])
 	config.patchRadius        = 15;
 	config.distWeighting      = config.patchRadius / 3.0;
 	config.diffWeighting      = 128*128;
-	config.minCamNum          = 3;
+	config.minCamNum          = 5;
 	config.textureVariation   = 36;
-	config.visibleCorrelation = 0.4;
-	config.minCorrelation     = 0.8;
+	config.visibleCorrelation = 0.87;
+	config.minCorrelation     = 0.95;
 	config.minLOD             = 0;
-	config.maxLOD             = 10;
+	config.maxLOD             = 15;
 	config.lodRatio           = 0.8;
 	config.maxCellPatchNum    = 3;
 	config.neighborRadius     = 0.005;
-	config.minRegionRatio     = 0.2;
-	config.depthRangeScalar   = 10;
+	config.minRegionRatio     = 0.55;
+	config.depthRangeScalar   = 2;
 	config.particleNum        = 15;
 	config.maxIteration       = 60;
 
@@ -46,8 +46,8 @@ int main(int argc, char* argv[])
 	MVS &mvs = MVS::getInstance(config);
 
 	// LOAD MVS file
-	//mvs.loadNVM2("../../../TMVS_data/dino/dino.nvm2");
-	mvs.loadNVM("../../../TMVS_data/pawn/pawn.nvm");
+	mvs.loadNVM2("../../../TMVS_data/dino/dino.nvm2");
+	//mvs.loadNVM("../../../TMVS_data/castle/castle.nvm");
 	//mvs.loadNVM((char*)argv[1]);
 	//mvs.loadMVS((char*)argv[1]);
 	//mvs.loadMVS("seed.mvs");
@@ -60,10 +60,7 @@ int main(int argc, char* argv[])
 	//printf("time1\t%f\n", (double)(end_t - start_t) / CLOCKS_PER_SEC);
 	
 	//viewer = new MvsViewer(mvs, true, true, false);
-	
-	mvs.refineSeedPatches();
 
-	/*
 	mvs.writeMVS("init.mvs");
 	mvs.refineSeedPatches();
 	mvs.writeMVS("seed.mvs");
@@ -80,7 +77,6 @@ int main(int argc, char* argv[])
 	mvs.writeMVS("filter.mvs");
 	mvs.writePLY("cloud.ply");
 	mvs.writePSR("cloud.psr");
-	*/
 	/*
 	mvs.patchQuantization(24, 24, 100);
 	mvs.writePLY("cloud_quantized.ply");
