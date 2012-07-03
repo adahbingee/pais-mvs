@@ -196,7 +196,7 @@ void Patch::psoOptimization() {
     depth  = gBest[2];
 	center = ray * depth + mvs.getCamera(refCamIdx).getCenter();
 
-	// debugFile << fitness << " " << solver.getIteration() << endl; 
+	//debugFile << fitness << " " << solver.getIteration() << endl; 
 }
 
 void Patch::setCorrelationTable(const vector<Mat_<double>> &H) {
