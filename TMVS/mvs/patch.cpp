@@ -377,8 +377,16 @@ void Patch::getHomographyPatch(const Vec2d &pt, const Mat_<uchar> &img, const Ma
 /* setters */
 
 void Patch::setEstimatedNormal() {
+	if (drop) return;
+
 	const MVS &mvs = MVS::getInstance();
     const int camNum = getCameraNumber();
+
+	if (camNum < mvs.minCamNum) {
+		drop = true;
+		printf("setEstimatedNormal: Not enough visible camera\n");
+		return;
+	}
 
     Vec3d dir;
     normal = Vec3d(0.0, 0.0, 0.0);
@@ -394,11 +402,14 @@ void Patch::setEstimatedNormal() {
 }
 
 void Patch::setReferenceCameraIndex() {
+	if (drop) return;
+
 	const MVS &mvs = MVS::getInstance();
     const int camNum = getCameraNumber();
 
-	if (camNum == 0) {
-		printf("no visible camera\n");
+	if (camNum < mvs.minCamNum) {
+		drop = true;
+		printf("setReferenceCameraIndex: Not enough visible camera\n");
 		return;
 	}
 
@@ -418,27 +429,35 @@ void Patch::setReferenceCameraIndex() {
 	if (refCamIdx < 0) {
 		printf("can't set reference camera camNum: %d maxCorr: %f\n", camNum, maxCorr);
 		refCamIdx = camIdx[0];
-		// system("pause");
+		drop = true;
 	}
 }
 
 void Patch::setDepthAndRay() {
+	if (drop) return;
+
+	const MVS &mvs = MVS::getInstance();
+
 	if (refCamIdx < 0) {
-		printf("no reference camera\n");
+		drop = true;
+		printf("setDepthAndRay: Not set reference camera\n");
 		return;
 	}
 
-    ray = center - MVS::getInstance().getCamera(refCamIdx).getCenter();
+    ray = center - mvs.getCamera(refCamIdx).getCenter();
     depth = norm(ray);
     ray = ray * (1.0 / depth);
 }
 
 void Patch::setDepthRange() {
+	if (drop) return;
+
 	const MVS &mvs   = MVS::getInstance();
     const int camNum = getCameraNumber();
 
-	if (camNum == 0) {
-		printf("no visible camera\n");
+	if (camNum < mvs.minCamNum) {
+		drop = true;
+		printf("setDepthRange: Not enough visible camera\n");
 		return;
 	}
 
@@ -479,8 +498,11 @@ void Patch::setDepthRange() {
 }
 
 void Patch::setLOD() {
+	if (drop) return;
+
 	if (refCamIdx < 0) {
-        printf("Reference camera index not set\n");
+		drop = true;
+		printf("setLOD: Not set reference camera\n");
         return;
     }
 
@@ -614,6 +636,7 @@ void Patch::setImagePoint() {
 }
 
 void Patch::removeInvisibleCamera() {
+	if (drop) return;
 
 	const MVS &mvs = MVS::getInstance();
 	const int camNum = getCameraNumber();
@@ -670,6 +693,8 @@ void Patch::removeInvisibleCamera() {
 }
 
 void Patch::expandVisibleCamera() {
+	if (drop) return;
+
 	const MVS &mvs = MVS::getInstance();
 	const vector<Camera> &cameras = mvs.cameras;
 
@@ -707,7 +732,7 @@ void Patch::setQuantization(const Vec3d &center, const Vec3d &normal) {
 /* misc */
 void Patch::showRefinedResult() const {
 	if (refCamIdx < 0) {
-		printf("reference camera not set\n");
+		printf("showRefinedResult: reference camera not set\n");
 		return;
 	}
 
@@ -765,7 +790,7 @@ void Patch::showRefinedResult() const {
 
 void Patch::showError() const {
 	if (refCamIdx < 0) {
-		printf("reference camera not set\n");
+		printf("showError: reference camera not set\n");
 		return;
 	}
 

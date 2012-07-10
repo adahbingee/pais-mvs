@@ -24,7 +24,7 @@ int main(int argc, char* argv[])
 {
 	// MVS configures
 	MvsConfig config;
-	config.cellSize           = 2;
+	config.cellSize           = 1;
 	config.patchRadius        = 15;
 	config.distWeighting      = config.patchRadius / 3.0;
 	config.diffWeighting      = 128*128;
@@ -39,8 +39,8 @@ int main(int argc, char* argv[])
 	config.neighborRadius     = 0.005;
 	config.minRegionRatio     = 0.55;
 	config.depthRangeScalar   = 2;
-	config.particleNum        = 15;
-	config.maxIteration       = 60;
+	config.particleNum        = 10;
+	config.maxIteration       = 40;
 
 	// set MVS instance
 	MVS &mvs = MVS::getInstance(config);
@@ -77,6 +77,7 @@ int main(int argc, char* argv[])
 	mvs.writeMVS("filter.mvs");
 	mvs.writePLY("cloud.ply");
 	mvs.writePSR("cloud.psr");
+
 	/*
 	mvs.patchQuantization(24, 24, 100);
 	mvs.writePLY("cloud_quantized.ply");
