@@ -135,7 +135,7 @@ void Patch::refine() {
 	int beforeCamNum    = getCameraNumber();
 	int afterCamNum     = -1;
 
-	while (beforeRefCamIdx != afterRefCamIdx && beforeCamNum != afterCamNum) {
+	while (beforeRefCamIdx != afterRefCamIdx || beforeCamNum != afterCamNum) {
 
 		if (getCameraNumber() < mvs.minCamNum) {
 			fitness  = DBL_MAX;
