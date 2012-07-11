@@ -160,6 +160,7 @@ void MVS::refineSeedPatches() {
 		}
 
 		pth.refine();
+		pth.removeInvisibleCamera();
 
 		if ( !runtimeFiltering(pth) ) {
 			it = patches.erase(it);
@@ -494,6 +495,7 @@ void MVS::expandCell(const PAIS::Camera &cam, const Patch &parent, const int cx,
 	// get expansion patch
 	Patch expPatch(center, parent);
 	expPatch.refine();
+	expPatch.removeInvisibleCamera();
 
 	insertPatch(expPatch);
 }

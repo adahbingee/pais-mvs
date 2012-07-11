@@ -147,7 +147,7 @@ void Patch::refine() {
 		beforeRefCamIdx = refCamIdx;
 		beforeCamNum    = getCameraNumber();
 
-		// do pso optimization
+		// do pso optimization (update center and normal)
 		psoOptimization();
 
 		// skip fail optimization
@@ -157,11 +157,11 @@ void Patch::refine() {
 		}
 
 		// update information
+		removeInvisibleCamera();
 		setReferenceCameraIndex();
 		setDepthAndRay();
 		setDepthRange();
 		setLOD();
-		removeInvisibleCamera();
 
 		if (type == TYPE_EXPAND) break;
 
@@ -249,10 +249,12 @@ void Patch::setCorrelationTable(const vector<Mat_<double>> &H) {
 
 double Patch::getHomographyRegionRatio(const Vec2d &pt, const Mat_<double> &H) const {
 	const int patchRadius = MVS::getInstance().patchRadius;
-	const int patchSize   = MVS::getInstance().patchSize;
+	const int patchSize   = MVS::getInstance().patchSize - 1;
 
-	double x [] = {pt[0]-patchRadius, pt[0]+patchRadius, pt[0]-patchRadius, pt[0]+patchRadius};
-	double y [] = {pt[1]-patchRadius, pt[1]-patchRadius, pt[1]+patchRadius, pt[1]+patchRadius};
+	// 0 3
+	// 1 2
+	double x [] = {pt[0]-patchRadius, pt[0]-patchRadius, pt[0]+patchRadius, pt[0]+patchRadius};
+	double y [] = {pt[1]-patchRadius, pt[1]+patchRadius, pt[1]+patchRadius, pt[1]-patchRadius};
 	Vec2d p[4];
 	double w;
 	for (int i = 0; i < 4; ++i) {
@@ -260,20 +262,12 @@ double Patch::getHomographyRegionRatio(const Vec2d &pt, const Mat_<double> &H) c
 		p[i][0] = ( H.at<double>(0, 0) * x[i] + H.at<double>(0, 1) * y[i] + H.at<double>(0, 2) ) / w;
 		p[i][1] = ( H.at<double>(1, 0) * x[i] + H.at<double>(1, 1) * y[i] + H.at<double>(1, 2) ) / w;
 	}
-	
-	double dist[4];
-	dist[0] = norm(p[0]-p[1]);
-	dist[1] = norm(p[0]-p[2]);
-	dist[2] = norm(p[1]-p[3]);
-	dist[3] = norm(p[2]-p[3]);
-	double minDist = DBL_MAX;
-	for (int i = 0; i < 4; ++i) {
-		if (dist[i] < minDist) {
-			minDist = dist[i];
-		}
-	}
 
-	return minDist / patchSize;
+	double sum1 = p[0][0]*p[1][1] + p[1][0]*p[2][1] + p[2][0]*p[3][1] + p[3][0]*p[0][1];
+	double sum2 = p[0][1]*p[1][0] + p[1][1]*p[2][0] + p[2][1]*p[3][0] + p[3][1]*p[0][0];
+	double region = 0.5 * abs(sum1-sum2);
+
+	return region / (patchSize*patchSize);
 }
 
 void Patch::getHomographies(const Vec3d &center, const Vec3d &normal, vector<Mat_<double>> &H) const {
@@ -642,7 +636,7 @@ void Patch::removeInvisibleCamera() {
 	const int camNum = getCameraNumber();
 	const Camera &refCam = mvs.getCamera(refCamIdx);
 
-	vector<Mat_<double>> H;
+	vector<Mat_<double> > H;
 	getHomographies(center, normal, H);
 	setCorrelationTable(H);
 
@@ -675,6 +669,12 @@ void Patch::removeInvisibleCamera() {
 			continue;
 		}
 
+		// filter by normal correlation
+		if (normal.ddot(-mvs.getCamera(camIdx[i]).getOpticalNormal()) < 0) {
+			removeIdx.push_back(camIdx[i]);
+			continue;
+		}
+
 		// filter by correlation
 		if (i == maxIdx) continue;
 		if (corrTable.at<double>(maxIdx, i) < mvs.minCorrelation) {
@@ -683,12 +683,17 @@ void Patch::removeInvisibleCamera() {
 		}
 	}
 
-	// remove idx
+	// remove camera idx
 	vector<int>::iterator it;
 	for (int i = 0; i < (int) removeIdx.size(); i++) {
 		it = find(camIdx.begin(), camIdx.end(), removeIdx[i]);
-		if(it == camIdx.end()) continue;
-		camIdx.erase(it);
+		if(it != camIdx.end()) {
+			camIdx.erase(it);
+		}
+	}
+
+	if (getCameraNumber() < mvs.minCamNum) {
+		drop = true;
 	}
 }
 
@@ -699,6 +704,8 @@ void Patch::expandVisibleCamera() {
 	const vector<Camera> &cameras = mvs.cameras;
 
 	vector<int> expCamIdx;
+
+	// expand visible camera through a viewing cone
 	for (int i = 0; i < cameras.size(); ++i) {
 		const Camera &cam = cameras[i];
 		if (normal.ddot(-cam.getOpticalNormal()) >= mvs.visibleCorrelation) {
@@ -711,17 +718,23 @@ void Patch::expandVisibleCamera() {
 
 		for (int i = 0; i < camIdx.size(); ++i) {
 			const Camera &cam = cameras[camIdx[i]];
+			// get parent patch camera through a larger viewing cone
 			if (normal.ddot(-cam.getOpticalNormal()) >= mvs.visibleCorrelation/2.0) {
 				expCamIdx.push_back(camIdx[i]);
 			}
 		}
 		
+		// unique camera indices
 		sort(expCamIdx.begin(), expCamIdx.end());
 		vector<int>::iterator it = unique(expCamIdx.begin(), expCamIdx.end());
 		expCamIdx.resize(it - expCamIdx.begin());
 	}
 
 	camIdx = expCamIdx;
+
+	if (getCameraNumber() < mvs.minCamNum) {
+		drop = true;
+	}
 }
 
 void Patch::setQuantization(const Vec3d &center, const Vec3d &normal) {
