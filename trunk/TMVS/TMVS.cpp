@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
 	config.patchRadius        = 15;
 	config.distWeighting      = config.patchRadius / 3.0;
 	config.diffWeighting      = 128*128;
-	config.minCamNum          = 5;
+	config.minCamNum          = 10;
 	config.textureVariation   = 36;
 	config.visibleCorrelation = 0.87;
 	config.minCorrelation     = 0.95;

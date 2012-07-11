@@ -19,8 +19,6 @@ namespace PAIS {
 		int type;
 
 		void setCorrelationTable(const vector<Mat_<double>> &H);
-		// get homography region ratio
-		double getHomographyRegionRatio(const Vec2d &pt, const Mat_<double> &H) const;
 		// get homography texture 1D vector
 		void getHomographyPatch(const Vec2d &pt, const Mat_<uchar> &img, const Mat_<double> &H, Mat_<double> &hp);
 		// expand visible camera using normal correlation
@@ -36,7 +34,6 @@ namespace PAIS {
 		void setLOD();
 		void setPriority();
 		void setImagePoint();
-		void removeInvisibleCamera();
 	
 	public:
 		static bool isNeighbor(const Patch &pth1, const Patch &pth2);
@@ -50,10 +47,13 @@ namespace PAIS {
 
 		void reCentering();
 		void refine();
+		void removeInvisibleCamera();
 		void setQuantization(const Vec3d &center, const Vec3d &normal);
 
 		// get homographies
 		void getHomographies(const Vec3d &center, const Vec3d &normal, vector<Mat_<double>> &H) const;
+		// get homography region ratio
+		double getHomographyRegionRatio(const Vec2d &pt, const Mat_<double> &H) const;
 		// show homography window in visible cameras
 		void showRefinedResult() const;
 		// show SAD error image
