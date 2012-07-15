@@ -16,6 +16,11 @@ namespace PAIS {
 	class Camera;
 	class Patch;
 
+	struct PatchDist {
+		int id;
+		double dist;
+	};
+
 	class MvsConfig {
 	public:
 		// image cell size (pixel*pixel)
@@ -152,6 +157,7 @@ namespace PAIS {
 		void cellFiltering();
 		void neighborCellFiltering(const double neighborRatio);
 		void visibilityFiltering();
+		void neighborPatchFiltering(const int localK = 30);
 		// patch quantization (optional)
 		void patchQuantization(const int thetaNum, const int phiNum, const int distNum);
 	};

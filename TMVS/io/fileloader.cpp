@@ -164,43 +164,6 @@ Patch FileLoader::loadNvmPatch(ifstream &file, const MVS &mvs) {
 MvsConfig FileLoader::loadMvsConfig(ifstream &file) {
 	MvsConfig config;
 	file.read((char*) &config, sizeof(MvsConfig));
-	/*
-	// read cell size
-	file.read((char*) &config.cellSize, sizeof(int));
-	// read patch radius
-	file.read((char*) &config.patchRadius, sizeof(int));
-	// read minimum visible camera number
-	file.read((char*) &config.minCamNum, sizeof(int));
-	// read intensity variation in patch for LOD
-	file.read((char*) &config.textureVariation, sizeof(double));
-	// read visible camera correlation for expand visible camera
-	file.read((char*) &config.visibleCorrelation, sizeof(double));
-	// read minimum patch correlation when filtering patch visible camera
-	file.read((char*) &config.minCorrelation, sizeof(double));
-	// read LOD ratio
-	file.read((char*) &config.lodRatio, sizeof(double));
-	// read minimum LOD
-	file.read((char*) &config.minLOD, sizeof(int));
-	// read maximum LOD
-	file.read((char*) &config.maxLOD, sizeof(int));
-	// read maximum cell patch number
-	file.read((char*) &config.maxCellPatchNum, sizeof(int));
-	// read patch distance wieghting
-	file.read((char*) &config.distWeighting, sizeof(double));
-	// wirte patch difference weighting
-	file.read((char*) &config.diffWeighting, sizeof(double));
-	// read neighbor radius
-	file.read((char*) &config.neighborRadius, sizeof(double));
-	// read minimum region ratio
-	file.read((char*) &config.minRegionRatio, sizeof(double));
-	// read depth range scalar (pixel)
-	file.read((char*) &config.depthRangeScalar, sizeof(double));
-	// PSO parameter
-	// particle number
-	file.read((char*) &config.particleNum, sizeof(int));
-	// maximum iteration number
-	file.read(((char*) &config.maxIteration), sizeof(int));
-	*/
 	return config;
 }
 
