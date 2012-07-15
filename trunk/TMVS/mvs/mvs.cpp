@@ -4,6 +4,10 @@ using namespace PAIS;
 
 MVS* MVS::instance = NULL;
 
+bool patchDistCompare(const PatchDist &p1, const PatchDist &p2) {
+	return (p1.dist < p2.dist);
+}
+
 /* constructor */
 
 MVS& MVS::getInstance(const MvsConfig &config) {
@@ -459,6 +463,70 @@ void MVS::visibilityFiltering() {
 	}
 }
 
+void MVS::neighborPatchFiltering(const int localK) {
+	// copy patch id
+	vector<int> patchIds;
+	for (map<int, Patch>::const_iterator it = patches.begin(); it != patches.end(); ++it) {
+		const Patch &pth = it->second; // current patch
+		patchIds.push_back(pth.getId());
+	}
+
+	// patch id to be remove
+	vector<int> removeIdx;
+	int count = 1;
+
+	// check k nearest neighbor of each patch
+	#pragma omp parallel for
+	for (int i = 0; i < (int) patchIds.size(); ++i) {
+		#pragma omp critical
+		{
+			printf("\rneighbor patch filtering: %d / %d / %d", count++, patches.size(), removeIdx.size());
+		}
+		const Patch &pth = getPatch(patchIds[i]); // current patch
+
+		vector<PatchDist> dist;              // dist container
+		for (map<int, Patch>::const_iterator itN = patches.begin(); itN != patches.end(); ++itN) {
+			const Patch &pthN = itN->second; // current neighbor patch
+
+			// skip self
+			if (pthN.getId() == pth.getId()) continue;
+
+			// distance object
+			PatchDist pthDist;
+			pthDist.id   = pthN.getId();
+			pthDist.dist = norm(pth.getCenter() - pthN.getCenter());
+
+			dist.push_back(pthDist);
+		}
+
+		// sort by distance
+		sort(dist.begin(), dist.end(), patchDistCompare);
+
+		// get local k nearest neighbor information
+		double avgNormalCorr = 0;
+		double avgDist       = 0;
+		for (int i = 0; i < localK; ++i) {
+			const Patch &pthN = getPatch(dist[i].id);
+			avgNormalCorr += pth.getNormal().ddot(pthN.getNormal());
+			avgDist       += dist[i].dist;
+		}
+		avgNormalCorr /= localK;
+		avgDist       /= localK;
+
+		if (avgDist > neighborRadius || avgNormalCorr < visibleCorrelation) {
+			#pragma omp critical
+			{
+				removeIdx.push_back(pth.getId());
+			}
+		}
+	}
+
+	// remove outlier patches
+	for (int i = 0; i < (int) removeIdx.size(); ++i) {
+		deletePatch(removeIdx[i]);
+	}
+}
+
 /* process */
 
 void MVS::expandNeighborCell(const Patch &pth) {
@@ -543,16 +611,18 @@ map<int, Patch>::iterator MVS::deletePatch(const int id) {
 	map<int, Patch>::iterator it = patches.find(id);
 	if (it == patches.end()) return patches.end();
 
-	const Patch &pth = it->second;
-	const int camNum = pth.getCameraNumber();
-	const vector<int> &camIdx = pth.getCameraIndices();
-	const vector<Vec2d> &imgPoints = pth.getImagePoints();
+	if(!cellMaps.empty()) {
+		const Patch &pth = it->second;
+		const int camNum = pth.getCameraNumber();
+		const vector<int> &camIdx = pth.getCameraIndices();
+		const vector<Vec2d> &imgPoints = pth.getImagePoints();
 
-	int cx, cy;
-	for (int i = 0; i < camNum; ++i) {
-		cx = (int) (imgPoints[i][0] / cellSize);
-		cy = (int) (imgPoints[i][1] / cellSize);
-		cellMaps[camIdx[i]].drop(cx, cy, pth.getId());
+		int cx, cy;
+		for (int i = 0; i < camNum; ++i) {
+			cx = (int) (imgPoints[i][0] / cellSize);
+			cy = (int) (imgPoints[i][1] / cellSize);
+			cellMaps[camIdx[i]].drop(cx, cy, pth.getId());
+		}
 	}
 
 	return patches.erase(it);
