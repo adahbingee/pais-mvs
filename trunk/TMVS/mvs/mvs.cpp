@@ -30,6 +30,7 @@ void MVS::setConfig(const MvsConfig &config) {
 	this->visibleCorrelation = config.visibleCorrelation;
 	this->textureVariation   = config.textureVariation;
 	this->minCorrelation     = config.minCorrelation;
+	this->maxFitness         = config.maxFitness;
 	this->minLOD             = config.minLOD;
 	this->maxLOD             = config.maxLOD;
 	this->lodRatio           = config.lodRatio;
@@ -61,6 +62,14 @@ bool MVS::initCellMaps() {
 	}
 
 	return true;
+}
+
+void MVS::initPriorityQueue() {
+	queue.clear();
+	map<int, Patch>::const_iterator it;
+	for (it = patches.begin(); it != patches.end(); ++it) {
+		queue.push_back(it->second.getId());
+	}
 }
 
 void MVS::initPatchDistanceWeighting() {
@@ -180,6 +189,8 @@ void MVS::refineSeedPatches() {
 void MVS::expansionPatches() {
 	// initialize cell maps (project seed patches)
 	setCellMaps();
+	// initialize seed patch into priority queue
+	initPriorityQueue();
 
 	int pthId = getTopPriorityPatchId();
 	int count = 0;
@@ -470,10 +481,10 @@ void MVS::expandNeighborCell(const Patch &pth) {
 		cy = (int) (imgPoints[i][1] / cellSize);
 
 		// check neighbor cells
-		int nx [] = {cx, cx-1, cx-1, cx+1, cx+1, cx-1, cx  , cx+1, cx  };
-		int ny [] = {cy, cy-1, cy+1, cy-1, cy+1, cy  , cy-1, cy  , cy+1};
+		int nx [] = {cx-1, cx  , cx+1, cx  };
+		int ny [] = {cy  , cy-1, cy  , cy+1};
 
-		for (int j = 0; j < 9; ++j) {
+		for (int j = 0; j < 4; ++j) {
 			// skip out of map
 			if ( !map.inMap(nx[j], ny[j]) ) continue;
 
@@ -510,6 +521,8 @@ void MVS::insertPatch(const Patch &pth) {
 
 	// insert into patches container
 	patches.insert(pair<int, Patch>(pth.getId(), pth));
+	// insert into priority queue
+	queue.push_back(pth.getId());
 	
 	// insert into cell maps
 	for (int i = 0; i < camNum; ++i) {
@@ -592,24 +605,37 @@ void MVS::getExpansionPatchCenter(const PAIS::Camera &cam, const Patch &parent, 
 }
 
 int MVS::getTopPriorityPatchId() const {
-	map<int, Patch>::const_iterator it;
+	vector<int>::iterator it;
+	vector<int>::iterator topIt = queue.end();
 	double topPriority = DBL_MAX;
-	int topId = -1;
-	int count = 0;
-	for (it = patches.begin(); it != patches.end(); ++it) { 
-		const Patch &pth = (*it).second;
+
+	for (it = queue.begin(); it != queue.end();) { 
+		const Patch &pth = getPatch(*it);
+
 		// skip expanded
-		if ( pth.isExpanded() ) continue;
-		++count;
+		if ( pth.isExpanded() ) {
+			it = queue.erase(it);
+			continue;
+		}
 
 		// update top priority
 		if (pth.getPriority() < topPriority) {
 			topPriority = pth.getPriority();
-			topId = pth.getId();
+			topIt       = it;
 		}
+
+		++it;
 	}
 
-	printf("queue %d patches %d\n", count, patches.size());
+	int topId = -1;
+
+	// delete top id from queue
+	if (topIt != queue.end()) {
+		topId = *topIt;
+		queue.erase(topIt);
+	}
+
+	printf("queue %d patches %d\n", queue.size(), patches.size());
 
 	return topId;
 }
@@ -617,7 +643,7 @@ int MVS::getTopPriorityPatchId() const {
 bool MVS::runtimeFiltering(const Patch &pth) const {
 	if (pth.isDropped())                       return false;
 	if (pth.getCameraNumber() < minCamNum)     return false;
-	if (pth.getFitness() >= 10000)             return false;
+	if (pth.getFitness() > maxFitness)         return false;
 	if (pth.getFitness() == 0.0)               return false;
 	if (pth.getPriority() > 10000)             return false;
 	if (_isnan(pth.getFitness()))              return false;
@@ -686,6 +712,7 @@ void MVS::printConfig() const {
 	printf("texture variation:\t%f\n", textureVariation);
 	printf("visible correlation:\t%f\n", visibleCorrelation);
 	printf("minimum correlation:\t%f\n", minCorrelation);
+	printf("maximum fitness:\t%f\n", maxFitness);
 	printf("LOD ratio:\t%f\n", lodRatio);
 	printf("minimum LOD:\t%d\n", minLOD);
 	printf("maximum LOD:\t%d\n", maxLOD);

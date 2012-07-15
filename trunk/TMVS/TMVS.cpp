@@ -24,7 +24,7 @@ int main(int argc, char* argv[])
 {
 	// MVS configures
 	MvsConfig config;
-	config.cellSize           = 1;
+	config.cellSize           = 2;
 	config.patchRadius        = 15;
 	config.distWeighting      = config.patchRadius / 3.0;
 	config.diffWeighting      = 128*128;
@@ -32,6 +32,7 @@ int main(int argc, char* argv[])
 	config.textureVariation   = 36;
 	config.visibleCorrelation = 0.87;
 	config.minCorrelation     = 0.95;
+	config.maxFitness         = 10.0;
 	config.minLOD             = 0;
 	config.maxLOD             = 15;
 	config.lodRatio           = 0.8;
