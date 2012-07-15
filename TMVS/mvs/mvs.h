@@ -32,6 +32,8 @@ namespace PAIS {
 		double visibleCorrelation;
 		// minimum patch correlation when filtering patch visible camera
 		double minCorrelation;
+		// fitness threshold
+		double maxFitness;
 		// LOD ratio
 		double lodRatio;
 		// minimum LOD
@@ -68,15 +70,21 @@ namespace PAIS {
 
 		// camera container
 		vector<Camera>  cameras;
-		// patch container
+		// patch container (id, patch)
 		map<int, Patch> patches;
 		// cell map container
 		vector<CellMap> cellMaps;
 		// pixel-wised distance weighting of patch
 		Mat_<double> patchDistWeight;
+		// priority queue (patch id)
+		mutable vector<int> queue;
 
+		// set initialize cell maps and project inti cells
+		void setCellMaps();
 		// initialize cell map using given cell size
 		bool initCellMaps();
+		// initialize priority queue
+		void initPriorityQueue();
 		// initial pixel-wised distance weighting of patch
 		void initPatchDistanceWeighting();
 		// re-centering patches
@@ -119,13 +127,13 @@ namespace PAIS {
 		void writePSR(const char *fileName) const;
 
 		// getter
-		const vector<Camera>&  getCameras()  const { return cameras;  }
-		const Camera& getCamera(const int idx) const { return cameras[idx]; }
-		const map<int, Patch>& getPatches()  const { return patches;  }
-		const vector<CellMap>& getCellMaps() const { return cellMaps; }
+		const vector<Camera>&  getCameras()             const { return cameras;         }
+		const Camera& getCamera(const int idx)          const { return cameras[idx];    }
+		const map<int, Patch>& getPatches()             const { return patches;         }
+		const vector<CellMap>& getCellMaps()            const { return cellMaps;        }
 		const Mat_<double>& getPatchDistanceWeighting() const { return patchDistWeight; }
-		const Patch& getPatch(const int id) const { return patches.at(id); }
-		Patch& getPatch(const int id) { return patches.at(id); }
+		const Patch& getPatch(const int id)             const { return patches.at(id);  }
+		Patch& getPatch(const int id)                         { return patches.at(id);  }
 
 		int    getCellSize()           const { return cellSize;           } 
 		int    getPatchRadius()        const { return patchRadius;        }
@@ -140,12 +148,12 @@ namespace PAIS {
 		void refineSeedPatches();
 		// expand neighbor cell patches
 		void expansionPatches();
-		// set initialize cell maps and project inti cells
-		void setCellMaps();
-		void patchQuantization(const int thetaNum, const int phiNum, const int distNum);
+		// patch filtering
 		void cellFiltering();
 		void neighborCellFiltering(const double neighborRatio);
 		void visibilityFiltering();
+		// patch quantization (optional)
+		void patchQuantization(const int thetaNum, const int phiNum, const int distNum);
 	};
 };
 

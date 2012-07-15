@@ -151,7 +151,7 @@ void Patch::refine() {
 		psoOptimization();
 
 		// skip fail optimization
-		if (fitness > 1000) {
+		if (fitness > mvs.maxFitness) {
 			drop = true;
 			return;
 		}
