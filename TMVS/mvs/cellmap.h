@@ -14,10 +14,8 @@ namespace PAIS {
 
 	class CellMap {
 	private:
-		int cellSize;
 		int width;
 		int height;
-		const Camera *camera;
 		Map map;
 
 	public:

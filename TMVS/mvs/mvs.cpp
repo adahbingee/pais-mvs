@@ -4,6 +4,15 @@ using namespace PAIS;
 
 MVS* MVS::instance = NULL;
 
+struct PatchDist {
+	int id;
+	double dist;
+};
+struct PatchNeighbor {
+	int id;
+	vector<int> nid;
+};
+
 bool patchDistCompare(const PatchDist &p1, const PatchDist &p2) {
 	return (p1.dist < p2.dist);
 }
@@ -196,14 +205,14 @@ void MVS::expansionPatches() {
 	// initialize seed patch into priority queue
 	initPriorityQueue();
 
-	int pthId = getTopPriorityPatchId();
+	int pthId = getNextPatchId(); // getTopPriorityPatchId();
 	int count = 0;
 	while ( pthId >= 0) {
 		// get top priority seed patch
 		Patch &pth = getPatch(pthId);
 		pth.setExpanded();
 		// get next seed patch
-		pthId = getTopPriorityPatchId();
+		pthId = getNextPatchId(); // getTopPriorityPatchId();
 
 		printf("parent: fit: %f \t pri: %f \t camNum: %d\n", pth.getFitness(), pth.getPriority(), pth.getCameraNumber());
 		
@@ -463,7 +472,7 @@ void MVS::visibilityFiltering() {
 	}
 }
 
-void MVS::neighborPatchFiltering(const int localK) {
+void MVS::neighborPatchFiltering() {
 	// copy patch id
 	vector<int> patchIds;
 	for (map<int, Patch>::const_iterator it = patches.begin(); it != patches.end(); ++it) {
@@ -471,17 +480,18 @@ void MVS::neighborPatchFiltering(const int localK) {
 		patchIds.push_back(pth.getId());
 	}
 
-	// patch id to be remove
-	vector<int> removeIdx;
-	int count = 1;
+	// patch neighbor information
+	vector<PatchNeighbor> neighbor;
 
 	// check k nearest neighbor of each patch
+	int count = 1;
 	#pragma omp parallel for
 	for (int i = 0; i < (int) patchIds.size(); ++i) {
 		#pragma omp critical
 		{
-			printf("\rneighbor patch filtering: %d / %d / %d", count++, patches.size(), removeIdx.size());
+			printf("\rfiltering: %d / %d", count++, patches.size());
 		}
+
 		const Patch &pth = getPatch(patchIds[i]); // current patch
 
 		vector<PatchDist> dist;              // dist container
@@ -502,28 +512,33 @@ void MVS::neighborPatchFiltering(const int localK) {
 		// sort by distance
 		sort(dist.begin(), dist.end(), patchDistCompare);
 
-		// get local k nearest neighbor information
-		double avgNormalCorr = 0;
-		double avgDist       = 0;
-		for (int i = 0; i < localK; ++i) {
+		// get local neighbor information
+		PatchNeighbor pn;
+		pn.id = pth.getId();
+		for (int i = 0; i < (int) dist.size(); ++i) {
 			const Patch &pthN = getPatch(dist[i].id);
-			avgNormalCorr += pth.getNormal().ddot(pthN.getNormal());
-			avgDist       += dist[i].dist;
+			if (dist[i].dist > neighborRadius) break;
+			pn.nid.push_back(pthN.getId());
 		}
-		avgNormalCorr /= localK;
-		avgDist       /= localK;
-
-		if (avgDist > neighborRadius || avgNormalCorr < visibleCorrelation) {
-			#pragma omp critical
-			{
-				removeIdx.push_back(pth.getId());
-			}
+		#pragma omp critical
+		{
+			neighbor.push_back(pn);
 		}
 	}
 
+	// get average neighbor number
+	int avgNeighborNum = 0;
+	for (int i = 0; i < (int) neighbor.size(); ++i) {
+		avgNeighborNum += (int) neighbor[i].nid.size();
+	}
+	avgNeighborNum /= (int) neighbor.size();
+	printf("average neighbor number: %d\n", avgNeighborNum);
+
 	// remove outlier patches
-	for (int i = 0; i < (int) removeIdx.size(); ++i) {
-		deletePatch(removeIdx[i]);
+	for (int i = 0; i < (int) neighbor.size(); ++i) {
+		if ((int) neighbor[i].nid.size() < (avgNeighborNum>>2) ) {
+			deletePatch(neighbor[i].id);
+		}
 	}
 }
 
@@ -704,6 +719,66 @@ int MVS::getTopPriorityPatchId() const {
 		topId = *topIt;
 		queue.erase(topIt);
 	}
+
+	printf("queue %d patches %d\n", queue.size(), patches.size());
+
+	return topId;
+}
+
+int MVS::getLastPriorityPatchId() const {
+	vector<int>::iterator it;
+	vector<int>::iterator topIt = queue.end();
+	double topPriority = -DBL_MAX;
+
+	for (it = queue.begin(); it != queue.end();) { 
+		const Patch &pth = getPatch(*it);
+
+		// skip expanded
+		if ( pth.isExpanded() ) {
+			it = queue.erase(it);
+			continue;
+		}
+
+		// update top priority
+		if (pth.getPriority() > topPriority) {
+			topPriority = pth.getPriority();
+			topIt       = it;
+		}
+
+		++it;
+	}
+
+	int topId = -1;
+
+	// delete top id from queue
+	if (topIt != queue.end()) {
+		topId = *topIt;
+		queue.erase(topIt);
+	}
+
+	printf("queue %d patches %d\n", queue.size(), patches.size());
+
+	return topId;
+}
+
+int MVS::getNextPatchId() const {
+	vector<int>::iterator it;
+	int topId = -1;
+
+	for (it = queue.begin(); it != queue.end();) {
+		const Patch &pth = getPatch(*it);
+
+		// skip expanded
+		if ( pth.isExpanded() ) {
+			it = queue.erase(it);
+			continue;
+		}
+
+		topId = *it;
+		break;
+	}
+
+	queue.erase(it);
 
 	printf("queue %d patches %d\n", queue.size(), patches.size());
 
