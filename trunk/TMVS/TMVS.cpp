@@ -24,7 +24,7 @@ int main(int argc, char* argv[])
 {
 	// MVS configures
 	MvsConfig config;
-	config.cellSize           = 2;
+	config.cellSize           = 1;
 	config.patchRadius        = 15;
 	config.distWeighting      = config.patchRadius / 3.0;
 	config.diffWeighting      = 128*128;
@@ -47,11 +47,11 @@ int main(int argc, char* argv[])
 	MVS &mvs = MVS::getInstance(config);
 
 	// LOAD MVS file
-	//mvs.loadNVM2("../../../TMVS_data/dino/dino.nvm2");
+	mvs.loadNVM2("../../../TMVS_data/dino/dino.nvm2");
 	//mvs.loadNVM("../../../TMVS_data/castle/castle.nvm");
 	//mvs.loadNVM((char*)argv[1]);
 	//mvs.loadMVS((char*)argv[1]);
-	mvs.loadMVS("filter.mvs");
+	//mvs.loadMVS("filter.mvs");
 	// printf("patches: %d\n", mvs.getPatches().size());
 
 	// start MVS process
@@ -62,7 +62,6 @@ int main(int argc, char* argv[])
 	
 	//viewer = new MvsViewer(mvs, true, true, false);
 
-	/*
 	mvs.writeMVS("init.mvs");
 	mvs.refineSeedPatches();
 	mvs.writeMVS("seed.mvs");
@@ -77,13 +76,10 @@ int main(int argc, char* argv[])
 	mvs.neighborCellFiltering(0.25);
 	printf("patches: %d\n", mvs.getPatches().size());
 	mvs.writeMVS("filter.mvs");
+	mvs.neighborPatchFiltering();
+	mvs.writeMVS("filter2.mvs");
 	mvs.writePLY("cloud.ply");
 	mvs.writePSR("cloud.psr");
-	*/
-
-	mvs.neighborPatchFiltering(8);
-	mvs.writeMVS("filter2.mvs");
-
 	/*
 	mvs.patchQuantization(24, 24, 100);
 	mvs.writePLY("cloud_quantized.ply");

@@ -6,20 +6,15 @@
 
 #include "../io/fileloader.h"
 #include "../io/filewriter.h"
-#include "patch.h"
 #include "cellmap.h"
 
+// trigger viewer event
 extern void addPatchView(const Patch &pth);
 
 namespace PAIS {
 	class CellMap;
 	class Camera;
 	class Patch;
-
-	struct PatchDist {
-		int id;
-		double dist;
-	};
 
 	class MvsConfig {
 	public:
@@ -84,6 +79,9 @@ namespace PAIS {
 		// priority queue (patch id)
 		mutable vector<int> queue;
 
+		/*******************
+			initialization 
+		********************/
 		// set initialize cell maps and project inti cells
 		void setCellMaps();
 		// initialize cell map using given cell size
@@ -95,30 +93,51 @@ namespace PAIS {
 		// re-centering patches
 		void reCentering();
 
-
+		/******************
+			expansion
+		*******************/
+		// expansion one ring neighbor cells in all visible images (optional: only reference image)
 		void expandNeighborCell(const Patch &pth);
+		// expansion cell
 		void expandCell(const Camera &cam, const Patch &parent, const int cx, const int cy);
-		void insertPatch(const Patch &pth);
-		// delete patch and return next patch iterator
-		map<int, Patch>::iterator deletePatch(Patch &pth);
-		map<int, Patch>::iterator deletePatch(const int id);
 
-		// get top priority patch id to expansion
+		/*****************
+			get patch id from queue
+		******************/
+		// get top priority patch id from queue to expansion (best first)
 		int getTopPriorityPatchId() const;
+		// get last priority patch id from queue to expansion (worst first)
+		int getLastPriorityPatchId() const;
+		// get next patch id from queue to expansion (breath first)
+		int getNextPatchId() const;
+
 		// check neighbor patches in cell
 		bool skipNeighborCell(const vector<int> &cell, const Patch &refPth) const;
 		// get new expansion center
 		void getExpansionPatchCenter(const Camera &cam, const Patch &parent, const int cx, const int cy, Vec3d &center) const;
 		// patch filter (false: filter out)
 		bool runtimeFiltering(const Patch &pth) const;
+
+		/*****************
+			misc functions
+		******************/
+		// insert new patch in patch pool and queue
+		void insertPatch(const Patch &pth);
+		// delete patch and return next patch iterator
+		map<int, Patch>::iterator deletePatch(Patch &pth);
+		map<int, Patch>::iterator deletePatch(const int id);
 		// print config information
 		void printConfig() const;
+
 	public:
 		friend class FileWriter;
 		friend class FileLoader;
 		friend class Patch;
 		friend class Camera;
 
+		/*****************
+			instance getter
+		******************/
 		static MVS& getInstance() { return *instance; }
 		static MVS& getInstance(const MvsConfig &config);
 
@@ -157,7 +176,7 @@ namespace PAIS {
 		void cellFiltering();
 		void neighborCellFiltering(const double neighborRatio);
 		void visibilityFiltering();
-		void neighborPatchFiltering(const int localK = 30);
+		void neighborPatchFiltering();
 		// patch quantization (optional)
 		void patchQuantization(const int thetaNum, const int phiNum, const int distNum);
 	};

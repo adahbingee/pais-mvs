@@ -3,11 +3,8 @@
 using namespace PAIS;
 
 CellMap::CellMap(const Camera &camera, const int cellSize) {
-	this->camera   = &camera;
-	this->cellSize = cellSize;
-
 	// get map size
-	this->width  = cvCeil((double) camera.getImageWidth() / (double) cellSize);
+	this->width  = cvCeil((double) camera.getImageWidth()  / (double) cellSize);
 	this->height = cvCeil((double) camera.getImageHeight() / (double) cellSize);
 
 	// initial map
