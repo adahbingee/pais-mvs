@@ -134,8 +134,11 @@ void Patch::refine() {
 	int afterRefCamIdx  = -1;
 	int beforeCamNum    = getCameraNumber();
 	int afterCamNum     = -1;
+	int count           = 0; // optimization counter
+	int totalCamNum     = mvs.getCameras().size();
 
-	while (beforeRefCamIdx != afterRefCamIdx || beforeCamNum != afterCamNum) {
+	// re-optimization when reference camera index or visible cameras are changed
+	while ( (beforeRefCamIdx != afterRefCamIdx || beforeCamNum != afterCamNum) && count++ <= totalCamNum ) {
 
 		if (getCameraNumber() < mvs.minCamNum) {
 			fitness  = DBL_MAX;
@@ -476,7 +479,7 @@ void Patch::setDepthRange() {
         worldDist = 1.0 / imgDist;
 
 		// fix for small baseline
-        if (worldDist > maxWorldDist && imgDist >= 1) {
+        if (worldDist > maxWorldDist && imgDist >= 0.01) {
             maxWorldDist = worldDist;
         }
     }
