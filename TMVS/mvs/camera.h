@@ -32,6 +32,8 @@ namespace PAIS {
 		// gray level image pyramid from 0 = original size to vector size = 1 pixel size
 		vector<Mat_<uchar> > imgPyramid;
 		vector<Mat_<double> > edgePyramid;
+		// rgb level image pyramid
+		// vector<Mat_<Vec3b> > rgbPyramid;
 
 		// camera focal length, K = [fx, 0, cx; 0 fy cy; 0 0 1]
 		Vec2d focal;

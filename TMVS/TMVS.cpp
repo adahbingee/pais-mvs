@@ -30,7 +30,7 @@ int main(int argc, char* argv[])
 	config.diffWeighting      = 128*128;
 	config.minCamNum          = 3;
 	config.textureVariation   = 36;
-	config.visibleCorrelation = 0.8;
+	config.visibleCorrelation = 0.7;
 	config.minCorrelation     = 0.7;
 	config.maxFitness         = 10.0;
 	config.minLOD             = 0;
