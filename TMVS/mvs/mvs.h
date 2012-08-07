@@ -57,6 +57,8 @@ namespace PAIS {
 		int particleNum;
 		// maximum iteration number
 		int maxIteration;
+		// expansion strategy (best, worst, breath, depth)
+		int expansionStrategy;
 	};
 
 	class MVS : private MvsConfig {
@@ -104,12 +106,16 @@ namespace PAIS {
 		/*****************
 			get patch id from queue
 		******************/
+		// get patch id from queue (entry function)
+		int getPatchIdFromQueue() const;
 		// get top priority patch id from queue to expansion (best first)
 		int getTopPriorityPatchId() const;
 		// get last priority patch id from queue to expansion (worst first)
 		int getLastPriorityPatchId() const;
 		// get next patch id from queue to expansion (breath first)
-		int getNextPatchId() const;
+		int getBreathFirstPatchId() const;
+		// get next patch id from queue to expansion (depth first)
+		int getDepthFirstPatchId() const;
 
 		// check neighbor patches in cell
 		bool skipNeighborCell(const vector<int> &cell, const Patch &refPth) const;
@@ -134,6 +140,11 @@ namespace PAIS {
 		friend class FileLoader;
 		friend class Patch;
 		friend class Camera;
+
+		static const int EXPANSION_BEST_FIRST   = 0x00;
+		static const int EXPANSION_WORST_FIRST  = 0x01;
+		static const int EXPANSION_BREATH_FIRST = 0x02;
+		static const int EXPANSION_DEPTH_FIRST  = 0x03;
 
 		/*****************
 			instance getter

@@ -55,8 +55,9 @@ void MVS::setConfig(const MvsConfig &config) {
 	this->depthRangeScalar   = config.depthRangeScalar;
 	this->particleNum        = config.particleNum;
 	this->maxIteration       = config.maxIteration;
+	this->expansionStrategy  = config.expansionStrategy;
 	this->patchSize          = (patchRadius<<1)+1;
-
+	
 	printConfig();
 
 	initPatchDistanceWeighting();
@@ -205,14 +206,14 @@ void MVS::expansionPatches() {
 	// initialize seed patch into priority queue
 	initPriorityQueue();
 
-	int pthId = getNextPatchId(); // getTopPriorityPatchId();
+	int pthId = getPatchIdFromQueue();
 	int count = 0;
 	while ( pthId >= 0) {
 		// get top priority seed patch
 		Patch &pth = getPatch(pthId);
 		pth.setExpanded();
 		// get next seed patch
-		pthId = getNextPatchId(); // getTopPriorityPatchId();
+		pthId = getPatchIdFromQueue();
 
 		printf("parent: fit: %f \t pri: %f \t camNum: %d\n", pth.getFitness(), pth.getPriority(), pth.getCameraNumber());
 		
@@ -534,7 +535,7 @@ void MVS::neighborPatchFiltering() {
 	avgNeighborNum /= (int) neighbor.size();
 	printf("average neighbor number: %d\n", avgNeighborNum);
 
-	// remove outlier patches
+	// remove outlier patches which neighbor number < (average neighbor number*0.25)
 	for (int i = 0; i < (int) neighbor.size(); ++i) {
 		if ((int) neighbor[i].nid.size() < (avgNeighborNum>>2) ) {
 			deletePatch(neighbor[i].id);
@@ -643,50 +644,22 @@ map<int, Patch>::iterator MVS::deletePatch(const int id) {
 	return patches.erase(it);
 }
 
-/* const function */
-
-bool MVS::skipNeighborCell(const vector<int> &cell, const Patch &refPth) const {
-	const int pthNum = (int) cell.size();
-	// skip if full cell
-	if (pthNum >= maxCellPatchNum) return true;
-
-	for (int k = 0; k < pthNum; k++) {
-		const Patch &pth = getPatch(cell[k]);
-		// skip if has robust neighbor (but depth discontinuous)
-		if ( pth.getCorrelation() > minCorrelation ) return true;
-		// skip if has near neighbor
-		if ( Patch::isNeighbor(refPth, pth) )        return true;
+int MVS::getPatchIdFromQueue() const {
+	switch (expansionStrategy) {
+	default:
+	case EXPANSION_BEST_FIRST:
+		return getTopPriorityPatchId();
+		break;
+	case EXPANSION_WORST_FIRST:
+		return getLastPriorityPatchId();
+		break;
+	case EXPANSION_BREATH_FIRST:
+		return getBreathFirstPatchId();
+		break;
+	case EXPANSION_DEPTH_FIRST:
+		return getDepthFirstPatchId();
+		break;
 	}
-	return false;
-}
-
-void MVS::getExpansionPatchCenter(const PAIS::Camera &cam, const Patch &parent, const int cx, const int cy, Vec3d &center) const {
-	const Vec2d &focal        = cam.getFocalLength();
-	const Vec2d &principle    = cam.getPrinciplePoint();
-	const Vec3d &camCenter    = cam.getCenter();
-	const Vec3d &parentNormal = parent.getNormal();
-	const Vec3d &parentCenter = parent.getCenter();
-
-	// get center pixel position of cell on reference image
-	const double px = (cx+0.5)*cellSize;
-	const double py = (cy+0.5)*cellSize;
-
-	// get center pixel position of cell in world coordinate
-	Mat p3d(3, 1, CV_64FC1);
-	p3d.at<double>(0, 0) = (px - principle[0]) / focal[0];
-	p3d.at<double>(1, 0) = (py - principle[1]) / focal[1];
-	p3d.at<double>(2, 0) = 1.0;
-	p3d = cam.getRotation().t() * (p3d - cam.getTranslation());
-
-	// get intersection point on patch plane
-	const Vec3d v13 = parentCenter - camCenter;
-	const Vec3d v12(p3d.at<double>(0, 0) - camCenter[0], 
-			        p3d.at<double>(1, 0) - camCenter[1],
-			        p3d.at<double>(2, 0) - camCenter[2]);
-	const double u = parentNormal.ddot(v13) / parentNormal.ddot(v12);
-
-	// expansion patch information
-	center = camCenter + u*v12;
 }
 
 int MVS::getTopPriorityPatchId() const {
@@ -761,7 +734,7 @@ int MVS::getLastPriorityPatchId() const {
 	return topId;
 }
 
-int MVS::getNextPatchId() const {
+int MVS::getBreathFirstPatchId() const {
 	vector<int>::iterator it;
 	int topId = -1;
 
@@ -783,6 +756,76 @@ int MVS::getNextPatchId() const {
 	printf("queue %d patches %d\n", queue.size(), patches.size());
 
 	return topId;
+}
+
+int MVS::getDepthFirstPatchId() const {
+	vector<int>::iterator it;
+	int topId = -1;
+
+	for (it = queue.begin(); it != queue.end();) {
+		const Patch &pth = getPatch(*it);
+
+		// skip expanded
+		if ( pth.isExpanded() ) {
+			it = queue.erase(it);
+			continue;
+		}
+
+		topId = *it;
+		break;
+	}
+
+	queue.erase(it);
+
+	printf("queue %d patches %d\n", queue.size(), patches.size());
+
+	return topId;
+}
+
+/* const function */
+
+bool MVS::skipNeighborCell(const vector<int> &cell, const Patch &refPth) const {
+	const int pthNum = (int) cell.size();
+	// skip if full cell
+	if (pthNum >= maxCellPatchNum) return true;
+
+	for (int k = 0; k < pthNum; k++) {
+		const Patch &pth = getPatch(cell[k]);
+		// skip if has robust neighbor (but depth discontinuous)
+		if ( pth.getCorrelation() > minCorrelation ) return true;
+		// skip if has near neighbor
+		if ( Patch::isNeighbor(refPth, pth) )        return true;
+	}
+	return false;
+}
+
+void MVS::getExpansionPatchCenter(const PAIS::Camera &cam, const Patch &parent, const int cx, const int cy, Vec3d &center) const {
+	const Vec2d &focal        = cam.getFocalLength();
+	const Vec2d &principle    = cam.getPrinciplePoint();
+	const Vec3d &camCenter    = cam.getCenter();
+	const Vec3d &parentNormal = parent.getNormal();
+	const Vec3d &parentCenter = parent.getCenter();
+
+	// get center pixel position of cell on reference image
+	const double px = (cx+0.5)*cellSize;
+	const double py = (cy+0.5)*cellSize;
+
+	// get center pixel position of cell in world coordinate
+	Mat p3d(3, 1, CV_64FC1);
+	p3d.at<double>(0, 0) = (px - principle[0]) / focal[0];
+	p3d.at<double>(1, 0) = (py - principle[1]) / focal[1];
+	p3d.at<double>(2, 0) = 1.0;
+	p3d = cam.getRotation().t() * (p3d - cam.getTranslation());
+
+	// get intersection point on patch plane
+	const Vec3d v13 = parentCenter - camCenter;
+	const Vec3d v12(p3d.at<double>(0, 0) - camCenter[0], 
+			        p3d.at<double>(1, 0) - camCenter[1],
+			        p3d.at<double>(2, 0) - camCenter[2]);
+	const double u = parentNormal.ddot(v13) / parentNormal.ddot(v12);
+
+	// expansion patch information
+	center = camCenter + u*v12;
 }
 
 bool MVS::runtimeFiltering(const Patch &pth) const {
@@ -869,5 +912,20 @@ void MVS::printConfig() const {
 	printf("depth range scalar:\t%f\n", depthRangeScalar);
 	printf("particle number:\t%d\n", particleNum);
 	printf("maximum iteration number:\t%d\n", maxIteration);
+	switch (expansionStrategy) {
+	default:
+	case EXPANSION_BEST_FIRST:
+		printf("expansion strategy:\tBest first\n");
+		break;
+	case EXPANSION_WORST_FIRST:
+		printf("expansion strategy:\tWorst first\n");
+		break;
+	case EXPANSION_BREATH_FIRST:
+		printf("expansion strategy:\tBreath first\n");
+		break;
+	case EXPANSION_DEPTH_FIRST:
+		printf("expansion strategy:\tDepth first\n");
+		break;
+	}
 	printf("-------------------------------\n");
 }

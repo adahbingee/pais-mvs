@@ -42,6 +42,7 @@ int main(int argc, char* argv[])
 	config.depthRangeScalar   = 2;
 	config.particleNum        = 10;
 	config.maxIteration       = 40;
+	config.expansionStrategy  = MVS::EXPANSION_WORST_FIRST;
 
 	// set MVS instance
 	MVS &mvs = MVS::getInstance(config);
@@ -60,8 +61,9 @@ int main(int argc, char* argv[])
 	//end_t = clock();
 	//printf("time1\t%f\n", (double)(end_t - start_t) / CLOCKS_PER_SEC);
 	
-	//viewer = new MvsViewer(mvs, true, true, false);
+	viewer = new MvsViewer(mvs, true, true, true);
 
+	/*
 	mvs.writeMVS("init.mvs");
 	mvs.refineSeedPatches();
 	mvs.writeMVS("seed.mvs");
@@ -80,6 +82,8 @@ int main(int argc, char* argv[])
 	mvs.writeMVS("filter2.mvs");
 	mvs.writePLY("cloud.ply");
 	mvs.writePSR("cloud.psr");
+	*/
+
 	/*
 	mvs.patchQuantization(24, 24, 100);
 	mvs.writePLY("cloud_quantized.ply");
