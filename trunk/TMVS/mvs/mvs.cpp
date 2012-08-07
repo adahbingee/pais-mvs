@@ -645,21 +645,27 @@ map<int, Patch>::iterator MVS::deletePatch(const int id) {
 }
 
 int MVS::getPatchIdFromQueue() const {
+	int id;
+
 	switch (expansionStrategy) {
 	default:
 	case EXPANSION_BEST_FIRST:
-		return getTopPriorityPatchId();
+		id = getTopPriorityPatchId();
 		break;
 	case EXPANSION_WORST_FIRST:
-		return getLastPriorityPatchId();
+		id = getLastPriorityPatchId();
 		break;
 	case EXPANSION_BREATH_FIRST:
-		return getBreathFirstPatchId();
+		id = getBreathFirstPatchId();
 		break;
 	case EXPANSION_DEPTH_FIRST:
-		return getDepthFirstPatchId();
+		id = getDepthFirstPatchId();
 		break;
 	}
+
+	printf("queue %d patches %d\n", queue.size(), patches.size());
+
+	return id;
 }
 
 int MVS::getTopPriorityPatchId() const {
@@ -692,8 +698,6 @@ int MVS::getTopPriorityPatchId() const {
 		topId = *topIt;
 		queue.erase(topIt);
 	}
-
-	printf("queue %d patches %d\n", queue.size(), patches.size());
 
 	return topId;
 }
@@ -729,8 +733,6 @@ int MVS::getLastPriorityPatchId() const {
 		queue.erase(topIt);
 	}
 
-	printf("queue %d patches %d\n", queue.size(), patches.size());
-
 	return topId;
 }
 
@@ -753,8 +755,6 @@ int MVS::getBreathFirstPatchId() const {
 
 	queue.erase(it);
 
-	printf("queue %d patches %d\n", queue.size(), patches.size());
-
 	return topId;
 }
 
@@ -776,8 +776,6 @@ int MVS::getDepthFirstPatchId() const {
 	}
 
 	queue.erase(it);
-
-	printf("queue %d patches %d\n", queue.size(), patches.size());
 
 	return topId;
 }
