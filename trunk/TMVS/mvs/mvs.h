@@ -132,8 +132,6 @@ namespace PAIS {
 		// delete patch and return next patch iterator
 		map<int, Patch>::iterator deletePatch(Patch &pth);
 		map<int, Patch>::iterator deletePatch(const int id);
-		// print config information
-		void printConfig() const;
 
 	public:
 		friend class FileWriter;
@@ -167,8 +165,6 @@ namespace PAIS {
 		const map<int, Patch>& getPatches()             const { return patches;         }
 		const vector<CellMap>& getCellMaps()            const { return cellMaps;        }
 		const Mat_<double>& getPatchDistanceWeighting() const { return patchDistWeight; }
-		//const Patch& getPatch(const int id)             const { return patches.at(id);  }
-		//Patch& getPatch(const int id)                         { return patches.at(id);  }
 		const Patch* getPatch(const int id) const;
 		Patch* getPatch(const int id);
 
@@ -192,6 +188,8 @@ namespace PAIS {
 		void neighborPatchFiltering();
 		// patch quantization (optional)
 		void patchQuantization(const int thetaNum, const int phiNum, const int distNum);
+		// print config information
+		void printConfig() const;
 	};
 };
 

@@ -22,6 +22,9 @@ bool patchDistCompare(const PatchDist &p1, const PatchDist &p2) {
 MVS& MVS::getInstance(const MvsConfig &config) {
 	if (instance==NULL) {
 		instance = new MVS(config);
+	} else {
+		delete instance;
+		instance = new MVS(config);
 	}
 	return *instance;
 }
@@ -57,8 +60,6 @@ void MVS::setConfig(const MvsConfig &config) {
 	this->maxIteration       = config.maxIteration;
 	this->expansionStrategy  = config.expansionStrategy;
 	this->patchSize          = (patchRadius<<1)+1;
-	
-	printConfig();
 
 	initPatchDistanceWeighting();
 }

@@ -469,5 +469,81 @@ void FileLoader::loadMVS(const char *fileName, MVS &mvs) {
 }
 
 void FileLoader::loadConfig(const char *fileName, MvsConfig &config) {
+	ifstream file(fileName, ifstream::in);
+	if ( !file.is_open() ) {
+		printf("Can't open config file: %s\n", fileName);
+		return;
+	}
 
+	char *strip = NULL;
+	char strbuf[STRING_BUFFER_LENGTH];
+	while ( !file.eof() ) {
+		file.getline(strbuf, STRING_BUFFER_LENGTH);
+		// skip comment
+		if (strbuf[0] == '#') continue;
+
+		strip = strtok(strbuf, " \t");
+		if (strip == NULL) continue; // skip blank line
+		if ( strcmp(strip, "patchRadius") == 0 ) {
+			strip = strtok(NULL, " \t");
+			config.patchRadius = atoi(strip);
+			config.patchSize   = (config.patchRadius << 1) + 1;
+		} else if ( strcmp(strip, "distWeighting") == 0 ) {
+			strip = strtok(NULL, " \t");
+			config.distWeighting = atof(strip);
+		} else if ( strcmp(strip, "diffWeighting") == 0 ) {
+			strip = strtok(NULL, " \t");
+			config.diffWeighting = atof(strip);
+		} else if ( strcmp(strip, "visibleCorrelation") == 0 ) {
+			strip = strtok(NULL, " \t");
+			config.visibleCorrelation = atof(strip);
+		} else if ( strcmp(strip, "depthRangeScalar") == 0 ) {
+			strip = strtok(NULL, " \t");
+			config.depthRangeScalar = atof(strip);
+		} else if ( strcmp(strip, "particleNum") == 0 ) {
+			strip = strtok(NULL, " \t");
+			config.particleNum = atoi(strip);
+		} else if ( strcmp(strip, "maxIteration") == 0 ) {
+			strip = strtok(NULL, " \t");
+			config.maxIteration = atoi(strip);
+		} else if ( strcmp(strip, "cellSize") == 0 ) {
+			strip = strtok(NULL, " \t");
+			config.cellSize = atoi(strip);
+		} else if ( strcmp(strip, "maxCellPatchNum") == 0 ) {
+			strip = strtok(NULL, " \t");
+			config.maxCellPatchNum = atoi(strip);
+		} else if ( strcmp(strip, "expansionStrategy") == 0 ) {
+			strip = strtok(NULL, " \t");
+			config.expansionStrategy = atoi(strip);
+		} else if ( strcmp(strip, "textureVariation") == 0 ) {
+			strip = strtok(NULL, " \t");
+			config.textureVariation = atof(strip);
+		} else if ( strcmp(strip, "minLOD") == 0 ) {
+			strip = strtok(NULL, " \t");
+			config.minLOD = atoi(strip);
+		} else if ( strcmp(strip, "maxLOD") == 0 ) {
+			strip = strtok(NULL, " \t");
+			config.maxLOD = atoi(strip);
+		} else if ( strcmp(strip, "lodRatio") == 0 ) {
+			strip = strtok(NULL, " \t");
+			config.lodRatio = atof(strip);
+		} else if ( strcmp(strip, "minCamNum") == 0 ) {
+			strip = strtok(NULL, " \t");
+			config.minCamNum = atoi(strip);
+		} else if ( strcmp(strip, "minCorrelation") == 0 ) {
+			strip = strtok(NULL, " \t");
+			config.minCorrelation = atof(strip);
+		} else if ( strcmp(strip, "minRegionRatio") == 0 ) {
+			strip = strtok(NULL, " \t");
+			config.minRegionRatio = atof(strip);
+		} else if ( strcmp(strip, "maxFitness") == 0 ) {
+			strip = strtok(NULL, " \t");
+			config.maxFitness = atof(strip);
+		} else if ( strcmp(strip, "neighborRadius") == 0 ) {
+			strip = strtok(NULL, " \t");
+			config.neighborRadius = atof(strip);
+		}
+	}
+
+	file.close();
 }
