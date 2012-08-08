@@ -42,7 +42,7 @@ int main(int argc, char* argv[])
 	config.depthRangeScalar   = 1;
 	config.particleNum        = 5;
 	config.maxIteration       = 10;
-	config.expansionStrategy  = MVS::EXPANSION_BEST_FIRST;
+	config.expansionStrategy  = MVS::EXPANSION_BREATH_FIRST;
 
 	// set MVS instance
 	MVS &mvs = MVS::getInstance(config);
