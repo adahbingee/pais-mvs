@@ -48,8 +48,6 @@ int main(int argc, char* argv[])
 
 	// set MVS instance
 	MVS &mvs = MVS::getInstance(config);
-	mvs.printConfig();
-	system("pause");
 
 	if (argc >= 3) {
 		if ( strcmp(argv[1], "-v") == 0 ) {         // viewer
