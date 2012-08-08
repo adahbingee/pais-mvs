@@ -210,10 +210,14 @@ void MVS::expansionPatches() {
 	int count = 0;
 	while ( pthId >= 0) {
 		// get top priority seed patch
-		Patch &pth = getPatch(pthId);
-		pth.setExpanded();
-		// get next seed patch
+		Patch *pthP = getPatch(pthId);
+		// get next seed patch id
 		pthId = getPatchIdFromQueue();
+		// skip if not found
+		if (pthP == NULL) continue;
+		Patch &pth = *pthP;
+
+		pth.setExpanded();
 
 		printf("parent: fit: %f \t pri: %f \t camNum: %d\n", pth.getFitness(), pth.getPriority(), pth.getCameraNumber());
 		
@@ -321,7 +325,9 @@ void MVS::patchQuantization(const int thetaNum, const int phiNum, const int dist
 				const vector<int> &bin = bins[thetaIdx][phiIdx][distIdx];
 				pthNum = (int) bin.size();
 				for (int i = 0; i < pthNum; ++i) {
-					Patch &pth = getPatch(bin[i]);
+					Patch *pthP = getPatch(bin[i]);
+					if (pthP == NULL) continue;
+					Patch &pth = *pthP;
 					const Vec3d &center = pth.getCenter();
 					d = (center + quanDist*quanNormal).ddot(quanNormal);
 					// on plane center
@@ -354,10 +360,14 @@ void MVS::cellFiltering() {
 					corrSum = 0;
 					for (int k = 0; k < pthNum; ++k) {
 						if (j == k) continue;
-						Patch &pth = getPatch(cell[k]);
+						const Patch *pthP = getPatch(cell[k]);
+						if (pthP == NULL) continue;
+						const Patch &pth = *pthP;
 						corrSum += pth.getCorrelation();
 					}
-					Patch &pth = getPatch(cell[j]);
+					const Patch *pthP = getPatch(cell[j]);
+					if (pthP == NULL) continue;
+					const Patch &pth = *pthP;
 					if (pth.getCorrelation() * pth.getCameraNumber() < corrSum) {
 						removeIdx.push_back(cell[j]);
 					}
@@ -394,7 +404,10 @@ void MVS::neighborCellFiltering(const double neighborRatio) {
 				// center cell
 				for (int j = 0; j < pthNum; ++j) {
 					// center patch
-					const Patch &centerPth = getPatch(cell[j]);
+					const Patch *centerPthP = getPatch(cell[j]);
+					if (centerPthP == NULL) continue;
+					const Patch &centerPth = *centerPthP;
+
 					int neighborPthSum = 0;
 					int neighborPthNum = 0;
 
@@ -408,7 +421,10 @@ void MVS::neighborCellFiltering(const double neighborRatio) {
 						neighborPthSum += neighborCellPthNum;
 
 						for (int k = 0; k < neighborCellPthNum; ++k) {
-							const Patch &neighborPth = getPatch(neighborCell[k]);
+							const Patch *neighborPthP = getPatch(neighborCell[k]);
+							if (neighborPthP == NULL) continue;
+							const Patch &neighborPth = *neighborPthP;
+
 							if ( Patch::isNeighbor(centerPth, neighborPth) ) {
 								++neighborPthNum;
 							}
@@ -455,7 +471,10 @@ void MVS::visibilityFiltering() {
 			const int pthNum = (int) cell.size();
 			for (int p = 0; p < pthNum; ++p) {
 				if (cell[p] == pth.getId()) continue;
-				neighborDepth = norm(getPatch(cell[p]).getCenter() - cam.getCenter());
+				const Patch *pthP = getPatch(cell[p]);
+				if (pthP == NULL) continue;
+				const Patch &pth = *pthP;
+				neighborDepth = norm(pth.getCenter() - cam.getCenter());
 				if (depth > neighborDepth) {
 					--visibleCount;
 					break;
@@ -493,7 +512,9 @@ void MVS::neighborPatchFiltering() {
 			printf("\rfiltering: %d / %d", count++, patches.size());
 		}
 
-		const Patch &pth = getPatch(patchIds[i]); // current patch
+		const Patch *pthP = getPatch(patchIds[i]); // current patch
+		if (pthP == NULL) continue;
+		const Patch &pth = *pthP;
 
 		vector<PatchDist> dist;              // dist container
 		for (map<int, Patch>::const_iterator itN = patches.begin(); itN != patches.end(); ++itN) {
@@ -517,7 +538,9 @@ void MVS::neighborPatchFiltering() {
 		PatchNeighbor pn;
 		pn.id = pth.getId();
 		for (int i = 0; i < (int) dist.size(); ++i) {
-			const Patch &pthN = getPatch(dist[i].id);
+			const Patch *pthNP = getPatch(dist[i].id);
+			if (pthNP == NULL) continue;
+			const Patch &pthN = *pthNP;
 			if (dist[i].dist > neighborRadius) break;
 			pn.nid.push_back(pthN.getId());
 		}
@@ -674,7 +697,12 @@ int MVS::getTopPriorityPatchId() const {
 	double topPriority = DBL_MAX;
 
 	for (it = queue.begin(); it != queue.end();) { 
-		const Patch &pth = getPatch(*it);
+		const Patch *pthP = getPatch(*it);
+		if (pthP == NULL) {
+			it = queue.erase(it);
+			continue;
+		}
+		const Patch &pth = *pthP;
 
 		// skip expanded
 		if ( pth.isExpanded() ) {
@@ -708,7 +736,12 @@ int MVS::getLastPriorityPatchId() const {
 	double topPriority = -DBL_MAX;
 
 	for (it = queue.begin(); it != queue.end();) { 
-		const Patch &pth = getPatch(*it);
+		const Patch *pthP = getPatch(*it);
+		if (pthP == NULL) {
+			it = queue.erase(it);
+			continue;
+		}
+		const Patch &pth = *pthP;
 
 		// skip expanded
 		if ( pth.isExpanded() ) {
@@ -741,7 +774,12 @@ int MVS::getBreathFirstPatchId() const {
 	int topId = -1;
 
 	for (it = queue.begin(); it != queue.end();) {
-		const Patch &pth = getPatch(*it);
+		const Patch *pthP = getPatch(*it);
+		if (pthP == NULL) {
+			it = queue.erase(it);
+			continue;
+		}
+		const Patch &pth = *pthP;
 
 		// skip expanded
 		if ( pth.isExpanded() ) {
@@ -762,12 +800,19 @@ int MVS::getDepthFirstPatchId() const {
 	vector<int>::iterator it;
 	int topId = -1;
 
-	for (it = queue.begin(); it != queue.end();) {
-		const Patch &pth = getPatch(*it);
+	for (it = queue.end()-1; it != queue.begin();) {
+		const Patch *pthP = getPatch(*it);
+		if (pthP == NULL) {
+			queue.erase(it);
+			it = queue.end()-1;
+			continue;
+		}
+		const Patch &pth = *pthP;
 
 		// skip expanded
 		if ( pth.isExpanded() ) {
-			it = queue.erase(it);
+			queue.erase(it);
+			it = queue.end()-1;
 			continue;
 		}
 
@@ -788,7 +833,9 @@ bool MVS::skipNeighborCell(const vector<int> &cell, const Patch &refPth) const {
 	if (pthNum >= maxCellPatchNum) return true;
 
 	for (int k = 0; k < pthNum; k++) {
-		const Patch &pth = getPatch(cell[k]);
+		const Patch *pthP = getPatch(cell[k]);
+		if (pthP == NULL) continue;
+		const Patch &pth = *pthP;
 		// skip if has robust neighbor (but depth discontinuous)
 		if ( pth.getCorrelation() > minCorrelation ) return true;
 		// skip if has near neighbor
@@ -926,4 +973,21 @@ void MVS::printConfig() const {
 		break;
 	}
 	printf("-------------------------------\n");
+}
+
+/* getter */
+const Patch* MVS::getPatch(const int id) const {
+	if ( patches.find(id) != patches.end() ) {
+		return &patches.at(id);
+	} else {
+		return NULL;
+	}
+}
+
+Patch* MVS::getPatch(const int id) {
+	if ( patches.find(id) != patches.end() ) {
+		return &patches.at(id);
+	} else {
+		return NULL;
+	}
 }
