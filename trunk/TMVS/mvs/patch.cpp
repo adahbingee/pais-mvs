@@ -135,7 +135,7 @@ void Patch::refine() {
 	int beforeCamNum    = getCameraNumber();
 	int afterCamNum     = -1;
 	int count           = 0; // optimization counter
-	int totalCamNum     = mvs.getCameras().size();
+	int totalCamNum     = beforeCamNum;
 
 	// re-optimization when reference camera index or visible cameras are changed
 	while ( (beforeRefCamIdx != afterRefCamIdx || beforeCamNum != afterCamNum) && count++ <= totalCamNum ) {
