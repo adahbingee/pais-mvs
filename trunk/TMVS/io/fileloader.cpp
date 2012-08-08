@@ -467,3 +467,7 @@ void FileLoader::loadMVS(const char *fileName, MVS &mvs) {
 
 	file.close();
 }
+
+void FileLoader::loadConfig(const char *fileName, MvsConfig &config) {
+
+}
