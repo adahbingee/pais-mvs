@@ -61,6 +61,8 @@ void MVS::setConfig(const MvsConfig &config) {
 	this->expansionStrategy  = config.expansionStrategy;
 	this->patchSize          = (patchRadius<<1)+1;
 
+	printConfig();
+
 	initPatchDistanceWeighting();
 }
 

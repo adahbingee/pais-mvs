@@ -201,14 +201,14 @@ void MvsViewer::addPatches() {
 		pt.x = p[0];
 		pt.y = p[1];
 		pt.z = p[2];
+		/*
 		pt.r = 255;
 		pt.g = 255;
 		pt.b = 255 * (it->second.getId() / (double) (patches.size()));
-		/*
+		*/
 		pt.r = c[2];
 		pt.g = c[1];
 		pt.b = c[0];
-		*/
 		Normal nt(n[0], n[1], n[2]);
 
 		centers->push_back(pt);
