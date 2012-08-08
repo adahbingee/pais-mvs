@@ -333,7 +333,7 @@ void FileLoader::loadNVM2(const char *fileName, MVS &mvs) {
 	ifstream file(fileName, ifstream::in);
 
 	if ( !file.is_open() ) {
-		printf("Can't open NVM file: %s\n", fileName);
+		printf("Can't open NVM2 file: %s\n", fileName);
 		return;
 	}
 

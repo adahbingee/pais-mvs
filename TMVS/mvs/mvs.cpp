@@ -553,7 +553,7 @@ void MVS::expandNeighborCell(const Patch &pth) {
 	int cx, cy;
 	for (int i = 0; i < camNum; ++i) {
 		// only expansion visible image cell
-		if (camIdx[i] != pth.getReferenceCameraIndex()) continue;
+		//if (camIdx[i] != pth.getReferenceCameraIndex()) continue;
 
 		// camera
 		const Camera &cam = cameras[camIdx[i]];
