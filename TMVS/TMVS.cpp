@@ -42,12 +42,14 @@ int main(int argc, char* argv[])
 	config.depthRangeScalar   = 1;
 	config.particleNum        = 5;
 	config.maxIteration       = 10;
-	config.expansionStrategy  = MVS::EXPANSION_DEPTH_FIRST;
+	config.expansionStrategy  = MVS::EXPANSION_BEST_FIRST;
 
 	FileLoader::loadConfig("config.txt", config);
 
 	// set MVS instance
 	MVS &mvs = MVS::getInstance(config);
+	mvs.printConfig();
+	system("pause");
 
 	if (argc >= 3) {
 		if ( strcmp(argv[1], "-v") == 0 ) {         // viewer
@@ -74,7 +76,7 @@ int main(int argc, char* argv[])
 				mvs.loadMVS(argv[2]);
 			}
 
-			viewer = new MvsViewer(mvs, false, false, true);
+			//viewer = new MvsViewer(mvs, false, false, true);
 
 			printf("patches: %d\n", mvs.getPatches().size());
 
