@@ -88,7 +88,8 @@ MvsViewer::~MvsViewer(void) {
 }
 
 void MvsViewer::init() {
-	pointSize = 1;
+	pointSize    = 1;
+	normalLength = getNormalLength();
 
 	// set container
 	centers = PointCloud<PointXYZRGB>::Ptr (new PointCloud<PointXYZRGB>);
@@ -138,7 +139,7 @@ void MvsViewer::addCameras() {
 
 	// add new points
 	pclViewer.addPointCloud(centers, "cameras");
-	pclViewer.addPointCloudNormals<pcl::PointXYZ, pcl::Normal>(centers, normals, 1, 0.1, "cameraNormals");
+	pclViewer.addPointCloudNormals<pcl::PointXYZ, pcl::Normal>(centers, normals, 1, normalLength, "cameraNormals");
 
 	// set camera visualize properities
 	pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 5, "cameras");
@@ -172,7 +173,7 @@ void MvsViewer::addPatch(const Patch &pth) {
 	}
 
 	pclViewer.removePointCloud(NAME_NORMAL);
-	pclViewer.addPointCloudNormals<pcl::PointXYZRGB, pcl::Normal>(centers, normals, 1, 0.1, NAME_NORMAL);
+	pclViewer.addPointCloudNormals<pcl::PointXYZRGB, pcl::Normal>(centers, normals, 1, normalLength, NAME_NORMAL);
 
 	// set normal color
 	pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1.0, 1.0, 0.0, NAME_NORMAL);
@@ -215,7 +216,7 @@ void MvsViewer::addPatches() {
 
 	// add new points
     pclViewer.addPointCloud(centers, NAME_PATCH);
-	pclViewer.addPointCloudNormals<pcl::PointXYZRGB, pcl::Normal>(centers, normals, 1, 0.1, NAME_NORMAL);
+	pclViewer.addPointCloudNormals<pcl::PointXYZRGB, pcl::Normal>(centers, normals, 1, normalLength, NAME_NORMAL);
 	
 	// set normal color
 	pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1.0, 1.0, 0.0, NAME_NORMAL);
@@ -326,7 +327,7 @@ void MvsViewer::showPickedPoint(const Patch &pth) {
 	// add new points
     pclViewer.addPointCloud(cloud, NAME_PICKED_PATCH);
 	// add point normals
-	pclViewer.addPointCloudNormals<pcl::PointXYZ, pcl::Normal>(cloud, normal, 1, 0.1, NAME_PICKED_NORMAL);
+	pclViewer.addPointCloudNormals<pcl::PointXYZ, pcl::Normal>(cloud, normal, 1, normalLength, NAME_PICKED_NORMAL);
 	// set color
     pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 1.0, 0.0, NAME_PICKED_PATCH);
 	// set point size
@@ -392,4 +393,22 @@ void MvsViewer::printPatchInformation(const Patch &pth) const {
 
 	pth.showRefinedResult();
 	pth.showError();
+}
+
+double MvsViewer::getNormalLength() const {
+	const vector<Camera> &cameras = mvs->getCameras();
+	const int camNum = (int) cameras.size();
+
+	double sum = 0;
+	for (int i = 0; i < camNum; i++) { 
+		const Camera &cam1 = cameras[i];
+		for (int j = 0; j < camNum; j++) {
+			if (i==j) continue;
+			const Camera &cam2 = cameras[j];
+			sum += norm(cam1.getCenter()-cam2.getCenter());
+		}
+	}
+	sum /= (camNum*camNum - camNum);
+
+	return sum / 10.0;
 }

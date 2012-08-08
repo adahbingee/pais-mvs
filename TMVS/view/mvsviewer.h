@@ -28,6 +28,7 @@ namespace PAIS {
 
 		PointCloud<pcl::PointXYZRGB>::Ptr centers;
 		PointCloud<pcl::Normal>::Ptr normals;
+		double normalLength;
 
 		// viewer flags (default:false)
 		// false/true
@@ -42,6 +43,7 @@ namespace PAIS {
 		void addCameras();
 		void addPatches();
 		void addPatchesAnimate();
+		double getNormalLength() const;
 	public:
 
 		int pointSize;
