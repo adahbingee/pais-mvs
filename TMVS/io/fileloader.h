@@ -40,6 +40,7 @@ namespace PAIS {
 		static void loadNVM(const char *fileName, MVS &mvs);
 		static void loadNVM2(const char *fileName, MVS &mvs);
 		static void loadMVS(const char *fileName, MVS &mvs);
+		static void loadConfig(const char *fileName, MvsConfig &config);
 	};
 };
 

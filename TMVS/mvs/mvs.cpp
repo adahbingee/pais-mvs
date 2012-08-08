@@ -185,6 +185,11 @@ void MVS::refineSeedPatches() {
 		pth.refine();
 		pth.removeInvisibleCamera();
 
+		if (pth.getSphericalNormal()[0] < 0.0001) {
+			it = patches.erase(it);
+			continue;
+		}
+
 		if ( !runtimeFiltering(pth) ) {
 			it = patches.erase(it);
 			continue;

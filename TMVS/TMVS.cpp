@@ -24,7 +24,7 @@ int main(int argc, char* argv[])
 {
 	// MVS configures
 	MvsConfig config;
-	config.cellSize           = 1;
+	config.cellSize           = 4;
 	config.patchRadius        = 15;
 	config.distWeighting      = config.patchRadius / 3.0;
 	config.diffWeighting      = 128*128;
@@ -39,9 +39,9 @@ int main(int argc, char* argv[])
 	config.maxCellPatchNum    = 3;
 	config.neighborRadius     = 0.005;
 	config.minRegionRatio     = 0.55;
-	config.depthRangeScalar   = 2;
-	config.particleNum        = 10;
-	config.maxIteration       = 40;
+	config.depthRangeScalar   = 1;
+	config.particleNum        = 5;
+	config.maxIteration       = 10;
 	config.expansionStrategy  = MVS::EXPANSION_BEST_FIRST;
 
 	// set MVS instance
@@ -86,9 +86,12 @@ int main(int argc, char* argv[])
 			mvs.writePSR("exp.psr");
 			end_t = clock();
 			printf("time1\t%f\n", (double)(end_t - start_t) / CLOCKS_PER_SEC);
+			system("pause");
 		}
 	} else {
 		// Todo: useage message
+		char *msg = "-v [filename.mvs]: viewer\n-a [filename.mvs]: animate\n-r {[filename.mvs], [filename.nvm], [filename.nvm2]}: reconstruction\n";
+		printf(msg);
 	}
 
 	/*
@@ -109,6 +112,5 @@ int main(int argc, char* argv[])
 	*/
 	
 	//debugFile.close();
-	system("pause");
 	return 0;
 }
