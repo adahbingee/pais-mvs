@@ -4,6 +4,7 @@
 * expansion strategy
 * getPatch() return pointer 
 * auto normal length in mvsviewer
+* depth search range narrow view projection threshold 1 -> 0.01
 2012/06/13
 * BUG: loader correlation table -> homography -> warping overflow (fixed)
 2012/06/12
