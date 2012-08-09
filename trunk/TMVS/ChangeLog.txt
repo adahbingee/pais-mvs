@@ -1,4 +1,6 @@
 2012/08/09
+* prepare to update OpenCV and PCL library to current version
+2012/08/09
 * config loader
 * linear patch priority
 * expansion strategy
