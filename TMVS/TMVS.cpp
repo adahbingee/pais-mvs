@@ -6,11 +6,12 @@
 
 #include "mvs\mvs.h"
 #include "view\mvsviewer.h"
+#include "mvs\featuremanager.h"
 
 using namespace cv;
 using namespace PAIS;
 
-//ofstream debugFile("debug.txt", ofstream::out);
+ofstream debugFile("debug.txt", ofstream::out);
 
 MvsViewer *viewer;
 
@@ -48,6 +49,9 @@ int main(int argc, char* argv[])
 
 	// set MVS instance
 	MVS &mvs = MVS::getInstance(config);
+
+	//mvs.loadNVM2("D:/workspace/TMVS_data/boxball/boxball.nvm2");
+	//FeatureManager::getFeatureDescriptor(mvs.getCameras());
 
 	if (argc >= 3) {
 		if ( strcmp(argv[1], "-v") == 0 ) {         // viewer
