@@ -42,6 +42,8 @@ namespace PAIS {
 		int maxLOD;
 		// maxium cell patch number
 		int maxCellPatchNum;
+		// reduce PSO search range for expansion patch
+		double reduceNormalRange;
 		// enable adaptive weighting
 		bool adaptiveEnable;
 		// patch distance weighting
@@ -140,7 +142,6 @@ namespace PAIS {
 		friend class FileLoader;
 		friend class Patch;
 		friend class Camera;
-		// friend class MvsViewer;
 
 		static const int EXPANSION_BEST_FIRST   = 0x00;
 		static const int EXPANSION_WORST_FIRST  = 0x01;
@@ -180,6 +181,7 @@ namespace PAIS {
 		double getDistanceWeight()     const { return distWeighting;      }
 		int    getMinLOD()             const { return minLOD;             }
 		bool   getAdaptiveEnable()     const { return adaptiveEnable;     }
+		double getReduceNormalRange()  const { return reduceNormalRange;  }
 
 		// refine seed patches
 		void refineSeedPatches();
