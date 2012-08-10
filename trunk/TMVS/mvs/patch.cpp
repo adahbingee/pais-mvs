@@ -194,7 +194,7 @@ void Patch::psoOptimization() {
 	} else {
 		// reduce normal search range for expansion patch
 		rangeL[0] = max(  0.0, normalS[0] - M_PI/mvs.reduceNormalRange);
-		rangeU[0] = max( M_PI, normalS[0] + M_PI/mvs.reduceNormalRange);
+		rangeU[0] = min( M_PI, normalS[0] + M_PI/mvs.reduceNormalRange);
 		rangeL[1] = normalS[1] - M_PI/mvs.reduceNormalRange;
 		rangeU[1] = normalS[1] + M_PI/mvs.reduceNormalRange;
 		solver = new PsoSolver(3, rangeL, rangeU, PAIS::getFitness, this, mvs.maxIteration, mvs.particleNum);
