@@ -398,10 +398,6 @@ void MvsViewer::printPatchInformation(const Patch &pth) const {
 
 	pth.showRefinedResult();
 	pth.showError();
-
-	MVS *mvsR = const_cast<MVS*>(mvs);
-	mvsR->setCellMaps();
-	mvsR->expandNeighborCell(pth);
 }
 
 double MvsViewer::getNormalLength() const {
