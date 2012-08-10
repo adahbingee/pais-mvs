@@ -190,18 +190,23 @@ void Patch::psoOptimization() {
 
 	PsoSolver *solver = NULL;
 	if (type == TYPE_SEED) {
-		solver = new PsoSolver(3, rangeL, rangeU, PAIS::getFitness, this, mvs.maxIteration*2, mvs.particleNum*2);
+		solver = new PsoSolver(3, rangeL, rangeU, PAIS::getFitness, this, mvs.maxIteration*2, mvs.particleNum*2 );
 	} else {
+		/*
+		// reduce search range for expansion patch
+		rangeL[0] = max(  0.0, normalS[0] - M_PI/6.0);
+		rangeU[0] = max( M_PI, normalS[0] + M_PI/6.0);
+		rangeL[1] = normalS[1] - M_PI/6.0;
+		rangeU[1] = normalS[1] + M_PI/6.0;
+		*/
 		solver = new PsoSolver(3, rangeL, rangeU, PAIS::getFitness, this, mvs.maxIteration, mvs.particleNum);
 	}
-    
-	if (solver == NULL) {
-		drop = true;
-		return;
-	}
 
+	clock_t start_t, end_t;
+	start_t = clock();
 	solver->setParticle(init);
     solver->run(true);
+	end_t = clock();
 
 	// set refined patch information
 	fitness = solver->getGbestFitness();
@@ -210,8 +215,10 @@ void Patch::psoOptimization() {
     depth  = gBest[2];
 	center = ray * depth + mvs.getCamera(refCamIdx).getCenter();
 
+	if (type != TYPE_SEED)
+		debugFile << solver->getIteration() << " " << ((double)(end_t - start_t) / CLOCKS_PER_SEC) << endl;
+
 	delete solver;
-	//debugFile << fitness << " " << solver.getIteration() << endl; 
 }
 
 void Patch::setCorrelationTable(const vector<Mat_<double>> &H) {
@@ -1016,7 +1023,11 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 			}
 			avgSad /= camNum;
 
-			weight     = (*it) * exp(-avgSad*avgSad/diffWeighting);
+			if ( mvs.getAdaptiveEnable() ) { // adaptive weighting
+				weight = (*it) * exp(-avgSad*avgSad/diffWeighting);
+			} else {				         // average weighting
+				weight = 1;
+			}
 			sumWeight += weight;
 			fitness   += weight * avgSad;
 		} // end of warping y
