@@ -51,6 +51,7 @@ void MVS::setConfig(const MvsConfig &config) {
 	this->maxLOD             = config.maxLOD;
 	this->lodRatio           = config.lodRatio;
 	this->maxCellPatchNum    = config.maxCellPatchNum;
+	this->adaptiveEnable     = config.adaptiveEnable;
 	this->distWeighting      = config.distWeighting;
 	this->diffWeighting      = config.diffWeighting;
 	this->neighborRadius     = config.neighborRadius;
@@ -954,6 +955,11 @@ void MVS::printConfig() const {
 	printf("minimum LOD:\t%d\n", minLOD);
 	printf("maximum LOD:\t%d\n", maxLOD);
 	printf("maximum cell patch number:\t%d patch/cell\n", maxCellPatchNum);
+	if (adaptiveEnable) {
+		printf("adaptive enable:\tenable\n");
+	} else {
+		printf("adaptive enable:\tdisable\n");
+	}
 	printf("distance weighting:\t%f\n", distWeighting);
 	printf("difference weighting:\t%f\n", diffWeighting);
 	printf("neighbor radius:\t%f\n", neighborRadius);

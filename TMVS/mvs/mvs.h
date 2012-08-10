@@ -42,6 +42,8 @@ namespace PAIS {
 		int maxLOD;
 		// maxium cell patch number
 		int maxCellPatchNum;
+		// enable adaptive weighting
+		bool adaptiveEnable;
 		// patch distance weighting
 		double distWeighting;
 		// patch difference weighting
@@ -177,6 +179,7 @@ namespace PAIS {
 		double getDifferenceWeight()   const { return diffWeighting;      }
 		double getDistanceWeight()     const { return distWeighting;      }
 		int    getMinLOD()             const { return minLOD;             }
+		bool   getAdaptiveEnable()     const { return adaptiveEnable;     }
 
 		// refine seed patches
 		void refineSeedPatches();

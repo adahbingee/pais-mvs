@@ -27,6 +27,7 @@ int main(int argc, char* argv[])
 	MvsConfig config;
 	config.cellSize           = 4;
 	config.patchRadius        = 15;
+	config.adaptiveEnable     = true;
 	config.distWeighting      = config.patchRadius / 3.0;
 	config.diffWeighting      = 128*128;
 	config.minCamNum          = 3;
