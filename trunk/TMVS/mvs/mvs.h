@@ -138,6 +138,7 @@ namespace PAIS {
 		friend class FileLoader;
 		friend class Patch;
 		friend class Camera;
+		friend class MvsViewer;
 
 		static const int EXPANSION_BEST_FIRST   = 0x00;
 		static const int EXPANSION_WORST_FIRST  = 0x01;

@@ -119,6 +119,6 @@ int main(int argc, char* argv[])
 	mvs.writePSR("cloud_quantized.psr");
 	*/
 	
-	//debugFile.close();
+	debugFile.close();
 	return 0;
 }
