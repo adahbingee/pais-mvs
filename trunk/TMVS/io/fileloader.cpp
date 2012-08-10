@@ -488,6 +488,9 @@ void FileLoader::loadConfig(const char *fileName, MvsConfig &config) {
 			strip = strtok(NULL, " \t");
 			config.patchRadius = atoi(strip);
 			config.patchSize   = (config.patchRadius << 1) + 1;
+		} else if ( strcmp(strip, "reduceNormalRange") == 0) {
+			strip = strtok(NULL, " \t");
+			config.reduceNormalRange = atof(strip);
 		} else if ( strcmp(strip, "adaptiveEnable") == 0) {
 			strip = strtok(NULL, " \t");
 			config.adaptiveEnable = atoi(strip);

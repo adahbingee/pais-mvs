@@ -192,13 +192,11 @@ void Patch::psoOptimization() {
 	if (type == TYPE_SEED) {
 		solver = new PsoSolver(3, rangeL, rangeU, PAIS::getFitness, this, mvs.maxIteration*2, mvs.particleNum*2 );
 	} else {
-		/*
-		// reduce search range for expansion patch
-		rangeL[0] = max(  0.0, normalS[0] - M_PI/6.0);
-		rangeU[0] = max( M_PI, normalS[0] + M_PI/6.0);
-		rangeL[1] = normalS[1] - M_PI/6.0;
-		rangeU[1] = normalS[1] + M_PI/6.0;
-		*/
+		// reduce normal search range for expansion patch
+		rangeL[0] = max(  0.0, normalS[0] - M_PI/mvs.reduceNormalRange);
+		rangeU[0] = max( M_PI, normalS[0] + M_PI/mvs.reduceNormalRange);
+		rangeL[1] = normalS[1] - M_PI/mvs.reduceNormalRange;
+		rangeU[1] = normalS[1] + M_PI/mvs.reduceNormalRange;
 		solver = new PsoSolver(3, rangeL, rangeU, PAIS::getFitness, this, mvs.maxIteration, mvs.particleNum);
 	}
 
