@@ -80,8 +80,6 @@ int main(int argc, char* argv[])
 				mvs.loadMVS(argv[2]);
 			}
 
-			//viewer = new MvsViewer(mvs, false, false, true);
-
 			printf("patches: %d\n", mvs.getPatches().size());
 
 			// run reconstruction
