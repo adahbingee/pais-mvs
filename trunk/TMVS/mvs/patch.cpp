@@ -188,17 +188,29 @@ void Patch::psoOptimization() {
     // initial guess particle
     double init   [] = {normalS[0], normalS[1], depth};
 
-	PsoSolver solver(3, rangeL, rangeU, PAIS::getFitness, this, mvs.maxIteration, mvs.particleNum);
-    solver.setParticle(init);
-    solver.run(true);
+	PsoSolver *solver = NULL;
+	if (type == TYPE_SEED) {
+		solver = new PsoSolver(3, rangeL, rangeU, PAIS::getFitness, this, mvs.maxIteration*2, mvs.particleNum*2);
+	} else {
+		solver = new PsoSolver(3, rangeL, rangeU, PAIS::getFitness, this, mvs.maxIteration, mvs.particleNum);
+	}
+    
+	if (solver == NULL) {
+		drop = true;
+		return;
+	}
+
+	solver->setParticle(init);
+    solver->run(true);
 
 	// set refined patch information
-	fitness = solver.getGbestFitness();
-    const double *gBest = solver.getGbest();
+	fitness = solver->getGbestFitness();
+    const double *gBest = solver->getGbest();
     setNormal(Vec2d(gBest[0], gBest[1]));
     depth  = gBest[2];
 	center = ray * depth + mvs.getCamera(refCamIdx).getCenter();
 
+	delete solver;
 	//debugFile << fitness << " " << solver.getIteration() << endl; 
 }
 
