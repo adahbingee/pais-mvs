@@ -211,11 +211,9 @@ void MVS::expansionPatches() {
 
 	int pthId = getPatchIdFromQueue();
 	int count = 0;
-	while ( pthId >= 0) {
+	while ( !queue.empty() ) {
 		// get top priority seed patch
 		Patch *pthP = getPatch(pthId);
-		// get next seed patch id
-		pthId = getPatchIdFromQueue();
 		// skip if not found
 		if (pthP == NULL) continue;
 		Patch &pth = *pthP;
@@ -237,6 +235,9 @@ void MVS::expansionPatches() {
 		if (count++ % 500 == 0) {
 			writeMVS("auto_save.mvs");
 		}
+
+		// get next seed patch id
+		pthId = getPatchIdFromQueue();
 	}
 }
 
@@ -671,7 +672,7 @@ map<int, Patch>::iterator MVS::deletePatch(const int id) {
 }
 
 int MVS::getPatchIdFromQueue() const {
-	int id;
+	int id = -1;
 
 	switch (expansionStrategy) {
 	default:
