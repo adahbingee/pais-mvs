@@ -1,3 +1,6 @@
+2012/08/11
+* update to OpenCV 2.4.2 and PCL 1.6.0
+* fix solbel bug in camera.cpp
 2012/08/09
 * prepare to update OpenCV and PCL library to current version
 2012/08/09
