@@ -12,6 +12,7 @@
 #include <boost/thread/thread.hpp>
 #include <pcl\common\common_headers.h>
 #include <pcl\visualization\pcl_visualizer.h>
+#include <pcl\common\transforms.h>
 
 #include "../mvs/mvs.h"
 

@@ -226,6 +226,8 @@ void MvsViewer::addPatches() {
 	// set normal color
 	pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1.0, 1.0, 0.0, NAME_NORMAL);
     pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, 0.0, NAME_NORMAL);
+
+	pclViewer.resetCamera();
 }
 
 void MvsViewer::addPatchesAnimate() {
