@@ -79,7 +79,7 @@ Camera::Camera(const char *fileName, const Vec2d &focal, const Vec2d &principleP
 	#pragma omp parallel for
 	for (int i = 1; i <= maxLOD; i++) {
 		double size = pow(mvs.lodRatio, i);
-		Mat_<uchar> gradientX, gradientY;
+		Mat_<double> gradientX, gradientY;
 		double minG, maxG;
 
 		resize(imgPyramid[0], imgPyramid[i], Size(), size, size, INTER_AREA);

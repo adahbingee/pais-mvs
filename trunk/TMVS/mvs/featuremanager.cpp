@@ -22,12 +22,10 @@ void FeatureManager::getFeatureDescriptor(const vector<Camera> &cameras) {
 		sift(cameras[i].getPyramidImage(0), cameras[i].getPyramidImage(0), keypoints[i], descriptors[i]);
 	}
 
-	// knn feature descriptor matching
-	const int k = 3;
-	vector<vector<DMatch> > knnMatches;
-	Ptr<DescriptorMatcher> matcherPtr = DescriptorMatcher::create("BruteForce");
-	matcherPtr->knnMatch(descriptors[0], descriptors[1], knnMatches, k);
+	// nearest feature descriptor matching
+	vector<DMatch> matches;
 
+	/*
 	for (int i = 0; i < knnMatches.size(); ++i) {
 		const vector<DMatch> &matches = knnMatches[i];
 		
@@ -89,6 +87,8 @@ void FeatureManager::getFeatureDescriptor(const vector<Camera> &cameras) {
 		waitKey();
 
 	} // end of matches
+
+	*/
 }
 
 Mat_<double> FeatureManager::getFundamental(const Camera &camFrom, const Camera &camTo) {
