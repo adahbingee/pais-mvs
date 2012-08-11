@@ -93,7 +93,9 @@ int main(int argc, char* argv[])
 			mvs.writePLY("exp.ply");
 			mvs.writePSR("exp.psr");
 			end_t = clock();
-			printf("time1\t%f\n", (double)(end_t - start_t) / CLOCKS_PER_SEC);
+			double totime = (double)(end_t - start_t) / CLOCKS_PER_SEC;
+			printf("time1\t%f\n", totime);
+			debugFile << "total time: " << totime << endl;
 			system("pause");
 		}
 	} else {
