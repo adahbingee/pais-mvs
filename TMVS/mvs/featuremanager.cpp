@@ -24,6 +24,8 @@ void FeatureManager::getFeatureDescriptor(const vector<Camera> &cameras) {
 
 	// nearest feature descriptor matching
 	vector<DMatch> matches;
+	BFMatcher matcher(NORM_L2, true);
+
 
 	/*
 	for (int i = 0; i < knnMatches.size(); ++i) {
