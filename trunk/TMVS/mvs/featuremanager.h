@@ -2,7 +2,7 @@
 #define __PAIS_FEATURE_MANAGER__
 
 #include <vector>
-
+#include <opencv2\nonfree\nonfree.hpp>
 #include "camera.h"
 
 // using namespace PAIS;
