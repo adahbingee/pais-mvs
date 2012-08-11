@@ -26,7 +26,6 @@ void FeatureManager::getFeatureDescriptor(const vector<Camera> &cameras) {
 	vector<DMatch> matches;
 	BFMatcher matcher(NORM_L2, true);
 
-
 	/*
 	for (int i = 0; i < knnMatches.size(); ++i) {
 		const vector<DMatch> &matches = knnMatches[i];
