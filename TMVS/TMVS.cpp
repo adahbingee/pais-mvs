@@ -92,6 +92,19 @@ int main(int argc, char* argv[])
 			mvs.writeMVS("exp.mvs");
 			mvs.writePLY("exp.ply");
 			mvs.writePSR("exp.psr");
+			/*
+			mvs.cellFiltering();
+			printf("patches: %d\n", mvs.getPatches().size());
+			mvs.visibilityFiltering();
+			printf("patches: %d\n", mvs.getPatches().size());
+			mvs.neighborCellFiltering(0.25);
+			printf("patches: %d\n", mvs.getPatches().size());
+			mvs.writeMVS("filter.mvs");
+			mvs.neighborPatchFiltering();
+			mvs.writeMVS("filter2.mvs");
+			mvs.writePLY("cloud.ply");
+			mvs.writePSR("cloud.psr");
+			*/
 			end_t = clock();
 			double totime = (double)(end_t - start_t) / CLOCKS_PER_SEC;
 			printf("time1\t%f\n", totime);
@@ -104,23 +117,6 @@ int main(int argc, char* argv[])
 		printf(msg);
 	}
 
-	/*
-	mvs.cellFiltering();
-	printf("patches: %d\n", mvs.getPatches().size());
-	mvs.visibilityFiltering();
-	printf("patches: %d\n", mvs.getPatches().size());
-	mvs.neighborCellFiltering(0.25);
-	printf("patches: %d\n", mvs.getPatches().size());
-	mvs.writeMVS("filter.mvs");
-	mvs.neighborPatchFiltering();
-	mvs.writeMVS("filter2.mvs");
-	mvs.writePLY("cloud.ply");
-	mvs.writePSR("cloud.psr");
-	mvs.patchQuantization(24, 24, 100);
-	mvs.writePLY("cloud_quantized.ply");
-	mvs.writePSR("cloud_quantized.psr");
-	*/
-	
 	debugFile.close();
 	return 0;
 }
