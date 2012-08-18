@@ -2,6 +2,13 @@
 
 extern ofstream debugFile;
 
+struct NViewMatch {
+	int queryDescIdx;
+	int trainDescIdx;
+	int queryCamIdx;
+	int trainCamIdx;
+};
+
 void FeatureManager::getFeatureDescriptor(const vector<Camera> &cameras) {
 	const int camNum = (int) cameras.size();
 
@@ -23,8 +30,59 @@ void FeatureManager::getFeatureDescriptor(const vector<Camera> &cameras) {
 	}
 
 	// nearest feature descriptor matching
-	vector<DMatch> matches;
-	BFMatcher matcher(NORM_L2, true);
+	vector<vector<NViewMatch> > correctMatches(camNum);
+	for (int i = 0; i < camNum; ++i) {
+		vector<DMatch> matches;
+		BFMatcher matcher(NORM_L2, true);
+		// match other views
+		for (int j = 0; j < camNum; ++j) {
+			if (i == j) continue; // skip self matching
+			matches.clear();
+			matcher.clear();
+			matcher.match(descriptors[i], descriptors[j], matches);
+
+			// fundamental matrix
+			const Mat_<double> &F = Fs[i][j];
+
+			// epipolar line filtering
+			for (int k = 0; k < (int) matches.size(); ++k) {
+				const DMatch &match = matches[k];
+
+				// feature index
+				int qidx = match.queryIdx;
+				int tidx = match.trainIdx;
+				// feature point
+				const Point2f &qpt = keypoints[i][qidx].pt;
+				const Point2f &tpt = keypoints[j][tidx].pt;
+
+				Mat_<double> qM(3, 1);
+				Mat_<double> tM(3, 1);
+				qM.at<double>(0, 0) = qpt.x;
+				qM.at<double>(1, 0) = qpt.y;
+				qM.at<double>(2, 0) = 1.0;
+				tM.at<double>(0, 0) = tpt.x;
+				tM.at<double>(1, 0) = tpt.y;
+				tM.at<double>(2, 0) = 1.0;
+
+				Mat_<double> epiLine = qM.t()*F;
+				Mat_<double> distM = epiLine * tM;
+				double dist = abs(distM.at<double>(0, 0)) / sqrt(epiLine.at<double>(0, 0)*epiLine.at<double>(0, 0) + epiLine.at<double>(0, 1)*epiLine.at<double>(0, 1));
+
+				if (dist <= 1.0) {
+					NViewMatch nvm;
+					nvm.queryCamIdx = i;
+					nvm.trainCamIdx = j;
+					nvm.queryDescIdx = match.queryIdx;
+					nvm.trainDescIdx = match.trainIdx;
+					correctMatches[i].push_back(nvm);
+				}
+			}
+		}
+	}
+
+	for (int i = 0; i < (int) correctMatches.size(); ++i) {
+		
+	}
 
 	/*
 	for (int i = 0; i < knnMatches.size(); ++i) {

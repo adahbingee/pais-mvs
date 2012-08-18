@@ -212,7 +212,6 @@ void MVS::expansionPatches() {
 	initPriorityQueue();
 
 	int pthId = getPatchIdFromQueue();
-	int count = 0;
 	while ( !queue.empty() ) {
 		// get top priority seed patch
 		Patch *pthP = getPatch(pthId);
@@ -234,7 +233,7 @@ void MVS::expansionPatches() {
 		// expand patch
 		expandNeighborCell(pth);
 		
-		if (count++ % 500 == 0) {
+		if (patches.size() % 500 == 0) {
 			writeMVS("auto_save.mvs");
 		}
 
