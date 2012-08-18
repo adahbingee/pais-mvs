@@ -109,6 +109,7 @@ int main(int argc, char* argv[])
 			double totime = (double)(end_t - start_t) / CLOCKS_PER_SEC;
 			printf("time1\t%f\n", totime);
 			debugFile << "total time: " << totime << endl;
+			debugFile.close();
 			system("pause");
 		}
 	} else {
@@ -116,7 +117,5 @@ int main(int argc, char* argv[])
 		char *msg = "-v [filename.mvs]: viewer\n-a [filename.mvs]: animate\n-r {[filename.mvs], [filename.nvm], [filename.nvm2]}: reconstruction\n";
 		printf(msg);
 	}
-
-	debugFile.close();
 	return 0;
 }
