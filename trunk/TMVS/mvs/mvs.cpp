@@ -40,28 +40,28 @@ MVS::~MVS(void) {
 /* initialize */
 
 void MVS::setConfig(const MvsConfig &config) {
-	this->cellSize           = config.cellSize;
-	this->patchRadius        = config.patchRadius;
-	this->minCamNum          = config.minCamNum;
-	this->visibleCorrelation = config.visibleCorrelation;
-	this->textureVariation   = config.textureVariation;
-	this->minCorrelation     = config.minCorrelation;
-	this->maxFitness         = config.maxFitness;
-	this->minLOD             = config.minLOD;
-	this->maxLOD             = config.maxLOD;
-	this->lodRatio           = config.lodRatio;
-	this->maxCellPatchNum    = config.maxCellPatchNum;
-	this->reduceNormalRange  = config.reduceNormalRange;
-	this->adaptiveEnable     = config.adaptiveEnable;
-	this->distWeighting      = config.distWeighting;
-	this->diffWeighting      = config.diffWeighting;
-	this->neighborRadius     = config.neighborRadius;
-	this->minRegionRatio     = config.minRegionRatio;
-	this->depthRangeScalar   = config.depthRangeScalar;
-	this->particleNum        = config.particleNum;
-	this->maxIteration       = config.maxIteration;
-	this->expansionStrategy  = config.expansionStrategy;
-	this->patchSize          = (patchRadius<<1)+1;
+	this->cellSize             = config.cellSize;
+	this->patchRadius          = config.patchRadius;
+	this->minCamNum            = config.minCamNum;
+	this->visibleCorrelation   = config.visibleCorrelation;
+	this->textureVariation     = config.textureVariation;
+	this->minCorrelation       = config.minCorrelation;
+	this->maxFitness           = config.maxFitness;
+	this->minLOD               = config.minLOD;
+	this->maxLOD               = config.maxLOD;
+	this->lodRatio             = config.lodRatio;
+	this->maxCellPatchNum      = config.maxCellPatchNum;
+	this->reduceNormalRange    = config.reduceNormalRange;
+	this->adaptiveEnable       = config.adaptiveEnable;
+	this->distWeighting        = config.distWeighting;
+	this->diffWeighting        = config.diffWeighting;
+	this->neighborRadiusScalar = config.neighborRadiusScalar;
+	this->minRegionRatio       = config.minRegionRatio;
+	this->depthRangeScalar     = config.depthRangeScalar;
+	this->particleNum          = config.particleNum;
+	this->maxIteration         = config.maxIteration;
+	this->expansionStrategy    = config.expansionStrategy;
+	this->patchSize            = (patchRadius<<1)+1;
 
 	printConfig();
 
@@ -141,6 +141,13 @@ void MVS::reCentering() {
 	printf("\n");
 }
 
+void MVS::setNeighborRadius() {
+	Vec3d minP, maxP;
+	double volume = getBoundingVolume(&minP, &maxP);
+	neighborRadius = pow(volume, 1.0/3.0) * neighborRadiusScalar;
+	printf("neighborRadius %f\n", neighborRadius);
+}
+
 /* io */
 
 void MVS::loadNVM(const char* fileName) {
@@ -177,6 +184,8 @@ void MVS::refineSeedPatches() {
 		return;
 	}
 
+	setNeighborRadius();
+
 	map<int, Patch>::iterator it;
 	for (it = patches.begin(); it != patches.end(); ) {
 		Patch &pth = it->second;
@@ -202,7 +211,8 @@ void MVS::refineSeedPatches() {
 
 		++it;
 	}
-	return;
+
+	setNeighborRadius();
 }
 
 void MVS::expansionPatches() {
@@ -210,6 +220,8 @@ void MVS::expansionPatches() {
 	setCellMaps();
 	// initialize seed patch into priority queue
 	initPriorityQueue();
+	// set neighbor radius from bounding volume
+	setNeighborRadius();
 
 	int pthId = getPatchIdFromQueue();
 	while ( !queue.empty() ) {
@@ -240,6 +252,8 @@ void MVS::expansionPatches() {
 		// get next seed patch id
 		pthId = getPatchIdFromQueue();
 	}
+
+	setNeighborRadius();
 }
 
 void MVS::patchQuantization(const int thetaNum, const int phiNum, const int distNum) {
@@ -345,7 +359,10 @@ void MVS::patchQuantization(const int thetaNum, const int phiNum, const int dist
 }
 
 void MVS::cellFiltering() {
-	if (cellMaps.empty()) setCellMaps();
+	if (cellMaps.empty()) {
+		setNeighborRadius();
+		setCellMaps();
+	}
 
 	const int camNum = (int) cameras.size();
 	int mapWidth, mapHeight, pthNum;
@@ -389,7 +406,10 @@ void MVS::cellFiltering() {
 }
 
 void MVS::neighborCellFiltering(const double neighborRatio) {
-	if (cellMaps.empty()) setCellMaps();
+	if (cellMaps.empty()) {
+		setNeighborRadius();
+		setCellMaps();
+	}
 
 	const int camNum = (int) cameras.size();
 	int mapWidth, mapHeight;
@@ -458,7 +478,10 @@ void MVS::neighborCellFiltering(const double neighborRatio) {
 }
 
 void MVS::visibilityFiltering() {
-	if (cellMaps.empty()) setCellMaps();
+	if (cellMaps.empty()) {
+		setNeighborRadius();
+		setCellMaps();
+	}
 
 	map<int, Patch>::iterator it;
 	int camNum, cx, cy;
@@ -504,6 +527,11 @@ void MVS::visibilityFiltering() {
 }
 
 void MVS::neighborPatchFiltering(const double neighborRatio) {
+	if (cellMaps.empty()) {
+		setNeighborRadius();
+		setCellMaps();
+	}
+
 	// copy patch id
 	vector<int> patchIds;
 	for (map<int, Patch>::const_iterator it = patches.begin(); it != patches.end(); ++it) {
@@ -969,7 +997,7 @@ void MVS::printConfig() const {
 	}
 	printf("distance weighting:\t%f\n", distWeighting);
 	printf("difference weighting:\t%f\n", diffWeighting);
-	printf("neighbor radius:\t%f\n", neighborRadius);
+	printf("neighbor radius scalar:\t%f\n", neighborRadiusScalar);
 	printf("minimum region ratio:\t%f\n", minRegionRatio);
 	printf("depth range scalar:\t%f\n", depthRangeScalar);
 	printf("particle number:\t%d\n", particleNum);
@@ -1009,7 +1037,7 @@ Patch* MVS::getPatch(const int id) {
 	}
 }
 
-void MVS::getBoundingVolume(Vec3d *minPtr, Vec3d *maxPtr) const {
+double MVS::getBoundingVolume(Vec3d *minPtr, Vec3d *maxPtr) const {
 	Vec3d minP = *minPtr;
 	Vec3d maxP = *maxPtr;
 	minP[0] = DBL_MAX;
@@ -1028,4 +1056,8 @@ void MVS::getBoundingVolume(Vec3d *minPtr, Vec3d *maxPtr) const {
 			if (center[i] > maxP[i]) maxP[i] = center[i];
 		}
 	}
+
+	Vec3d vol = maxP-minP;
+
+	return abs(vol[0] * vol[1] * vol[2]);
 }

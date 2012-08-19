@@ -545,9 +545,9 @@ void FileLoader::loadConfig(const char *fileName, MvsConfig &config) {
 		} else if ( strcmp(strip, "maxFitness") == 0 ) {
 			strip = strtok(NULL, " \t");
 			config.maxFitness = atof(strip);
-		} else if ( strcmp(strip, "neighborRadius") == 0 ) {
+		} else if ( strcmp(strip, "neighborRadiusScalar") == 0 ) {
 			strip = strtok(NULL, " \t");
-			config.neighborRadius = atof(strip);
+			config.neighborRadiusScalar = atof(strip);
 		}
 	}
 
