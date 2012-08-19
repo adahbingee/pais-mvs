@@ -52,6 +52,8 @@ namespace PAIS {
 		double diffWeighting;
 		// neighbor radius
 		double neighborRadius;
+		// neighbor radius scalar (PCMVS)
+		double neighborRadiusScalar;
 		// minimum region ratio
 		double minRegionRatio;
 		// depth range scalar (pixel)
@@ -139,6 +141,8 @@ namespace PAIS {
 		// delete patch and return next patch iterator
 		map<int, Patch>::iterator deletePatch(Patch &pth);
 		map<int, Patch>::iterator deletePatch(const int id);
+		// set neighbor radius from bounding volume
+		void setNeighborRadius();
 
 	public:
 		friend class FileWriter;
@@ -184,7 +188,7 @@ namespace PAIS {
 		int    getMinLOD()             const { return minLOD;             }
 		bool   getAdaptiveEnable()     const { return adaptiveEnable;     }
 		double getReduceNormalRange()  const { return reduceNormalRange;  }
-		void getBoundingVolume(Vec3d *minPtr, Vec3d *maxPtr) const;
+		double getBoundingVolume(Vec3d *minPtr, Vec3d *maxPtr) const;
 
 		// refine seed patches
 		void refineSeedPatches();

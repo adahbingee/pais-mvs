@@ -25,27 +25,28 @@ int main(int argc, char* argv[])
 {
 	// MVS configures
 	MvsConfig config;
-	config.cellSize           = 4;
-	config.patchRadius        = 15;
-	config.reduceNormalRange  = 2;
-	config.adaptiveEnable     = true;
-	config.distWeighting      = config.patchRadius / 3.0;
-	config.diffWeighting      = 128*128;
-	config.minCamNum          = 3;
-	config.textureVariation   = 36;
-	config.visibleCorrelation = 0.7;
-	config.minCorrelation     = 0.7;
-	config.maxFitness         = 10.0;
-	config.minLOD             = 0;
-	config.maxLOD             = 15;
-	config.lodRatio           = 0.8;
-	config.maxCellPatchNum    = 3;
-	config.neighborRadius     = 0.005;
-	config.minRegionRatio     = 0.55;
-	config.depthRangeScalar   = 1;
-	config.particleNum        = 5;
-	config.maxIteration       = 10;
-	config.expansionStrategy  = MVS::EXPANSION_BEST_FIRST;
+	config.cellSize             = 4;
+	config.patchRadius          = 15;
+	config.reduceNormalRange    = 2;
+	config.adaptiveEnable       = true;
+	config.distWeighting        = config.patchRadius / 3.0;
+	config.diffWeighting        = 128*128;
+	config.minCamNum            = 3;
+	config.textureVariation     = 36;
+	config.visibleCorrelation   = 0.7;
+	config.minCorrelation       = 0.7;
+	config.maxFitness           = 10.0;
+	config.minLOD               = 0;
+	config.maxLOD               = 15;
+	config.lodRatio             = 0.8;
+	config.maxCellPatchNum      = 3;
+	config.neighborRadius       = 0.005;
+	config.neighborRadiusScalar = 0.0025;
+	config.minRegionRatio       = 0.55;
+	config.depthRangeScalar     = 1;
+	config.particleNum          = 5;
+	config.maxIteration         = 10;
+	config.expansionStrategy    = MVS::EXPANSION_BEST_FIRST;
 
 	FileLoader::loadConfig("config.txt", config);
 
@@ -120,9 +121,11 @@ int main(int argc, char* argv[])
 
 			clock_t start_t, end_t;
 			start_t = clock();
+			// PMVS filtering
 			mvs.cellFiltering();
 			mvs.visibilityFiltering();
 			mvs.neighborCellFiltering(0.25);
+			// PCMVS filtering
 			mvs.neighborPatchFiltering(0.25);
 			end_t = clock();
 			mvs.writeMVS("filter.mvs");
