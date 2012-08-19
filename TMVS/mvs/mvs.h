@@ -170,7 +170,7 @@ namespace PAIS {
 		void writePLY(const char *fileName) const;
 		void writePSR(const char *fileName) const;
 
-		// getter
+		/* getter */
 		const vector<Camera>&  getCameras()             const { return cameras;         }
 		const Camera& getCamera(const int idx)          const { return cameras[idx];    }
 		const map<int, Patch>& getPatches()             const { return patches;         }
@@ -189,20 +189,19 @@ namespace PAIS {
 		bool   getAdaptiveEnable()     const { return adaptiveEnable;     }
 		double getReduceNormalRange()  const { return reduceNormalRange;  }
 		double getBoundingVolume(Vec3d *minPtr, Vec3d *maxPtr) const;
+		// print config information
+		void printConfig() const;
 
-		// refine seed patches
+		/* refine seed patches */
 		void refineSeedPatches();
-		// expand neighbor cell patches
+		/* expand neighbor cell patches from priority queue */
 		void expansionPatches();
-		// patch filtering
+		/* PMVS filtering */
 		void cellFiltering();
 		void neighborCellFiltering(const double neighborRatio);
 		void visibilityFiltering();
+		/* TVCG09 PCMVS filtering*/
 		void neighborPatchFiltering(const double neighborRatio);
-		// patch quantization (optional)
-		void patchQuantization(const int thetaNum, const int phiNum, const int distNum);
-		// print config information
-		void printConfig() const;
 	};
 };
 

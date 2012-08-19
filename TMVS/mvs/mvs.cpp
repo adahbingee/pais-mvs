@@ -256,107 +256,7 @@ void MVS::expansionPatches() {
 	setNeighborRadius();
 }
 
-void MVS::patchQuantization(const int thetaNum, const int phiNum, const int distNum) {
-	// normal bound in spherical coordinate
-	double minTheta =  DBL_MAX;
-	double maxTheta = -DBL_MAX;
-	double minPhi   =  DBL_MAX;
-	double maxPhi   = -DBL_MAX;
-	// plane distance bound to origin
-	double minDist  =  DBL_MAX;
-	double maxDist  = -DBL_MAX;
-
-	// get bound
-	double dist;
-	for (map<int, Patch>::iterator it = patches.begin(); it != patches.end(); ++it) {
-		const Patch &pth = it->second;
-		const Vec2d &normalS = pth.getSphericalNormal();
-		dist = -pth.getNormal().ddot(pth.getCenter());
-
-		if (dist < minDist) {
-			minDist = dist;
-		}
-		if (dist > maxDist) {
-			maxDist = dist;
-		}
-		if (normalS[0] < minTheta) {
-			minTheta = normalS[0];
-		}
-		if (normalS[0] > maxTheta) {
-			maxTheta = normalS[0];
-		}
-		if (normalS[1] < minPhi) {
-			minPhi = normalS[1];
-		}
-		if (normalS[1] > maxPhi) {
-			maxPhi = normalS[1];
-		}
-	}
-
-	// set container range
-	const double thetaRange = (maxTheta - minTheta);
-	const double phiRange   = (maxPhi   - minPhi  );
-	const double distRange  = (maxDist  - minDist );
-
-	const double thetaStep = thetaRange / thetaNum;
-	const double phiStep   = phiRange   / phiNum;
-	const double distStep  = distRange  / distNum;
-
-	vector<vector<vector< vector<int> > > > bins(thetaNum, vector<vector<vector<int> > >(phiNum, vector<vector<int > >(distNum, vector<int>(0)) ));
-
-	// vote in hough space
-	double thetaN, phiN, distN;
-	int thetaIdx, phiIdx, distIdx;
-	double quanTheta, quanPhi, quanDist;
-	
-	for (map<int, Patch>::iterator it = patches.begin(); it != patches.end(); ++it) {
-		const Patch &pth = it->second;
-		const Vec2d &normalS = pth.getSphericalNormal();
-		const Vec3d &center  = pth.getCenter();
-		const Vec3d &normal  = pth.getNormal();
-		dist = -normal.ddot(center);
-
-		// normalized to [0, 1]
-		thetaN = (normalS[0] - minTheta) / thetaRange;
-		phiN   = (normalS[1] - minPhi)   / phiRange;
-		distN  = (dist       - minDist)  / distRange;
-
-		// get index
-		thetaIdx = cvRound(thetaN * (thetaNum-1));
-		phiIdx   = cvRound(phiN   * (phiNum  -1));
-		distIdx  = cvRound(distN  * (distNum -1));
-		
-		bins[thetaIdx][phiIdx][distIdx].push_back(pth.getId());
-	}
-	
-	// patch quantization
-	double d;
-	Vec3d quanNormal, quanCenter, projCenter;
-	int pthNum;
-	for (int thetaIdx = 0; thetaIdx < thetaNum; ++thetaIdx) {
-		for (int phiIdx = 0; phiIdx < phiNum; ++phiIdx) {
-			for (int distIdx = 0; distIdx < distNum; ++distIdx) {
-				quanTheta = thetaIdx * thetaStep + minTheta;
-				quanPhi   = phiIdx   * phiStep   + minPhi;
-				quanDist  = distIdx  * distStep  + minDist;
-				Utility::spherical2Normal(Vec2d(quanTheta, quanPhi), quanNormal);
-
-				const vector<int> &bin = bins[thetaIdx][phiIdx][distIdx];
-				pthNum = (int) bin.size();
-				for (int i = 0; i < pthNum; ++i) {
-					Patch *pthP = getPatch(bin[i]);
-					if (pthP == NULL) continue;
-					Patch &pth = *pthP;
-					const Vec3d &center = pth.getCenter();
-					d = (center + quanDist*quanNormal).ddot(quanNormal);
-					// on plane center
-					projCenter = center - d*quanNormal;
-					pth.setQuantization(center, quanNormal);
-				}
-			}
-		}
-	}
-}
+/* filtering */
 
 void MVS::cellFiltering() {
 	if (cellMaps.empty()) {
@@ -595,7 +495,7 @@ void MVS::neighborPatchFiltering(const double neighborRatio) {
 		avgNeighborNum += (double) neighbor[i].nid.size();
 	}
 	avgNeighborNum /= (double) neighbor.size();
-	printf("average neighbor number: %d\n", avgNeighborNum);
+	printf("\naverage neighbor number: %f\n", avgNeighborNum);
 
 	// remove outlier patches which neighbor number < (average neighbor number*neighborRatio)
 	for (int i = 0; i < (int) neighbor.size(); ++i) {

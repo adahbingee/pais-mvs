@@ -22,11 +22,11 @@ void FeatureManager::getFeatureDescriptor(const vector<Camera> &cameras, const d
 		sift(cameras[i].getPyramidImage(0), cameras[i].getPyramidImage(0), keypoints[i], descriptors[i]);
 	}
 
-	// nearest feature descriptor matching
+	// nearest feature descriptor matching (matchTable[queryCamIDX][trainCamIDX])
 	vector<vector<vector<DMatch> > > matchTable(camNum, vector<vector<DMatch> >(camNum));
 	for (int i = 0; i < camNum; ++i) {
 		vector<DMatch> matches;
-		BFMatcher matcher(NORM_L2);
+		BFMatcher matcher(NORM_L2, true);
 
 		// match other views
 		for (int j = 0; j < camNum; ++j) {
@@ -48,7 +48,86 @@ void FeatureManager::getFeatureDescriptor(const vector<Camera> &cameras, const d
 		}
 	}
 
-	filteroutNonMatchViews(&matchTable);
+	filteroutNonMatches(&matchTable);
+
+	// union matches
+	vector<vector<NVMatch> > nvmatches;
+	for (int i = 0; i < camNum; ++i) {
+		for (int j = 0; j < camNum; ++j) {
+			// skip self matching
+			if ( i == j ) continue;
+			// skip empty matching
+			if ( matchTable[i][j].empty() ) continue;
+
+			while ( !matchTable[i][j].empty() ) {
+				const DMatch &match = matchTable[i][j].back();
+				vector<NVMatch>* unionSeed = setNVMatch(i, j, match, nvmatches);
+				
+				if (unionSeed == NULL) { // push new seed
+					vector<NVMatch> seed(2);
+					seed[0].camIdx = i;
+					seed[0].featureIdx = match.queryIdx;
+					seed[1].camIdx = j;
+					seed[1].featureIdx = match.trainIdx;
+					nvmatches.push_back(seed);
+				}
+
+				matchTable[i][j].pop_back();
+			}
+		}
+	}
+
+	// show n-view matches
+	for (vector<vector<NVMatch> >::const_iterator it = nvmatches.begin(); it != nvmatches.end(); ++it) {
+		const vector<NVMatch> &nvmatch =*it;
+		for (vector<NVMatch>::const_iterator it2 = nvmatch.begin(); it2 != nvmatch.end(); ++it2) {
+			Mat_<Vec3b> img = cameras[it2->camIdx].getRgbImage().clone();
+			const Point2f &pt = keypoints[it2->camIdx][it2->featureIdx].pt;
+			circle(img, pt, 3, Scalar(255, 255, 255), 3, CV_AA);
+			circle(img, pt, 2, Scalar(0, 0, 0), 3, CV_AA);
+			char title [30];
+			sprintf(title, "image%d", it2->camIdx);
+			imshow(title, img);
+		}
+		waitKey(0);
+		destroyAllWindows();
+	}
+}
+
+vector<NVMatch>* FeatureManager::setNVMatch(const int queryCamIdx, const int trainCamIdx, const DMatch &match, vector<vector<NVMatch> > &nvmatches) {
+	vector<vector<NVMatch> >::iterator it;
+	vector<NVMatch>::iterator it2, it3;
+	for (it = nvmatches.begin(); it != nvmatches.end(); ++it) {
+		vector<NVMatch> &nvmatch = *it;
+		for (it2 = nvmatch.begin(); it2 != nvmatch.end(); ++it2) {
+			const NVMatch &mth = *it2;
+			if (queryCamIdx == mth.camIdx && match.queryIdx == mth.featureIdx) {
+				for (it3 = nvmatch.begin(); it3 != nvmatch.end(); ++it3) {
+					if (it3->featureIdx == match.trainIdx) break;
+				}
+				if (it3 == nvmatch.end()) {
+					NVMatch newMatch;
+					newMatch.camIdx = trainCamIdx;
+					newMatch.featureIdx = match.trainIdx;
+					nvmatch.push_back(newMatch);
+				}
+				return &nvmatch;
+			}
+			if (trainCamIdx == mth.camIdx && match.trainIdx == mth.featureIdx) {
+				for (it3 = nvmatch.begin(); it3 != nvmatch.end(); ++it3) {
+					if (it3->featureIdx == match.queryIdx) break;
+				}
+				if (it3 == nvmatch.end()) {
+					NVMatch newMatch;
+					newMatch.camIdx = queryCamIdx;
+					newMatch.featureIdx = match.queryIdx;
+					nvmatch.push_back(newMatch);
+				}
+				return &nvmatch;
+			}
+		}
+	}
+	return NULL;
 }
 
 void FeatureManager::epipolarLineFiltering(const vector<KeyPoint> &queryKeypoints, const vector<KeyPoint> &trainKeypoints, const Mat_<double> &F, const double maxDist, vector<DMatch> *matchesPtr) {
@@ -90,11 +169,43 @@ void FeatureManager::epipolarLineFiltering(const vector<KeyPoint> &queryKeypoint
 	}
 }
 
-void FeatureManager::filteroutNonMatchViews(vector<vector<vector<DMatch> > > *matchTablePtr) {
+void FeatureManager::filteroutNonMatches(vector<vector<vector<DMatch> > > *matchTablePtr) {
+
 	vector<vector<vector<DMatch> > > &matchTable = *matchTablePtr;
+
+	// filter out non-cross matching and delete cross-matching redundance
+	for (int i = 0; i < (int) matchTable.size(); ++i) {
+		for (int j = 0; j < (int) matchTable[i].size(); ++j) {
+			vector<DMatch>::iterator it;
+			vector<DMatch>::iterator it2;
+			for (it = matchTable[i][j].begin(); it != matchTable[i][j].end();) {
+				DMatch &match = *it;
+				bool crossMatch = false;
+
+				for (it2 = matchTable[j][i].begin(); it2 != matchTable[j][i].end(); ++it2) {
+					DMatch &match2 = *it2;
+					// cross matching
+					if (match.trainIdx == match2.queryIdx && match.queryIdx == match2.trainIdx) {
+						crossMatch = true;
+						// remove redundance
+						matchTable[j][i].erase(it2);
+						break;
+					}
+				}
+				// delete non-cross matching
+				if (!crossMatch) {
+					it = matchTable[i][j].erase(it);
+					continue;
+				}
+				++it;
+			}
+		}
+	}
+
+	// filter out few feature views
 	for (int i = 0; i < (int) matchTable.size(); ++i) {
 		// find maximum number match views
-		double maxMatch = 0;
+		int maxMatch = 0;
 		for (int j = 0; j < (int) matchTable[i].size(); ++j) {
 			if (matchTable[i][j].size() > maxMatch) {
 				maxMatch = matchTable[i][j].size();
@@ -103,7 +214,7 @@ void FeatureManager::filteroutNonMatchViews(vector<vector<vector<DMatch> > > *ma
 
 		// filter out non-match views
 		for (int j = 0; j < (int) matchTable[i].size(); ++j) {
-			if (matchTable[i][j].size() < maxMatch/4) {
+			if (matchTable[i][j].size() < maxMatch/4.0) {
 				matchTable[i][j].clear();
 			}
 		}
