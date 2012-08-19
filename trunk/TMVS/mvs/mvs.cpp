@@ -345,6 +345,8 @@ void MVS::patchQuantization(const int thetaNum, const int phiNum, const int dist
 }
 
 void MVS::cellFiltering() {
+	if (cellMaps.empty()) setCellMaps();
+
 	const int camNum = (int) cameras.size();
 	int mapWidth, mapHeight, pthNum;
 	double corrSum;
@@ -387,6 +389,8 @@ void MVS::cellFiltering() {
 }
 
 void MVS::neighborCellFiltering(const double neighborRatio) {
+	if (cellMaps.empty()) setCellMaps();
+
 	const int camNum = (int) cameras.size();
 	int mapWidth, mapHeight;
 	for (int i = 0; i < camNum; ++i) {
@@ -454,6 +458,8 @@ void MVS::neighborCellFiltering(const double neighborRatio) {
 }
 
 void MVS::visibilityFiltering() {
+	if (cellMaps.empty()) setCellMaps();
+
 	map<int, Patch>::iterator it;
 	int camNum, cx, cy;
 	double depth, neighborDepth;
@@ -497,7 +503,7 @@ void MVS::visibilityFiltering() {
 	}
 }
 
-void MVS::neighborPatchFiltering() {
+void MVS::neighborPatchFiltering(const double neighborRatio) {
 	// copy patch id
 	vector<int> patchIds;
 	for (map<int, Patch>::const_iterator it = patches.begin(); it != patches.end(); ++it) {
@@ -556,16 +562,16 @@ void MVS::neighborPatchFiltering() {
 	}
 
 	// get average neighbor number
-	int avgNeighborNum = 0;
+	double avgNeighborNum = 0;
 	for (int i = 0; i < (int) neighbor.size(); ++i) {
-		avgNeighborNum += (int) neighbor[i].nid.size();
+		avgNeighborNum += (double) neighbor[i].nid.size();
 	}
-	avgNeighborNum /= (int) neighbor.size();
+	avgNeighborNum /= (double) neighbor.size();
 	printf("average neighbor number: %d\n", avgNeighborNum);
 
-	// remove outlier patches which neighbor number < (average neighbor number*0.25)
+	// remove outlier patches which neighbor number < (average neighbor number*neighborRatio)
 	for (int i = 0; i < (int) neighbor.size(); ++i) {
-		if ((int) neighbor[i].nid.size() < (avgNeighborNum>>2) ) {
+		if ((double) neighbor[i].nid.size() < (avgNeighborNum*neighborRatio) ) {
 			deletePatch(neighbor[i].id);
 		}
 	}
@@ -1000,5 +1006,26 @@ Patch* MVS::getPatch(const int id) {
 		return &patches.at(id);
 	} else {
 		return NULL;
+	}
+}
+
+void MVS::getBoundingVolume(Vec3d *minPtr, Vec3d *maxPtr) const {
+	Vec3d minP = *minPtr;
+	Vec3d maxP = *maxPtr;
+	minP[0] = DBL_MAX;
+	minP[1] = DBL_MAX;
+	minP[2] = DBL_MAX;
+	maxP[0] = -DBL_MAX;
+	maxP[1] = -DBL_MAX;
+	maxP[2] = -DBL_MAX;
+	map<int, Patch>::const_iterator it;
+
+	for (it = patches.begin(); it != patches.end(); ++it) {
+		const Patch &pth = it->second;
+		const Vec3d &center = pth.getCenter();
+		for (int i = 0; i < 3; ++i) {
+			if (center[i] < minP[i]) minP[i] = center[i];
+			if (center[i] > maxP[i]) maxP[i] = center[i];
+		}
 	}
 }

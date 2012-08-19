@@ -53,7 +53,7 @@ int main(int argc, char* argv[])
 	MVS &mvs = MVS::getInstance(config);
 
 	//mvs.loadNVM2("D:/workspace/TMVS_data/boxball/boxball.nvm2");
-	//FeatureManager::getFeatureDescriptor(mvs.getCameras());
+	//FeatureManager::getFeatureDescriptor(mvs.getCameras(), 1.0);
 
 	if (argc >= 3) {
 		if ( strcmp(argv[1], "-v") == 0 ) {         // viewer
@@ -92,20 +92,42 @@ int main(int argc, char* argv[])
 			mvs.writeMVS("exp.mvs");
 			mvs.writePLY("exp.ply");
 			mvs.writePSR("exp.psr");
-			/*
-			mvs.cellFiltering();
-			printf("patches: %d\n", mvs.getPatches().size());
-			mvs.visibilityFiltering();
-			printf("patches: %d\n", mvs.getPatches().size());
-			mvs.neighborCellFiltering(0.25);
-			printf("patches: %d\n", mvs.getPatches().size());
-			mvs.writeMVS("filter.mvs");
-			mvs.neighborPatchFiltering();
-			mvs.writeMVS("filter2.mvs");
-			mvs.writePLY("cloud.ply");
-			mvs.writePSR("cloud.psr");
-			*/
 			end_t = clock();
+
+			double totime = (double)(end_t - start_t) / CLOCKS_PER_SEC;
+			printf("time1\t%f\n", totime);
+			debugFile << "total time: " << totime << endl;
+			debugFile.close();
+			system("pause");
+		} else if ( strcmp(argv[1], "-f") == 0 ) { // filtering
+			string fileName(argv[2]);
+			size_t found = fileName.find_last_of(".");
+			string fileExt = fileName.substr(found+1);
+
+			// load file
+			if ( fileExt.compare("mvs") == 0 ) {
+				mvs.loadMVS(argv[2]);
+			} else {
+				printf("filtering only mvs file\n");
+				return 1;
+			}
+
+			// load config
+			FileLoader::loadConfig("config.txt", config);
+			mvs.setConfig(config);
+
+			printf("patches: %d\n", mvs.getPatches().size());
+
+			clock_t start_t, end_t;
+			start_t = clock();
+			mvs.cellFiltering();
+			mvs.visibilityFiltering();
+			mvs.neighborCellFiltering(0.25);
+			mvs.neighborPatchFiltering(0.25);
+			end_t = clock();
+			mvs.writeMVS("filter.mvs");
+			mvs.writePLY("filter.ply");
+			
 			double totime = (double)(end_t - start_t) / CLOCKS_PER_SEC;
 			printf("time1\t%f\n", totime);
 			debugFile << "total time: " << totime << endl;
@@ -116,6 +138,7 @@ int main(int argc, char* argv[])
 		// Todo: useage message
 		char *msg = "-v [filename.mvs]: viewer\n-a [filename.mvs]: animate\n-r {[filename.mvs], [filename.nvm], [filename.nvm2]}: reconstruction\n";
 		printf(msg);
+		return 1;
 	}
 	return 0;
 }

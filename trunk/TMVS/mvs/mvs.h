@@ -84,6 +84,9 @@ namespace PAIS {
 		Mat_<double> patchDistWeight;
 		// priority queue (patch id)
 		mutable vector<int> queue;
+		
+		/* getter */
+		Patch* getPatch(const int id);
 
 		/*******************
 			initialization 
@@ -170,8 +173,7 @@ namespace PAIS {
 		const vector<CellMap>& getCellMaps()            const { return cellMaps;        }
 		const Mat_<double>& getPatchDistanceWeighting() const { return patchDistWeight; }
 		const Patch* getPatch(const int id) const;
-		Patch* getPatch(const int id);
-
+		
 		int    getCellSize()           const { return cellSize;           } 
 		int    getPatchRadius()        const { return patchRadius;        }
 		int    getPatchSize()          const { return patchSize;          }
@@ -182,6 +184,7 @@ namespace PAIS {
 		int    getMinLOD()             const { return minLOD;             }
 		bool   getAdaptiveEnable()     const { return adaptiveEnable;     }
 		double getReduceNormalRange()  const { return reduceNormalRange;  }
+		void getBoundingVolume(Vec3d *minPtr, Vec3d *maxPtr) const;
 
 		// refine seed patches
 		void refineSeedPatches();
@@ -191,7 +194,7 @@ namespace PAIS {
 		void cellFiltering();
 		void neighborCellFiltering(const double neighborRatio);
 		void visibilityFiltering();
-		void neighborPatchFiltering();
+		void neighborPatchFiltering(const double neighborRatio);
 		// patch quantization (optional)
 		void patchQuantization(const int thetaNum, const int phiNum, const int distNum);
 		// print config information
