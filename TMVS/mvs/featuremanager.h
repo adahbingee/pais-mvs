@@ -15,7 +15,7 @@ namespace PAIS {
 
 	class FeatureManager {
 	public:
-		static void getFeatureDescriptor(const vector<Camera> &cameras, const double maxDist);
+		static void setSeedPatches(const vector<Camera> &cameras, const double maxDist, MVS *mvs);
 	private:
 		static vector<NVMatch>* setNVMatch(const int queryCamIdx, const int trainCamIdx, const DMatch &match, vector<vector<NVMatch> > &nvmatches);
 		static void epipolarLineFiltering(const vector<KeyPoint> &queryKeypoints, const vector<KeyPoint> &trainKeypoints, const Mat_<double> &F,  const double maxDist, vector<DMatch> *matchesPtr);
