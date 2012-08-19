@@ -2,7 +2,7 @@
 
 extern ofstream debugFile;
 
-void FeatureManager::getFeatureDescriptor(const vector<Camera> &cameras, const double maxDist) {
+void FeatureManager::setSeedPatches(const vector<Camera> &cameras, const double maxDist, MVS *mvs) {
 	const int camNum = (int) cameras.size();
 
 	// keypoints container
@@ -63,7 +63,7 @@ void FeatureManager::getFeatureDescriptor(const vector<Camera> &cameras, const d
 				const DMatch &match = matchTable[i][j].back();
 				vector<NVMatch>* unionSeed = setNVMatch(i, j, match, nvmatches);
 				
-				if (unionSeed == NULL) { // push new seed
+				if (unionSeed == NULL) { // push new union feature
 					vector<NVMatch> seed(2);
 					seed[0].camIdx = i;
 					seed[0].featureIdx = match.queryIdx;
@@ -77,6 +77,23 @@ void FeatureManager::getFeatureDescriptor(const vector<Camera> &cameras, const d
 		}
 	}
 
+	// create seed patches
+	for (vector<vector<NVMatch> >::const_iterator it = nvmatches.begin(); it != nvmatches.end(); ++it) {
+		const vector<NVMatch> &match = *it;
+		vector<int> camIdx;
+		vector<Vec2d> imgPoint;
+		for (vector<NVMatch>::const_iterator it = match.begin(); it != match.end(); ++it) {
+			camIdx.push_back(it->camIdx);
+			const Point2f &pt = keypoints[it->camIdx][it->featureIdx].pt;
+			imgPoint.push_back(Vec2d(pt.x, pt.y));
+		}
+		Patch pth(Vec3d(0, 0, 0), Vec3b(128, 128, 128), camIdx, imgPoint);
+		mvs->patches.insert(pair<int, Patch>(pth.getId(), pth));
+	}
+
+	mvs->reCentering();
+	
+	/*
 	// show n-view matches
 	for (vector<vector<NVMatch> >::const_iterator it = nvmatches.begin(); it != nvmatches.end(); ++it) {
 		const vector<NVMatch> &nvmatch =*it;
@@ -92,13 +109,18 @@ void FeatureManager::getFeatureDescriptor(const vector<Camera> &cameras, const d
 		waitKey(0);
 		destroyAllWindows();
 	}
+	*/
 }
 
 vector<NVMatch>* FeatureManager::setNVMatch(const int queryCamIdx, const int trainCamIdx, const DMatch &match, vector<vector<NVMatch> > &nvmatches) {
 	vector<vector<NVMatch> >::iterator it;
 	vector<NVMatch>::iterator it2, it3;
+
+	// find union feature
 	for (it = nvmatches.begin(); it != nvmatches.end(); ++it) {
+		// union feature
 		vector<NVMatch> &nvmatch = *it;
+		// find link node
 		for (it2 = nvmatch.begin(); it2 != nvmatch.end(); ++it2) {
 			const NVMatch &mth = *it2;
 			if (queryCamIdx == mth.camIdx && match.queryIdx == mth.featureIdx) {
@@ -124,9 +146,9 @@ vector<NVMatch>* FeatureManager::setNVMatch(const int queryCamIdx, const int tra
 					nvmatch.push_back(newMatch);
 				}
 				return &nvmatch;
-			}
-		}
-	}
+			} 
+		} // end of image features
+	} // end of union features
 	return NULL;
 }
 

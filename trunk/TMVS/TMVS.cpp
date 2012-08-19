@@ -77,6 +77,14 @@ void runReconstruct(MVS &mvs, const char *fileName) {
 
 	printf("patches: %d\n", mvs.getPatches().size());
 
+	// get seed point if no initial matching
+	if ( mvs.getPatches().empty() ) {
+		FeatureManager::setSeedPatches(mvs.getCameras(), 3.0, &mvs);
+		if ( mvs.getPatches().empty() ) {
+			printf("try less minCamNum\n");
+		}
+	}
+
 	// run reconstruction
 	clock_t start_t, end_t;
 	start_t = clock();
@@ -89,6 +97,7 @@ void runReconstruct(MVS &mvs, const char *fileName) {
 	mvs.writePSR("exp.psr");
 	end_t = clock();
 
+	// show runtime
 	double totime = (double)(end_t - start_t) / CLOCKS_PER_SEC;
 	printf("time1\t%f\n", totime);
 	debugFile << "total time: " << totime << endl;
@@ -143,9 +152,6 @@ int main(int argc, char* argv[])
 	// set MVS instance
 	MVS &mvs = MVS::getInstance(config);
 
-	mvs.loadNVM2("D:/workspace/TMVS_data/boxball/boxball_noseed.nvm2");
-	FeatureManager::getFeatureDescriptor(mvs.getCameras(), 1.0);
-
 	if (argc >= 3) {
 		if ( strcmp(argv[1], "-v") == 0 ) {         // viewer
 			runViewer(mvs, argv[2]);
@@ -153,7 +159,7 @@ int main(int argc, char* argv[])
 			runAnimate(mvs, argv[2]);
 		} else if ( strcmp(argv[1], "-r") == 0 ) {  // reconstruction
 			runReconstruct(mvs, argv[2]);
-		} else if ( strcmp(argv[1], "-f") == 0 ) { // filtering
+		} else if ( strcmp(argv[1], "-f") == 0 ) {  // filtering
 			runFiltering(mvs, argv[2]);
 		}
 	} else {
