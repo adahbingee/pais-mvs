@@ -876,6 +876,12 @@ void Patch::showError() const {
 				px[3] = px[0] + 1;
 				py[3] = py[0] + 1;
 
+				for (int j = 0; j < 4; ++j) {
+					if ( !cameras[camIdx[i]].inImage(px[j], py[j], LOD) ) {
+						return;
+					}
+				}
+
 				c[i] = (double) img.at<uchar>(py[0], px[0])*(px[1]-ix)*(py[2]-iy) + 
 					   (double) img.at<uchar>(py[1], px[1])*(ix-px[0])*(py[3]-iy) + 
 					   (double) img.at<uchar>(py[2], px[2])*(iy-py[0])*(px[3]-ix) + 
