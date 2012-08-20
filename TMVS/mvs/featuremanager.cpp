@@ -18,8 +18,11 @@ void FeatureManager::setSeedPatches(const vector<Camera> &cameras, const double 
 	// get SIFT feature keypoints and descriptors
 	#pragma omp parallel for
 	for (int i = 0; i < cameras.size(); ++i) {
+		Mat_<uchar> img;
+		cvtColor(cameras[i].getRgbImage(), img, CV_RGB2GRAY);
+
 		SIFT sift;
-		sift(cameras[i].getPyramidImage(0), cameras[i].getPyramidImage(0), keypoints[i], descriptors[i]);
+		sift(img, img, keypoints[i], descriptors[i]);
 	}
 
 	// nearest feature descriptor matching (matchTable[queryCamIDX][trainCamIDX])
@@ -80,6 +83,8 @@ void FeatureManager::setSeedPatches(const vector<Camera> &cameras, const double 
 	// create seed patches
 	for (vector<vector<NVMatch> >::const_iterator it = nvmatches.begin(); it != nvmatches.end(); ++it) {
 		const vector<NVMatch> &match = *it;
+		// skip few visible camera feature
+		if (match.size() < mvs->minCamNum) continue;
 		vector<int> camIdx;
 		vector<Vec2d> imgPoint;
 		for (vector<NVMatch>::const_iterator it = match.begin(); it != match.end(); ++it) {
@@ -88,12 +93,11 @@ void FeatureManager::setSeedPatches(const vector<Camera> &cameras, const double 
 			imgPoint.push_back(Vec2d(pt.x, pt.y));
 		}
 		Patch pth(Vec3d(0, 0, 0), Vec3b(128, 128, 128), camIdx, imgPoint);
+		pth.reCentering();
 		mvs->patches.insert(pair<int, Patch>(pth.getId(), pth));
 	}
 
-	mvs->reCentering();
-	
-	/*
+	return;
 	// show n-view matches
 	for (vector<vector<NVMatch> >::const_iterator it = nvmatches.begin(); it != nvmatches.end(); ++it) {
 		const vector<NVMatch> &nvmatch =*it;
@@ -109,7 +113,6 @@ void FeatureManager::setSeedPatches(const vector<Camera> &cameras, const double 
 		waitKey(0);
 		destroyAllWindows();
 	}
-	*/
 }
 
 vector<NVMatch>* FeatureManager::setNVMatch(const int queryCamIdx, const int trainCamIdx, const DMatch &match, vector<vector<NVMatch> > &nvmatches) {
@@ -217,7 +220,7 @@ void FeatureManager::filteroutNonMatches(vector<vector<vector<DMatch> > > *match
 				// delete non-cross matching
 				if (!crossMatch) {
 					it = matchTable[i][j].erase(it);
-					continue;
+					continue ;
 				}
 				++it;
 			}
