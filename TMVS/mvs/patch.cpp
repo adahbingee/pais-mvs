@@ -614,12 +614,16 @@ void Patch::setLOD() {
 
 void Patch::setPriority() {
 	if (drop) return;
+	double w1 = 1.0;
+	double w2 = 1.0;
+
 	const MVS &mvs = MVS::getInstance();
 	const int totalCamNum = (int) mvs.getCameras().size();
 	const int camNum = getCameraNumber();
 	double camRatio = ((double) camNum) / ((double) totalCamNum);
-	// priority = fitness * exp(-correlation-camRatio) * (LOD+1.0);
-	priority = fitness * (1.0/correlation) * (1.0/camRatio) * (LOD+1.0);
+	riority = fitness * exp( -correlation/w1 - camRatio/w2 ) * (LOD+1.0);
+
+	//priority = fitness * (1.0/correlation) * (1.0/camRatio) * (LOD+1.0);
 }
 
 void Patch::setImagePoint() {
