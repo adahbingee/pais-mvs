@@ -133,11 +133,13 @@ void runFiltering(MVS &mvs, const char *fileName) {
 	mvs.cellFiltering();
 	mvs.visibilityFiltering();
 	mvs.neighborCellFiltering(0.25);
+	mvs.writeMVS("PMVS_filter.mvs");
+	mvs.writePLY("PMVS_filter.ply");
 	// PCMVS filtering
 	mvs.neighborPatchFiltering(0.25);
 	end_t = clock();
-	mvs.writeMVS("filter.mvs");
-	mvs.writePLY("filter.ply");
+	mvs.writeMVS("PCMVS_filter.mvs");
+	mvs.writePLY("PCMVS_filter.ply");
 			
 	double totime = (double)(end_t - start_t) / CLOCKS_PER_SEC;
 	printf("time1\t%f\n", totime);
