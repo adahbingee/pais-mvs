@@ -614,15 +614,16 @@ void Patch::setLOD() {
 
 void Patch::setPriority() {
 	if (drop) return;
+	// cross correlation weighting
 	double w1 = 1.0;
+	// visible camera ratio weighting
 	double w2 = 1.0;
 
 	const MVS &mvs = MVS::getInstance();
 	const int totalCamNum = (int) mvs.getCameras().size();
 	const int camNum = getCameraNumber();
 	double camRatio = ((double) camNum) / ((double) totalCamNum);
-	riority = fitness * exp( -correlation/w1 - camRatio/w2 ) * (LOD+1.0);
-
+	priority = fitness * exp( -correlation/w1 - camRatio/w2 ) * (LOD+1.0);
 	//priority = fitness * (1.0/correlation) * (1.0/camRatio) * (LOD+1.0);
 }
 
@@ -760,11 +761,6 @@ void Patch::expandVisibleCamera() {
 	if (getCameraNumber() < mvs.minCamNum) {
 		drop = true;
 	}
-}
-
-void Patch::setQuantization(const Vec3d &center, const Vec3d &normal) {
-	this->center = center;
-	setNormal(normal);
 }
 
 /* misc */
@@ -977,6 +973,7 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 
 	// distance & difference weighting weighting
 	const double diffWeighting = mvs.getDifferenceWeight();
+	const double gradientWeighting = mvs.getGradientWeight();
 	Mat_<double>::const_iterator it = mvs.getPatchDistanceWeighting().begin();
 	double weight;
 	double sumWeight = 0;
@@ -1031,10 +1028,15 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 			}
 			avgSad /= camNum;
 
-			if ( mvs.getAdaptiveEnable() ) { // adaptive weighting
-				weight = (*it) * exp(-avgSad*avgSad/diffWeighting);
-			} else {				         // average weighting
-				weight = 1;
+			weight = 1;
+			if ( mvs.isAdaptiveDistanceEnable() ) {   // adaptive distance weighting
+				weight *= (*it);
+			}
+			if ( mvs.isAdaptiveDifferenceEnable() ) { // adaptive difference weighting
+				weight *= exp(-avgSad*avgSad/diffWeighting);
+			}
+			if ( mvs.isAdaptiveGradientEnable() ) {   // adaptive gradient maginitude weighting
+				weight *= exp( -1.0 / (edgeImg.at<double>(cvRound(y), cvRound(x))*gradientWeighting) );
 			}
 			sumWeight += weight;
 			fitness   += weight * avgSad;

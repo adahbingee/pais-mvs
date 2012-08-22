@@ -25,28 +25,31 @@ void addPatchView(const Patch &pth) {
 }
 
 void setInitConfig() {
-	config.cellSize             = 4;
-	config.patchRadius          = 15;
-	config.reduceNormalRange    = 2;
-	config.adaptiveEnable       = true;
-	config.distWeighting        = config.patchRadius / 3.0;
-	config.diffWeighting        = 128*128;
-	config.minCamNum            = 3;
-	config.textureVariation     = 36;
-	config.visibleCorrelation   = 0.7;
-	config.minCorrelation       = 0.7;
-	config.maxFitness           = 10.0;
-	config.minLOD               = 0;
-	config.maxLOD               = 15;
-	config.lodRatio             = 0.8;
-	config.maxCellPatchNum      = 3;
-	config.neighborRadius       = 0.005;
-	config.neighborRadiusScalar = 0.0025;
-	config.minRegionRatio       = 0.55;
-	config.depthRangeScalar     = 1;
-	config.particleNum          = 5;
-	config.maxIteration         = 10;
-	config.expansionStrategy    = MVS::EXPANSION_BEST_FIRST;
+	config.cellSize                 = 4;
+	config.patchRadius              = 15;
+	config.reduceNormalRange        = 2;
+	config.adaptiveDistanceEnable   = true;
+	config.adaptiveDifferenceEnable = true;
+	config.adaptiveGradientEnable   = false;
+	config.distWeighting            = config.patchRadius / 3.0;
+	config.diffWeighting            = 128*128;
+	config.gradientWeighting        = 10.0;
+	config.minCamNum                = 3;
+	config.textureVariation         = 36;
+	config.visibleCorrelation       = 0.7;
+	config.minCorrelation           = 0.7;
+	config.maxFitness               = 10.0;
+	config.minLOD                   = 0;
+	config.maxLOD                   = 15;
+	config.lodRatio                 = 0.8;
+	config.maxCellPatchNum          = 3;
+	config.neighborRadius           = 0.005;
+	config.neighborRadiusScalar     = 0.0025;
+	config.minRegionRatio           = 0.55;
+	config.depthRangeScalar         = 1;
+	config.particleNum              = 5;
+	config.maxIteration             = 10;
+	config.expansionStrategy        = MVS::EXPANSION_BEST_FIRST;
 }
 
 void runViewer(MVS &mvs, const char *fileName) {
@@ -88,9 +91,9 @@ void runReconstruct(MVS &mvs, const char *fileName) {
 	// run reconstruction
 	clock_t start_t, end_t;
 	start_t = clock();
-	mvs.writeMVS("init.mvs");
+	mvs.writeMVS("init.mvs"); // from seed traingulation
 	mvs.refineSeedPatches();
-	mvs.writeMVS("seed.mvs");
+	mvs.writeMVS("seed.mvs"); // after optimization and runtime filtering
 	mvs.expansionPatches();
 	mvs.writeMVS("exp.mvs");
 	mvs.writePLY("exp.ply");

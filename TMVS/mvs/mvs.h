@@ -45,11 +45,15 @@ namespace PAIS {
 		// reduce PSO search range for expansion patch
 		double reduceNormalRange;
 		// enable adaptive weighting
-		bool adaptiveEnable;
+		bool adaptiveDistanceEnable;
+		bool adaptiveDifferenceEnable;
+		bool adaptiveGradientEnable;
 		// patch distance weighting
 		double distWeighting;
 		// patch difference weighting
 		double diffWeighting;
+		// patch gradient maginitude weighting
+		double gradientWeighting;
 		// neighbor radius
 		double neighborRadius;
 		// neighbor radius scalar (PCMVS)
@@ -186,10 +190,14 @@ namespace PAIS {
 		double getVisibleCorrelation() const { return visibleCorrelation; }
 		double getDifferenceWeight()   const { return diffWeighting;      }
 		double getDistanceWeight()     const { return distWeighting;      }
+		double getGradientWeight()     const { return gradientWeighting;  }
 		int    getMinLOD()             const { return minLOD;             }
-		bool   getAdaptiveEnable()     const { return adaptiveEnable;     }
 		double getReduceNormalRange()  const { return reduceNormalRange;  }
 		double getBoundingVolume(Vec3d *minPtr, Vec3d *maxPtr) const;
+		bool isAdaptiveDistanceEnable()   const { return adaptiveDistanceEnable;   }
+		bool isAdaptiveDifferenceEnable() const { return adaptiveDifferenceEnable; }
+		bool isAdaptiveGradientEnable()   const { return adaptiveGradientEnable;   }
+
 		// print config information
 		void printConfig() const;
 
