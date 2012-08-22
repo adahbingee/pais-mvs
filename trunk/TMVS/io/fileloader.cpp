@@ -491,9 +491,15 @@ void FileLoader::loadConfig(const char *fileName, MvsConfig &config) {
 		} else if ( strcmp(strip, "reduceNormalRange") == 0) {
 			strip = strtok(NULL, " \t");
 			config.reduceNormalRange = atof(strip);
-		} else if ( strcmp(strip, "adaptiveEnable") == 0) {
+		} else if ( strcmp(strip, "adaptiveDistanceEnable") == 0) {
 			strip = strtok(NULL, " \t");
-			config.adaptiveEnable = atoi(strip);
+			config.adaptiveDistanceEnable = atoi(strip);
+		} else if ( strcmp(strip, "adaptiveDifferenceEnable") == 0) {
+			strip = strtok(NULL, " \t");
+			config.adaptiveDifferenceEnable = atoi(strip);
+		} else if ( strcmp(strip, "adaptiveGradientEnable") == 0) {
+			strip = strtok(NULL, " \t");
+			config.adaptiveGradientEnable = atoi(strip);
 		} else if ( strcmp(strip, "distWeighting") == 0 ) {
 			strip = strtok(NULL, " \t");
 			config.distWeighting = atof(strip);

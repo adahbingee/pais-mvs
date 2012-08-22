@@ -40,28 +40,31 @@ MVS::~MVS(void) {
 /* initialize */
 
 void MVS::setConfig(const MvsConfig &config) {
-	this->cellSize             = config.cellSize;
-	this->patchRadius          = config.patchRadius;
-	this->minCamNum            = config.minCamNum;
-	this->visibleCorrelation   = config.visibleCorrelation;
-	this->textureVariation     = config.textureVariation;
-	this->minCorrelation       = config.minCorrelation;
-	this->maxFitness           = config.maxFitness;
-	this->minLOD               = config.minLOD;
-	this->maxLOD               = config.maxLOD;
-	this->lodRatio             = config.lodRatio;
-	this->maxCellPatchNum      = config.maxCellPatchNum;
-	this->reduceNormalRange    = config.reduceNormalRange;
-	this->adaptiveEnable       = config.adaptiveEnable;
-	this->distWeighting        = config.distWeighting;
-	this->diffWeighting        = config.diffWeighting;
-	this->neighborRadiusScalar = config.neighborRadiusScalar;
-	this->minRegionRatio       = config.minRegionRatio;
-	this->depthRangeScalar     = config.depthRangeScalar;
-	this->particleNum          = config.particleNum;
-	this->maxIteration         = config.maxIteration;
-	this->expansionStrategy    = config.expansionStrategy;
-	this->patchSize            = (patchRadius<<1)+1;
+	this->cellSize                 = config.cellSize;
+	this->patchRadius              = config.patchRadius;
+	this->minCamNum                = config.minCamNum;
+	this->visibleCorrelation       = config.visibleCorrelation;
+	this->textureVariation         = config.textureVariation;
+	this->minCorrelation           = config.minCorrelation;
+	this->maxFitness               = config.maxFitness;
+	this->minLOD                   = config.minLOD;
+	this->maxLOD                   = config.maxLOD;
+	this->lodRatio                 = config.lodRatio;
+	this->maxCellPatchNum          = config.maxCellPatchNum;
+	this->reduceNormalRange        = config.reduceNormalRange;
+	this->adaptiveDistanceEnable   = config.adaptiveDistanceEnable;
+	this->adaptiveDifferenceEnable = config.adaptiveDifferenceEnable;
+	this->adaptiveGradientEnable   = config.adaptiveGradientEnable;
+	this->distWeighting            = config.distWeighting;
+	this->diffWeighting            = config.diffWeighting;
+	this->gradientWeighting        = config.gradientWeighting;
+	this->neighborRadiusScalar     = config.neighborRadiusScalar;
+	this->minRegionRatio           = config.minRegionRatio;
+	this->depthRangeScalar         = config.depthRangeScalar;
+	this->particleNum              = config.particleNum;
+	this->maxIteration             = config.maxIteration;
+	this->expansionStrategy        = config.expansionStrategy;
+	this->patchSize                = (patchRadius<<1)+1;
 
 	printConfig();
 
@@ -892,13 +895,24 @@ void MVS::printConfig() const {
 	printf("maximum LOD:\t%d\n", maxLOD);
 	printf("maximum cell patch number:\t%d patch/cell\n", maxCellPatchNum);
 	printf("reduce normal search range:\tpi/%f\n", reduceNormalRange);
-	if (adaptiveEnable) {
-		printf("adaptive enable:\tenable\n");
+	if (adaptiveDistanceEnable) {
+		printf("adaptive distance enable:\tenable\n");
 	} else {
-		printf("adaptive enable:\tdisable\n");
+		printf("adaptive distance enable:\tdisable\n");
+	}
+	if (adaptiveDifferenceEnable) {
+		printf("adaptive difference enable:\tenable\n");
+	} else {
+		printf("adaptive difference enable:\tdisable\n");
+	}
+	if (adaptiveGradientEnable) {
+		printf("adaptive gradient enable:\tenable\n");
+	} else {
+		printf("adaptive gradient enable:\tdisable\n");
 	}
 	printf("distance weighting:\t%f\n", distWeighting);
 	printf("difference weighting:\t%f\n", diffWeighting);
+	printf("gradient weighting:\t%f\n", gradientWeighting);
 	printf("neighbor radius scalar:\t%f\n", neighborRadiusScalar);
 	printf("minimum region ratio:\t%f\n", minRegionRatio);
 	printf("depth range scalar:\t%f\n", depthRangeScalar);

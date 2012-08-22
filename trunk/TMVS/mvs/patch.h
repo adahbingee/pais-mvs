@@ -48,7 +48,6 @@ namespace PAIS {
 		void reCentering();
 		void refine();
 		void removeInvisibleCamera();
-		void setQuantization(const Vec3d &center, const Vec3d &normal);
 
 		// get homographies
 		void getHomographies(const Vec3d &center, const Vec3d &normal, vector<Mat_<double>> &H) const;
