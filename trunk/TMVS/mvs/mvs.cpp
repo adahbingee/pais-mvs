@@ -151,6 +151,10 @@ void MVS::setNeighborRadius() {
 	printf("neighborRadius %f\n", neighborRadius);
 }
 
+void MVS::clearDeletedPatches() {
+	deletedPatches.clear();
+}
+
 /* io */
 
 void MVS::loadNVM(const char* fileName) {
@@ -177,6 +181,14 @@ void MVS::writePLY(const char *fileName) const {
 
 void MVS::writePSR(const char *fileName) const {
 	FileWriter::wirtePSR(fileName, *this);
+}
+
+void MVS::writeDeletedPatchMVS(const char *fileName) const {
+	FileWriter::writeDeletedPatchMVS(fileName, *this);
+}
+
+void MVS::writeDeletedPatchPLY(const char *fileName) const {
+	FileWriter::writeDeletedPatchPLY(fileName, *this);
 }
 
 /* main functions */
@@ -594,6 +606,7 @@ map<int, Patch>::iterator MVS::deletePatch(const int id) {
 	map<int, Patch>::iterator it = patches.find(id);
 	if (it == patches.end()) return patches.end();
 
+	// remove from cell maps
 	if(!cellMaps.empty()) {
 		const Patch &pth = it->second;
 		const int camNum = pth.getCameraNumber();
@@ -607,6 +620,9 @@ map<int, Patch>::iterator MVS::deletePatch(const int id) {
 			cellMaps[camIdx[i]].drop(cx, cy, pth.getId());
 		}
 	}
+
+	// push to deleted patches container
+	deletedPatches.push_back(it->second);
 
 	return patches.erase(it);
 }

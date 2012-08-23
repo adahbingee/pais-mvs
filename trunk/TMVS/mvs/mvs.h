@@ -90,8 +90,11 @@ namespace PAIS {
 		Mat_<double> patchDistWeight;
 		// priority queue (patch id)
 		mutable vector<int> queue;
+		// deleted patch container
+		vector<Patch> deletedPatches;
 		
 		/* getter */
+		// get patch by id
 		Patch* getPatch(const int id);
 
 		/*******************
@@ -142,7 +145,7 @@ namespace PAIS {
 		******************/
 		// insert new patch in patch pool and queue
 		void insertPatch(const Patch &pth);
-		// delete patch and return next patch iterator
+		// delete patch and return next patch iterator and push deleted patch into deleted patches container
 		map<int, Patch>::iterator deletePatch(Patch &pth);
 		map<int, Patch>::iterator deletePatch(const int id);
 		// set neighbor radius from bounding volume
@@ -155,6 +158,7 @@ namespace PAIS {
 		friend class Camera;
 		friend class FeatureManager;
 
+		// expansion strategy
 		static const int EXPANSION_BEST_FIRST   = 0x00;
 		static const int EXPANSION_WORST_FIRST  = 0x01;
 		static const int EXPANSION_BREATH_FIRST = 0x02;
@@ -163,24 +167,44 @@ namespace PAIS {
 		/*****************
 			instance getter
 		******************/
+		// singleton getter
 		static MVS& getInstance() { return *instance; }
 		static MVS& getInstance(const MvsConfig &config);
 
+		// set config and initialize
 		void setConfig(const MvsConfig &config);
 
+		// load NVM file
 		void loadNVM(const char *fileName);
+		// load NVM2 file
 		void loadNVM2(const char *fileName);
+		// load MVS file
 		void loadMVS(const char *fileName);
+		// write current state to MVS file (including cameras, patches, config)
 		void writeMVS(const char *fileName) const;
+		// write current state to PLY file (including patch vertex and normal)
 		void writePLY(const char *fileName) const;
+		// write current state to PSR file (including patch vertex and normal)
 		void writePSR(const char *fileName) const;
+		// write deleted patches to MVS file (including cameras, deleted patches, config)
+		void writeDeletedPatchMVS(const char *fileName) const;
+		// write deleted patches to PLY file (including deleted patch vertex and normal)
+		void writeDeletedPatchPLY(const char *fileName) const;
 
 		/* getter */
+		// get system cameras
 		const vector<Camera>&  getCameras()             const { return cameras;         }
+		// get camera by its index
 		const Camera& getCamera(const int idx)          const { return cameras[idx];    }
+		// get system patches
 		const map<int, Patch>& getPatches()             const { return patches;         }
+		// get deleted patches
+		const vector<Patch>& getDeletedPatches()        const { return deletedPatches;  }
+		// get system cell maps
 		const vector<CellMap>& getCellMaps()            const { return cellMaps;        }
+		// get pre-computed patch distance matrix (same size of patch size)
 		const Mat_<double>& getPatchDistanceWeighting() const { return patchDistWeight; }
+		// get patch by id
 		const Patch* getPatch(const int id) const;
 		
 		int    getCellSize()           const { return cellSize;           } 
@@ -211,6 +235,8 @@ namespace PAIS {
 		void visibilityFiltering();
 		/* TVCG09 PCMVS filtering*/
 		void neighborPatchFiltering(const double neighborRatio);
+		// clear deleted patches container
+		void clearDeletedPatches();
 	};
 };
 

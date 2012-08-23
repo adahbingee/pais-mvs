@@ -28,6 +28,8 @@ namespace PAIS {
 		static void writeMVS(const char *fileName, const MVS &mvs);
 		static void writePLY(const char *fileName, const MVS &mvs);
 		static void wirtePSR(const char *fileName, const MVS &mvs);
+		static void writeDeletedPatchMVS(const char *fileName, const MVS &mvs);
+		static void writeDeletedPatchPLY(const char *fileName, const MVS &mvs);
 	};
 };
 
