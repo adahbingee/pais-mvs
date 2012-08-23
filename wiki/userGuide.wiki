@@ -19,3 +19,11 @@ Our input file format includes "nvm", "nvm2" and "mvs"
 ====nvm file format====
 ====nvm2 file format====
 ====mvs file format====
+
+===Output file format===
+
+Our out put file format includes "mvs", "ply" and "psr"
+
+====mvs file format====
+====ply file format====
+====psr file format====
