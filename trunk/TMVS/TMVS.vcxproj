@@ -163,6 +163,7 @@
     <ClInclude Include="mvs\mvs.h" />
     <ClInclude Include="mvs\patch.h" />
     <ClInclude Include="mvs\utility.h" />
+    <ClInclude Include="pso\particle.h" />
     <ClInclude Include="pso\psosolver.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />

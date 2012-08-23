@@ -60,6 +60,9 @@
     <ClInclude Include="io\logmanager.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
+    <ClInclude Include="pso\particle.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

@@ -213,7 +213,7 @@ void Patch::psoOptimization() {
 	center = ray * depth + mvs.getCamera(refCamIdx).getCenter();
 
 	if (type != TYPE_SEED)
-		LogManager::log("patch it\t%d\tsec\t", solver->getIteration(), (double)(end_t - start_t) / CLOCKS_PER_SEC);
+		LogManager::log("patch it\t%d\tsec\t%f", solver->getIteration(), (double)(end_t - start_t) / CLOCKS_PER_SEC);
 
 	delete solver;
 }
