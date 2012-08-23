@@ -139,11 +139,15 @@ void runFiltering(MVS &mvs, const char *fileName) {
 	mvs.neighborCellFiltering(0.25);
 	mvs.writeMVS("PMVS_filter.mvs");
 	mvs.writePLY("PMVS_filter.ply");
+	mvs.writeDeletedPatchMVS("PMVS_filter_deleted.mvs");
+	mvs.writeDeletedPatchPLY("PMVS_filter_deleted.ply");
 	// PCMVS filtering
 	mvs.neighborPatchFiltering(0.25);
 	end_t = clock();
 	mvs.writeMVS("PCMVS_filter.mvs");
 	mvs.writePLY("PCMVS_filter.ply");
+	mvs.writeDeletedPatchMVS("PCMVS_filter_deleted.mvs");
+	mvs.writeDeletedPatchPLY("PCMVS_filter_deleted.ply");
 			
 	double totime = (double)(end_t - start_t) / CLOCKS_PER_SEC;
 	printf("time1\t%f\n", totime);
