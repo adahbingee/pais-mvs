@@ -1,14 +1,14 @@
 #labels Featured
 #The TMVS program user guide
 
-= #Introduction =
+= Introduction =
 
     # Input / Output file format
     # Config parameters
     # Command line instruction
 
 
-= #Details =
+= Details =
 
 ==Input / Output file format==
 
