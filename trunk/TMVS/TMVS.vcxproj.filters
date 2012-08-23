@@ -57,6 +57,9 @@
     <ClInclude Include="mvs\featuremanager.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
+    <ClInclude Include="io\logmanager.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -96,6 +99,9 @@
       <Filter>原始程式檔</Filter>
     </ClCompile>
     <ClCompile Include="mvs\featuremanager.cpp">
+      <Filter>原始程式檔</Filter>
+    </ClCompile>
+    <ClCompile Include="io\logmanager.cpp">
       <Filter>原始程式檔</Filter>
     </ClCompile>
   </ItemGroup>

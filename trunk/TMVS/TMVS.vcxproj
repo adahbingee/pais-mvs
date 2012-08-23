@@ -155,6 +155,7 @@
   <ItemGroup>
     <ClInclude Include="io\fileloader.h" />
     <ClInclude Include="io\filewriter.h" />
+    <ClInclude Include="io\logmanager.h" />
     <ClInclude Include="mvs\abstractpatch.h" />
     <ClInclude Include="mvs\camera.h" />
     <ClInclude Include="mvs\cellmap.h" />
@@ -170,6 +171,7 @@
   <ItemGroup>
     <ClCompile Include="io\fileloader.cpp" />
     <ClCompile Include="io\filewriter.cpp" />
+    <ClCompile Include="io\logmanager.cpp" />
     <ClCompile Include="mvs\abstractpatch.cpp" />
     <ClCompile Include="mvs\camera.cpp" />
     <ClCompile Include="mvs\cellmap.cpp" />

@@ -1,7 +1,6 @@
 #include "patch.h"
 
 using namespace PAIS;
-extern ofstream debugFile;
 
 /* static functions */
 bool Patch::isNeighbor(const Patch &pth1, const Patch &pth2) {
@@ -214,7 +213,7 @@ void Patch::psoOptimization() {
 	center = ray * depth + mvs.getCamera(refCamIdx).getCenter();
 
 	if (type != TYPE_SEED)
-		debugFile << solver->getIteration() << " " << ((double)(end_t - start_t) / CLOCKS_PER_SEC) << endl;
+		LogManager::log("patch it\t%d\tsec\t", solver->getIteration(), (double)(end_t - start_t) / CLOCKS_PER_SEC);
 
 	delete solver;
 }

@@ -4,6 +4,7 @@
 
 #include <opencv2\opencv.hpp>
 
+#include "io\logmanager.h"
 #include "mvs\mvs.h"
 #include "view\mvsviewer.h"
 #include "mvs\featuremanager.h"
@@ -12,8 +13,6 @@
 
 using namespace cv;
 using namespace PAIS;
-
-ofstream debugFile("debug.txt", ofstream::out);
 
 MvsViewer *viewer;
 MvsConfig config;
@@ -107,8 +106,7 @@ void runReconstruct(MVS &mvs, const char *fileName) {
 	// show runtime
 	double totime = (double)(end_t - start_t) / CLOCKS_PER_SEC;
 	printf("time1\t%f\n", totime);
-	debugFile << "total time: " << totime << endl;
-	debugFile.close();
+	LogManager::log("total time: %f", totime);
 	system("pause");
 }
 
@@ -153,8 +151,7 @@ void runFiltering(MVS &mvs, const char *fileName) {
 			
 	double totime = (double)(end_t - start_t) / CLOCKS_PER_SEC;
 	printf("time1\t%f\n", totime);
-	debugFile << "total time: " << totime << endl;
-	debugFile.close();
+	LogManager::log("total time: %f", totime);
 	system("pause");
 }
 
@@ -182,6 +179,8 @@ int main(int argc, char* argv[])
 		printf(msg);
 		return 1;
 	}
+
+	LogManager::close();
 
 	return 0;
 }
