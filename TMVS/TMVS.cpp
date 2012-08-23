@@ -78,6 +78,10 @@ void runReconstruct(MVS &mvs, const char *fileName) {
 		mvs.loadMVS(fileName);
 	}
 
+	// load config
+	FileLoader::loadConfig(CONFIG_FILE_NAME, config);
+	mvs.setConfig(config);
+
 	printf("patches: %d\n", mvs.getPatches().size());
 
 	// get seed point if no initial matching
