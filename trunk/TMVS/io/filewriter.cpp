@@ -1,8 +1,8 @@
 #include "filewriter.h"
 
 void FileWriter::writeMvsConfig(fstream &file, const MVS &mvs) {
-	MvsConfig config = (MvsConfig) mvs;
-	file.write((char*) &config, sizeof(MvsConfig));
+	const MvsConfig *config = static_cast<const MvsConfig*> (&mvs);
+	file.write((char*) config, sizeof(MvsConfig));
 }
 
 void FileWriter::writeVec(fstream &file, const Vec4d &vec) {
