@@ -64,6 +64,7 @@ void runAnimate(MVS &mvs, const char *fileName) {
 }
 
 void runReconstruct(MVS &mvs, const char *fileName) {
+	// get file extension
 	string fileNameStr(fileName);
 	size_t found = fileNameStr.find_last_of(".");
 	string fileExt = fileNameStr.substr(found+1);
@@ -111,6 +112,7 @@ void runReconstruct(MVS &mvs, const char *fileName) {
 }
 
 void runFiltering(MVS &mvs, const char *fileName) {
+	// get file extension
 	string fileNameStr(fileName);
 	size_t found = fileNameStr.find_last_of(".");
 	string fileExt = fileNameStr.substr(found+1);
@@ -180,6 +182,7 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
+	// close log file
 	LogManager::close();
 
 	return 0;

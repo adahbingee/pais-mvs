@@ -207,7 +207,7 @@ void MVS::refineSeedPatches() {
 
 		// remove patch with few visible camera
 		if (pth.getCameraNumber() < minCamNum) {
-			it = patches.erase(it);
+			it = deletePatch(pth);
 			continue;
 		}
 
@@ -215,7 +215,7 @@ void MVS::refineSeedPatches() {
 		pth.removeInvisibleCamera();
 
 		if ( !runtimeFiltering(pth) ) {
-			it = patches.erase(it);
+			it = deletePatch(pth);
 			continue;
 		}
 
@@ -314,6 +314,7 @@ void MVS::cellFiltering() {
 					}
 				}
 
+				// remove patches
 				for (int j = 0; j < (int) removeIdx.size(); ++j) {
 					deletePatch(removeIdx[j]);
 				}
@@ -383,7 +384,7 @@ void MVS::neighborCellFiltering(const double neighborRatio) {
 					}
 				} // end of center cell
 
-				// remove patch
+				// remove patches
 				for (int i = 0; i < (int) removeIdx.size(); ++i) {
 					deletePatch(removeIdx[i]);
 				}
