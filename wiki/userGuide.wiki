@@ -13,3 +13,5 @@
 ==Input / Output file format==
 
 ===Input file format===
+
+Our input file format includes "mvs", "nvm", "nvm2"
