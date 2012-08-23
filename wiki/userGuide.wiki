@@ -4,8 +4,8 @@
 = Introduction =
 
     # Input / Output file format
-    # Config Parameters
-    # command line instruction
+    # Config parameters
+    # Command line instruction
 
 
 = Details =
