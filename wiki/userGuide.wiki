@@ -4,7 +4,7 @@
 = Introduction =
 
     # Input / Output file format
-    # parameters
+    # Config Parameters
     # command line instruction
 
 
