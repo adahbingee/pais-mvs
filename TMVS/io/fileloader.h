@@ -1,9 +1,6 @@
 #ifndef __PAIS_FILE_LOADER_H__
 #define __PAIS_FILE_LOADER_H__
 
-#define STRING_BUFFER_LENGTH 10240
-#define DELIMITER " \t"
-
 #include <map>
 #include <fstream>
 

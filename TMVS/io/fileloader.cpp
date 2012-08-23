@@ -1,3 +1,6 @@
+#define STRING_BUFFER_LENGTH 10240
+#define DELIMITER " \t"
+
 #include "fileloader.h"
 
 FileLoader::FileLoader(void) {}
@@ -559,3 +562,11 @@ void FileLoader::loadConfig(const char *fileName, MvsConfig &config) {
 
 	file.close();
 }
+
+#ifdef STRING_BUFFER_LENGTH
+	#undef STRING_BUFFER_LENGTH
+#endif
+
+#ifdef DELIMITER
+	#undef DELIMITER
+#endif

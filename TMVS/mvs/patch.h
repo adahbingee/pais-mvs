@@ -1,6 +1,7 @@
 #ifndef __PAIS_PATCH__H__
 #define __PAIS_PATCH__H__
 
+#include "../io/logmanager.h"
 #include "../pso/psosolver.h"
 #include "abstractpatch.h"
 #include "mvs.h"
