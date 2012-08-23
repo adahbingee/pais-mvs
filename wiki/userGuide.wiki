@@ -14,4 +14,4 @@
 
 ===Input file format===
 
-Our input file format includes "mvs", "nvm", "nvm2"
+Our input file format includes "nvm", "nvm2" and "mvs"
