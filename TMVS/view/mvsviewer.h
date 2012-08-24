@@ -46,7 +46,7 @@ namespace PAIS {
 		void addPatchesAnimate();
 		double getNormalLength() const;
 	public:
-
+		int selectedPatchId;
 		int pointSize;
 
 		// constructor

@@ -53,12 +53,22 @@ void setInitConfig() {
 
 void runViewer(MVS &mvs, const char *fileName) {
 	mvs.loadMVS(fileName);
+
+	// override config
+	FileLoader::loadConfig(CONFIG_FILE_NAME, config);
+	mvs.setConfig(config);
+
 	viewer = new MvsViewer(mvs, true, true, false);
 	viewer->open();
 }
 
 void runAnimate(MVS &mvs, const char *fileName) {
 	mvs.loadMVS(fileName);
+
+	// override config
+	FileLoader::loadConfig(CONFIG_FILE_NAME, config);
+	mvs.setConfig(config);
+
 	viewer = new MvsViewer(mvs, true, true, true);
 	viewer->open();
 }
