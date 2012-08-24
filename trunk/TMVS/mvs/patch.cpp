@@ -907,6 +907,7 @@ void Patch::showError() const {
 	sprintf(title, "error%d.png", getId());
 	resize(error, error, Size(200, 200), 0, 0, CV_INTER_NN);
 	imshow(title, error);
+	imwrite(title, error*255);
 	cvMoveWindow(title, 0, 0);
 }
 

@@ -12,7 +12,9 @@ void keyBoardEvent(const pcl::visualization::KeyboardEvent &event, void* viewer_
 		printf("\tB, b toggle background color\n");
 		printf("\tN, n toggle normal display\n");
 		printf("\tD, d toggle axes display\n");
-		printf("\tW, w toggle cameras display\n");
+		printf("\tshift+W, shift+w toggle cameras display\n");
+		printf("\tshift+S, shift+s optimize by patch id\n");
+		printf();
 		break;
 	case 'A':
 	case 'a':
@@ -42,12 +44,30 @@ void keyBoardEvent(const pcl::visualization::KeyboardEvent &event, void* viewer_
 	case 'w':
 		viewer.toggleCameras();
 		break;
+	case 's':
+	case 'S':
+		if ( event.isShiftPressed() ) {
+			int pthId = -1;
+			printf("input patch id to be optimized: ");
+			scanf("%d", &pthId);
+			Patch *pth = const_cast<Patch*> (viewer.getPickedPatch(pthId));
+			if (pth == NULL) break;
+			pth->refine();
+			cvDestroyAllWindows();
+			viewer.printPatchInformation(*pth);
+			viewer.showPickedPoint(*pth);
+			viewer.showVisibleCamera(*pth);
+			waitKey(1);
+		}
+		break;
 	}
 }
 
 void pointPickEvent(const pcl::visualization::PointPickingEvent &event, void* viewer_void) {
 	MvsViewer &viewer = *((MvsViewer *) viewer_void);
-	const Patch *pth = viewer.getPickedPatch(event.getPointIndex());
+	viewer.selectedPatchId = event.getPointIndex();
+	// get patch
+	const Patch *pth = viewer.getPickedPatch(viewer.selectedPatchId);
 	if (pth == NULL) return;
 
 	cvDestroyAllWindows();
