@@ -30,6 +30,7 @@ namespace PAIS {
 		PointCloud<pcl::PointXYZRGB>::Ptr centers;
 		PointCloud<pcl::Normal>::Ptr normals;
 		double normalLength;
+		int normalLevel;
 
 		// viewer flags (default:false)
 		// false/true
@@ -66,6 +67,12 @@ namespace PAIS {
 		void toggleColor();
 		void toggleAxes();
 		void toggleCameras();
+		void addNormalLevel();
+		void reduceNormalLevel();
+		void addPointSize();
+		void reducePointSize();
+
+		// pick event
 		const Patch* getPickedPatch(const int idx) const;
 		void printPatchInformation(const Patch &pth) const;
 		void showPickedPoint(const Patch &pth);
