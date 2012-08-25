@@ -4,7 +4,18 @@ void keyBoardEvent(const pcl::visualization::KeyboardEvent &event, void* viewer_
 	if (!event.keyUp()) return;
 
 	MvsViewer &viewer = *((MvsViewer *) viewer_void);
-	
+
+	// printf("key %s %d\n", event.getKeySym(), event.getKeyCode());
+
+	if (event.getKeyCode() == 0) {
+		if (event.getKeySym().compare("Prior") == 0) {
+			viewer.reduceNormalLevel();
+		} else if (event.getKeySym().compare("Next") == 0) {
+			viewer.addNormalLevel();
+		}
+		return;
+	}
+
 	switch (event.getKeyCode()) {
 	case 'H':
 	case 'h':
@@ -14,7 +25,7 @@ void keyBoardEvent(const pcl::visualization::KeyboardEvent &event, void* viewer_
 		printf("\tD, d toggle axes display\n");
 		printf("\tshift+W, shift+w toggle cameras display\n");
 		printf("\tshift+S, shift+s optimize by patch id\n");
-		printf();
+		printf("\tpageup, pagedown add/reduce normal density\n");
 		break;
 	case 'A':
 	case 'a':
@@ -29,12 +40,10 @@ void keyBoardEvent(const pcl::visualization::KeyboardEvent &event, void* viewer_
 		viewer.toggleNormal();
 		break;
 	case '+':
-		viewer.pointSize = min(viewer.pointSize+1, 10);
-		viewer.getPclViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, (double) viewer.pointSize, NAME_PATCH);
+		viewer.addPointSize();
 		break;
 	case '-':
-		viewer.pointSize = max(viewer.pointSize-1, 1);
-		viewer.getPclViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, (double) viewer.pointSize, NAME_PATCH);
+		viewer.reducePointSize();
 		break;
 	case 'D':
 	case 'd':
@@ -109,6 +118,7 @@ MvsViewer::~MvsViewer(void) {
 
 void MvsViewer::init() {
 	pointSize    = 1;
+	normalLevel  = 1;
 	normalLength = getNormalLength();
 
 	// set container
@@ -221,11 +231,6 @@ void MvsViewer::addPatches() {
 		pt.x = p[0];
 		pt.y = p[1];
 		pt.z = p[2];
-		/*
-		pt.r = 255;
-		pt.g = 255;
-		pt.b = 255 * (it->second.getId() / (double) (patches.size()));
-		*/
 		pt.r = c[2];
 		pt.g = c[1];
 		pt.b = c[0];
@@ -241,7 +246,7 @@ void MvsViewer::addPatches() {
 
 	// add new points
     pclViewer.addPointCloud(centers, NAME_PATCH);
-	pclViewer.addPointCloudNormals<pcl::PointXYZRGB, pcl::Normal>(centers, normals, 1, normalLength, NAME_NORMAL);
+	pclViewer.addPointCloudNormals<pcl::PointXYZRGB, pcl::Normal>(centers, normals, normalLevel, normalLength, NAME_NORMAL);
 	
 	// set normal color
 	pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1.0, 1.0, 0.0, NAME_NORMAL);
@@ -314,6 +319,40 @@ void MvsViewer::toggleAxes() {
 
 void MvsViewer::toggleCameras() {
 
+}
+
+void MvsViewer::addPointSize() {
+	pointSize = min(pointSize+1, 10);
+	pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, (double) pointSize, NAME_PATCH);
+}
+
+void MvsViewer::reducePointSize() {
+	pointSize = max(pointSize-1, 1);
+	pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, (double) pointSize, NAME_PATCH);
+}
+
+void MvsViewer::addNormalLevel() {
+	normalLevel = min(normalLevel+10, 100);
+
+	// update normal
+	pclViewer.removePointCloud(NAME_NORMAL);
+	pclViewer.addPointCloudNormals<pcl::PointXYZRGB, pcl::Normal>(centers, normals, normalLevel, normalLength, NAME_NORMAL);
+	pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1.0, 1.0, 0.0, NAME_NORMAL);
+    pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, 0.2, NAME_NORMAL);
+
+	pclViewer.spinOnce(1);
+}
+
+void MvsViewer::reduceNormalLevel() {
+	normalLevel = max(normalLevel-10, 1);
+
+	// update normal
+	pclViewer.removePointCloud(NAME_NORMAL);
+	pclViewer.addPointCloudNormals<pcl::PointXYZRGB, pcl::Normal>(centers, normals, normalLevel, normalLength, NAME_NORMAL);
+	pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1.0, 1.0, 0.0, NAME_NORMAL);
+    pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, 0.2, NAME_NORMAL);
+
+	pclViewer.spinOnce(1);
 }
 
 const Patch* MvsViewer::getPickedPatch(const int idx) const {
