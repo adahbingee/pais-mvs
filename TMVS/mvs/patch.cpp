@@ -268,25 +268,23 @@ void Patch::setCorrelationTable(const vector<Mat_<double>> &H) {
 
 double Patch::getHomographyRegionRatio(const Vec2d &pt, const Mat_<double> &H) const {
 	const int patchRadius = MVS::getInstance().patchRadius;
-	const int patchSize   = MVS::getInstance().patchSize - 1;
 
 	// 0 3
 	// 1 2
-	double x [] = {pt[0]-patchRadius, pt[0]-patchRadius, pt[0]+patchRadius, pt[0]+patchRadius};
-	double y [] = {pt[1]-patchRadius, pt[1]+patchRadius, pt[1]+patchRadius, pt[1]-patchRadius};
-	Vec2d p[4];
+	double x [] = {pt[0]-patchRadius, pt[0]-patchRadius, pt[0]+patchRadius, pt[0]+patchRadius, pt[0]-patchRadius, pt[0]            , pt[0]+patchRadius, pt[0]            };
+	double y [] = {pt[1]-patchRadius, pt[1]+patchRadius, pt[1]+patchRadius, pt[1]-patchRadius, pt[1]            , pt[1]+patchRadius, pt[1]            , pt[1]-patchRadius};
+	vector<Point2f> p(8);
 	double w;
-	for (int i = 0; i < 4; ++i) {
+	for (int i = 0; i < 8; ++i) {
 		w       =   H.at<double>(2, 0) * x[i] + H.at<double>(2, 1) * y[i] + H.at<double>(2, 2);
-		p[i][0] = ( H.at<double>(0, 0) * x[i] + H.at<double>(0, 1) * y[i] + H.at<double>(0, 2) ) / w;
-		p[i][1] = ( H.at<double>(1, 0) * x[i] + H.at<double>(1, 1) * y[i] + H.at<double>(1, 2) ) / w;
+		p[i].x = ( H.at<double>(0, 0) * x[i] + H.at<double>(0, 1) * y[i] + H.at<double>(0, 2) ) / w;
+		p[i].y = ( H.at<double>(1, 0) * x[i] + H.at<double>(1, 1) * y[i] + H.at<double>(1, 2) ) / w;
 	}
 
-	double sum1 = p[0][0]*p[1][1] + p[1][0]*p[2][1] + p[2][0]*p[3][1] + p[3][0]*p[0][1];
-	double sum2 = p[0][1]*p[1][0] + p[1][1]*p[2][0] + p[2][1]*p[3][0] + p[3][1]*p[0][0];
-	double region = 0.5 * abs(sum1-sum2);
+	// fit ellipse
+	RotatedRect box = fitEllipse(p);
 
-	return region / (patchSize*patchSize);
+	return double( min(box.size.width, box.size.height) / max(box.size.width, box.size.height) );
 }
 
 void Patch::getHomographies(const Vec3d &center, const Vec3d &normal, vector<Mat_<double>> &H) const {
