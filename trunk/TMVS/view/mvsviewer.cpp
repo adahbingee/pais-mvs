@@ -454,7 +454,7 @@ void MvsViewer::printPatchInformation(const Patch &pth) const {
 	for (int i = 0; i < camNum; ++i) {
 		const Camera &cam = mvs->getCamera(camIdx[i]);
 		corr = normal.ddot(-cam.getOpticalNormal());
-		printf("visible correlation %d: %f\n", camIdx[i], corr);
+		printf("visible angle correlation %d: %f\n", camIdx[i], corr);
 	}
 
 	pth.showRefinedResult();

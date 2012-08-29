@@ -118,7 +118,7 @@ void runReconstruct(MVS &mvs, const char *fileName) {
 	double totime = (double)(end_t - start_t) / CLOCKS_PER_SEC;
 	printf("time1\t%f\n", totime);
 	LogManager::log("total time: %f", totime);
-	system("pause");
+	//system("pause");
 }
 
 void runFiltering(MVS &mvs, const char *fileName) {
@@ -146,10 +146,14 @@ void runFiltering(MVS &mvs, const char *fileName) {
 
 	// PMVS filtering
 	mvs.cellFiltering();
+	mvs.writeMVS("PMVS_filter1.mvs");
+	mvs.writePLY("PMVS_filter1.ply");
 	mvs.visibilityFiltering();
+	mvs.writeMVS("PMVS_filter2.mvs");
+	mvs.writePLY("PMVS_filter2.ply");
 	mvs.neighborCellFiltering(0.25);
-	mvs.writeMVS("PMVS_filter.mvs");
-	mvs.writePLY("PMVS_filter.ply");
+	mvs.writeMVS("PMVS_filter3.mvs");
+	mvs.writePLY("PMVS_filter3.ply");
 	mvs.writeDeletedPatchMVS("PMVS_filter_deleted.mvs");
 	mvs.writeDeletedPatchPLY("PMVS_filter_deleted.ply");
 	mvs.clearDeletedPatches();
@@ -164,7 +168,7 @@ void runFiltering(MVS &mvs, const char *fileName) {
 	double totime = (double)(end_t - start_t) / CLOCKS_PER_SEC;
 	printf("time1\t%f\n", totime);
 	LogManager::log("total time: %f", totime);
-	system("pause");
+	//system("pause");
 }
 
 int main(int argc, char* argv[])

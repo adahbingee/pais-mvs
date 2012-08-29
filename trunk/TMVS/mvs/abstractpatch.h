@@ -94,6 +94,9 @@ namespace PAIS {
 		bool isExpanded()                  const    { return expanded;            }
 		int getCameraNumber()              const    { return (int) camIdx.size(); }
 	
+		// zc ask to add
+		double getFitnessCenter();
+
 		// setters
 		void setExpanded() { expanded = true; }
 	};
