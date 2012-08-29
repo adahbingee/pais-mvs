@@ -62,7 +62,7 @@ namespace PAIS {
 		// is dropped
 		bool isDropped() const { return drop; }
 		// zc asked
-		bool centerDifferenceFiltering();
+		bool centerDifferenceFiltering() const;
 	};
 
 	double getFitness(const Particle &p, void *obj);

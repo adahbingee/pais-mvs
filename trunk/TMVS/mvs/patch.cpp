@@ -914,7 +914,7 @@ bool Patch::centerDifferenceFiltering() const {
 
 	if (refCamIdx < 0) {
 		printf("showError: reference camera not set\n");
-		return;
+		return false;
 	}
 
 	const MVS &mvs = MVS::getInstance();
@@ -967,7 +967,7 @@ bool Patch::centerDifferenceFiltering() const {
 
 				for (int j = 0; j < 4; ++j) {
 					if ( !cameras[camIdx[i]].inImage(px[j], py[j], LOD) ) {
-						return;
+						return false;
 					}
 				}
 
