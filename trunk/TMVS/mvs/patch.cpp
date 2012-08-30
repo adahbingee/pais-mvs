@@ -909,8 +909,9 @@ void Patch::showError() const {
 	cvMoveWindow(title, 0, 0);
 }
 
+// zc asked
 bool Patch::centerDifferenceFiltering() const {
-	return true;
+	//return true;
 
 	if (refCamIdx < 0) {
 		printf("showError: reference camera not set\n");
@@ -934,6 +935,7 @@ bool Patch::centerDifferenceFiltering() const {
 	refCam.project(center, pt, LOD);
 
 	// warping (get pixel-wised variance)
+	double CenterSAD,TotalSAD = 0;
 	double mean, avgSad;             // pixel-wised mean, avgSad
 	double w, ix, iy;                // position on target image
 	int px[4];                       // neighbor x
@@ -987,9 +989,19 @@ bool Patch::centerDifferenceFiltering() const {
 			avgSad /= camNum;
 
 			error.at<double>(ey, ex) = avgSad;
+			if(ex == patchRadius && ey == patchRadius)
+			{
+				CenterSAD = avgSad;
+			}
+			TotalSAD += avgSad;
 		} // end of warping y
 	} // end of warping x
-	
+	TotalSAD /= (patchSize*1.0);
+	if(CenterSAD > this->getFitness())
+		//TotalSAD)
+	{
+		return false;
+	}
 	return true;
 }
 
