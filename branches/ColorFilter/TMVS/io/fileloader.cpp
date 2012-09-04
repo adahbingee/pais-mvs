@@ -230,6 +230,45 @@ Patch FileLoader::loadMvsPatch(ifstream &file) {
 	return Patch(center, sphericalNormal, camIdx, fitness, correlation);
 }
 
+// added by Chaody, 2012.Sep.04
+Patch FileLoader::loadMvscPatch(ifstream &file) {
+	vector<int> camIdx;
+	int camNum;
+	Vec3d center;
+	Vec3d color;
+	Vec2d sphericalNormal;
+	double fitness;
+	double correlation;
+
+	// read patch center
+	loadMvsVec(file, center);
+	// read patch spherical normal
+	loadMvsVec(file, sphericalNormal);
+	// load visible camera number
+	file.read((char*) &camNum, sizeof(int));
+	// load visible camera index
+	for (int i = 0; i < camNum; ++i) {
+		int idx;
+		file.read((char*) &idx, sizeof(int));
+		camIdx.push_back(idx);
+	}
+	// load fitness
+	file.read((char*) &fitness, sizeof(double));
+	// load correlation
+	file.read((char*) &correlation, sizeof(double));
+	
+	// load color
+	unsigned char *rgb;
+	rgb = new unsigned char[3];
+	file.read((char*) &rgb[0], sizeof(unsigned char));
+	file.read((char*) &rgb[1], sizeof(unsigned char));
+	file.read((char*) &rgb[2], sizeof(unsigned char));
+	color[0] = rgb[0];color[1] = rgb[1]; color[2] = rgb[2];
+	delete [] rgb;
+
+	return Patch(center, sphericalNormal, camIdx, fitness, correlation, color);
+}
+
 void FileLoader::loadMvsVec(ifstream &file, Vec2d &v) {
 	file.read( (char*) &v[0], sizeof(double));
 	file.read( (char*) &v[1], sizeof(double));
@@ -461,6 +500,86 @@ void FileLoader::loadMVS(const char *fileName, MVS &mvs) {
 			for (int i = 0; i < num; ++i) {
 				printf("\rloading patches: %d / %d", i+1, num);
 				Patch pth = loadMvsPatch(file);
+				patches.insert( pair<int, Patch>(pth.getId(), pth) );
+			}
+			printf("\n");
+			loadPatch = false;
+		}
+	}
+
+	file.close();
+}
+
+// added by Chaody, 2012.Sep.04
+void FileLoader::loadMVSC(const char *fileName, MVS &mvs) {
+	vector<Camera>  &cameras = mvs.cameras;
+	map<int, Patch> &patches = mvs.patches;
+
+	// reset container
+	cameras.clear();
+	patches.clear();
+
+	// open mvs file
+	ifstream file(fileName, ifstream::in | ifstream::binary);
+
+	if ( !file.is_open() ) {
+		printf("Can't open MVS file: %s\n", fileName);
+		return;
+	}
+
+	char *strip = NULL;
+	char strbuf[STRING_BUFFER_LENGTH];
+	int num;
+	bool loadCamera = false;
+	bool loadPatch  = false;
+	while ( !file.eof() ) {
+
+		file.getline(strbuf, STRING_BUFFER_LENGTH);
+		strip = strtok(strbuf, DELIMITER);
+
+		if (strip == NULL) continue; // skip blank line
+
+		// start load camera
+		if (strcmp(strip, "MVS_V2") == 0) {
+			loadCamera = true;
+			continue;
+		}
+
+		// set config and start load camera
+		if (strcmp(strip, "MVS_V3") == 0) {
+			MvsConfig config = loadMvsConfig(file);
+			mvs.setConfig(config);
+			loadCamera = true;
+			continue;
+		}
+
+		// set config and start load camera
+		if (strcmp(strip, "MVSC_V1") == 0) {
+			MvsConfig config = loadMvsConfig(file);
+			mvs.setConfig(config);
+			loadCamera = true;
+			continue;
+		}
+
+		if (loadCamera) {
+			strip = strtok(NULL, DELIMITER);
+			num = atoi(strip);
+			for (int i = 0; i < num; ++i) {
+				printf("\rloading cameras: %d / %d", i+1, num);
+				cameras.push_back( loadMvsCamera(file) );
+			}
+			printf("\n");
+			loadCamera = false;
+			loadPatch  = true;
+			continue;
+		}
+
+		if (loadPatch) {
+			strip = strtok(NULL, DELIMITER);
+			num = atoi(strip);
+			for (int i = 0; i < num; ++i) {
+				printf("\rloading patches: %d / %d", i+1, num);
+				Patch pth = loadMvscPatch(file); // modified by Chaody, 2012.Sep.04
 				patches.insert( pair<int, Patch>(pth.getId(), pth) );
 			}
 			printf("\n");

@@ -180,8 +180,12 @@ namespace PAIS {
 		void loadNVM2(const char *fileName);
 		// load MVS file
 		void loadMVS(const char *fileName);
+		// load MVSC file, added by Chaody, 2012.Sep.04
+		void loadMVSC(const char *fileName);
 		// write current state to MVS file (including cameras, patches, config)
 		void writeMVS(const char *fileName) const;
+		// write current state to MVS file with distance info. in color map (including cameras, patches, config), by Chaody, 2012.Sep.04
+		void writeColorDistMVS(const char *fileName, char *fileNameGT) const;
 		// write current state to PLY file (including patch vertex and normal)
 		void writePLY(const char *fileName) const;
 		// write current state to PSR file (including patch vertex and normal)

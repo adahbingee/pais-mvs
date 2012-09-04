@@ -58,6 +58,24 @@ Patch::Patch(const Vec3d &center, const Vec2d &normalS, const vector<int> &camId
 	setImagePoint();
 }
 
+// added by Chaody, 2012.Sep.04
+Patch::Patch(const Vec3d &center, const Vec2d &normalS, const vector<int> &camIdx, const double fitness, const double correlation, const Vec3b &color, const int id) : AbstractPatch(id) {
+	this->type        = TYPE_SEED;
+	this->center      = center;
+	this->color    = color;
+	this->camIdx      = camIdx;
+	this->fitness     = fitness;
+	this->correlation = correlation;
+	this->drop        = false;
+	setNormal(normalS);
+	setReferenceCameraIndex();
+	setDepthAndRay();
+	setDepthRange();
+	setLOD();
+	setPriority();
+	//setImagePoint();
+}
+
 Patch::~Patch(void) {
 
 }
