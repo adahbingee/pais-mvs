@@ -175,6 +175,16 @@ void MVS::writeMVS(const char* fileName) const {
 	FileWriter::writeMVS(fileName, *this);
 }
 
+// added by Chaody, 2012.Sep.04
+void MVS::loadMVSC(const char* fileName) {
+	FileLoader::loadMVSC(fileName, *this);
+}
+
+// added by Chaody, 2012.Sep.04
+void MVS::writeColorDistMVS(const char* fileName, char* fileNameGT) const {
+	FileWriter::writeColorDistMVS(fileName, fileNameGT, *this);
+}
+
 void MVS::writePLY(const char *fileName) const {
 	FileWriter::writePLY(fileName, *this);
 }
