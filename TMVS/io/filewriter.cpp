@@ -1,5 +1,5 @@
 #include "filewriter.h"
-#include "objLoader.h"
+
 
 // compute distance from point to point
 double DistPoint2Point(obj_vector *, obj_vector *);
@@ -215,7 +215,7 @@ void FileWriter::writePatch(fstream &file, const Patch &patch) {
 
 // compare with ground truth model, output in color map
 // added by Chaody, 2012.Sep.04
-void FileWriter::writeColorDistPatch(fstream &file, char *fileNameGT, const Patch &patch) {
+void FileWriter::writeColorDistPatch(fstream &file, objLoader *objGT, const Patch &patch) {
 	const vector<int> &camIdx = patch.getCameraIndices();
 	const int camNum = (int) camIdx.size();
 	double fitness = patch.getFitness();
@@ -230,8 +230,8 @@ void FileWriter::writeColorDistPatch(fstream &file, char *fileNameGT, const Patc
 	objPatchCenter.e[1] = vPatchCenter[1];
 	objPatchCenter.e[2] = vPatchCenter[2];
 	
-	objLoader *objGT = new objLoader(); // ground truth model
-	objGT->load(fileNameGT);
+	//objLoader *objGT = new objLoader(); // ground truth model
+	//objGT->load(fileNameGT);
 
 	//printf("[Ground truth 3D model] %s\n", fileNameGT);
 	//printf("Number of vertices: %i\n", objGT->vertexCount);
@@ -312,9 +312,19 @@ void FileWriter::writeColorDistMVS(const char *fileName, char *fileNameGT, const
 	const int patchNum = (int) patches.size();
 	file << "PATCHES " << patchNum << endl;
 	map<int, Patch>::const_iterator it;
+	
+	printf("\n"); int i = 0;
+
+	objLoader *objGT = new objLoader(); // ground truth model
+	objGT->load(fileNameGT);
+
 	for (it = patches.begin(); it != patches.end(); ++it) {
-		writeColorDistPatch(file, fileNameGT, (*it).second);
+		writeColorDistPatch(file, objGT, (*it).second);
+		printf("\rprocessing ...... %d / %d", i++, patchNum);
 	}
+	printf("End of writing.\n");
+
+	delete objGT;
 
 	file.close();
 }

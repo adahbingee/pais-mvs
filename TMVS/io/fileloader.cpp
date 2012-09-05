@@ -263,7 +263,7 @@ Patch FileLoader::loadMvscPatch(ifstream &file) {
 	file.read((char*) &rgb[0], sizeof(unsigned char));
 	file.read((char*) &rgb[1], sizeof(unsigned char));
 	file.read((char*) &rgb[2], sizeof(unsigned char));
-	color[0] = rgb[0];color[1] = rgb[1]; color[2] = rgb[2];
+	color[0] = rgb[2]; color[1] = rgb[1]; color[2] = rgb[0]; // rgb to bgr
 	delete [] rgb;
 
 	return Patch(center, sphericalNormal, camIdx, fitness, correlation, color);

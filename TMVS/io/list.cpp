@@ -4,15 +4,15 @@
 #include <stdio.h>
 
 // internal helper functions
-char list_is_full(list *listo)
+char list_is_full(list_obj *listo)
 {
 	return(listo->item_count == listo->current_max_size);
 }
 
-void list_grow(list *old_listo)
+void list_grow(list_obj *old_listo)
 {
 	int i;
-	list new_listo;
+	list_obj new_listo;
 	
 	list_make(&new_listo, old_listo->current_max_size*2, old_listo->growable++);
 	
@@ -30,7 +30,7 @@ void list_grow(list *old_listo)
 }
 //end helpers
 
-void list_make(list *listo, int start_size, char growable)
+void list_make(list_obj *listo, int start_size, char growable)
 {
 	listo->names = (char**) malloc(sizeof(char*) * start_size);
 	listo->items = (void**) malloc(sizeof(void*) * start_size);
@@ -39,7 +39,7 @@ void list_make(list *listo, int start_size, char growable)
 	listo->growable = growable;
 }
 
-int list_add_item(list *listo, void *item, char *name)
+int list_add_item(list_obj *listo, void *item, char *name)
 {
 	int name_length;
 	char *new_name;
@@ -67,7 +67,7 @@ int list_add_item(list *listo, void *item, char *name)
 	return listo->item_count-1;
 }
 
-char* list_print_items(list *listo)
+char* list_print_items(list_obj *listo)
 {
 	int i;
 
@@ -79,14 +79,14 @@ char* list_print_items(list *listo)
 	return NULL;
 }
 
-void* list_get_index(list *listo, int indx)
+void* list_get_index(list_obj *listo, int indx)
 {
 	if(indx < listo->item_count)
 		return listo->items[indx];
 	return NULL;
 }
 
-void* list_get_item(list *listo, void *item_to_find)
+void* list_get_item(list_obj *listo, void *item_to_find)
 {
 	int i = 0;
 	
@@ -99,7 +99,7 @@ void* list_get_item(list *listo, void *item_to_find)
 	return NULL;
 }
 
-void* list_get_name(list *listo, char *name_to_find)
+void* list_get_name(list_obj *listo, char *name_to_find)
 {
 	int i = 0;
 
@@ -112,7 +112,7 @@ void* list_get_name(list *listo, char *name_to_find)
 	return NULL;
 }
 
-int list_find(list *listo, char *name_to_find)
+int list_find(list_obj *listo, char *name_to_find)
 {
 	int i = 0;
 
@@ -125,7 +125,7 @@ int list_find(list *listo, char *name_to_find)
 	return -1;
 }
 
-void list_delete_item(list *listo, void *item)
+void list_delete_item(list_obj *listo, void *item)
 {
 	int i;
 	
@@ -136,7 +136,7 @@ void list_delete_item(list *listo, void *item)
 	}
 }
 
-void list_delete_name(list *listo, char *name)
+void list_delete_name(list_obj *listo, char *name)
 {
 	int i;
 	//int j;
@@ -157,7 +157,7 @@ void list_delete_name(list *listo, char *name)
 	}
 }
 
-void list_delete_index(list *listo, int indx)
+void list_delete_index(list_obj *listo, int indx)
 {
 	int j;
 	
@@ -177,7 +177,7 @@ void list_delete_index(list *listo, int indx)
 	return;
 }
 
-void list_delete_all(list *listo)
+void list_delete_all(list_obj *listo)
 {
 	int i;
 	
@@ -185,14 +185,14 @@ void list_delete_all(list *listo)
 		list_delete_index(listo, i);
 }
 
-void list_free(list *listo)
+void list_free(list_obj *listo)
 {
 	list_delete_all(listo);
 	free(listo->names);
 	free(listo->items);
 }
 
-void list_print_list(list *listo)
+void list_print_list(list_obj *listo)
 {
 	int i;
 	
