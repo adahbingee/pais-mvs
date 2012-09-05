@@ -7,7 +7,7 @@
 
 #define WHITESPACE " \t\n\r"
 
-void obj_free_half_list(list *listo)
+void obj_free_half_list(list_obj *listo)
 {
 	list_delete_all(listo);
 	free(listo->names);
@@ -177,7 +177,7 @@ void obj_parse_camera(obj_growable_scene_data *scene, obj_camera *camera)
 	camera->camera_up_norm_index = obj_convert_to_list_index(scene->vertex_normal_list.item_count, indices[2]);
 }
 
-int obj_parse_mtl_file(char *filename, list *material_list)
+int obj_parse_mtl_file(char *filename, list_obj *material_list)
 {
 	int line_number = 0;
 	char *current_token;

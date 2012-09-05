@@ -87,19 +87,19 @@ typedef struct obj_growable_scene_data
 	char scene_filename[OBJ_FILENAME_LENGTH];
 	char material_filename[OBJ_FILENAME_LENGTH];
 	
-	list vertex_list;
-	list vertex_normal_list;
-	list vertex_texture_list;
+	list_obj vertex_list;
+	list_obj vertex_normal_list;
+	list_obj vertex_texture_list;
 	
-	list face_list;
-	list sphere_list;
-	list plane_list;
+	list_obj face_list;
+	list_obj sphere_list;
+	list_obj plane_list;
 	
-	list light_point_list;
-	list light_quad_list;
-	list light_disc_list;
+	list_obj light_point_list;
+	list_obj light_quad_list;
+	list_obj light_disc_list;
 	
-	list material_list;
+	list_obj material_list;
 	
 	obj_camera *camera;
 };

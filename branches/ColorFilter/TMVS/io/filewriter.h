@@ -6,6 +6,7 @@
 
 #include "../mvs/patch.h"
 #include "../mvs/mvs.h"
+#include "../io/objLoader.h" // added by Chaody
 
 using namespace PAIS;
 using namespace cv;
@@ -20,7 +21,7 @@ namespace PAIS {
 		static void writeMvsConfig(fstream &file, const MVS &mvs);
 		static void writeCamera(fstream &file, const Camera &camera);
 		static void writePatch(fstream &file, const Patch &patch);
-		static void writeColorDistPatch(fstream &file, char *fileNameGT, const Patch &patch);
+		static void writeColorDistPatch(fstream &file, objLoader *objGT, const Patch &patch); // added by Chaody, 2012.Sep.04
 		static void writeVec(fstream &file, const Vec4d &vec);
 		static void writeVec(fstream &file, const Vec3d &vec);
 		static void writeVec(fstream &file, const Vec2d &vec);

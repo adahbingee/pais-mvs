@@ -9,21 +9,21 @@ typedef struct
 
 	void **items;
 	char **names;	
-} list;
+} list_obj;
 
-void list_make(list *listo, int size, char growable);
-int list_add_item(list *listo, void *item, char *name);
-char* list_print_items(list *listo);
-void* list_get_name(list *listo, char *name);
-void* list_get_index(list *listo, int indx);
-void* list_get_item(list *listo, void *item_to_find);
-int list_find(list *listo, char *name_to_find);
-void list_delete_index(list *listo, int indx);
-void list_delete_name(list *listo, char *name);
-void list_delete_item(list *listo, void *item);
-void list_delete_all(list *listo);
-void list_print_list(list *listo);
-void list_free(list *listo);
+void list_make(list_obj *listo, int size, char growable);
+int list_add_item(list_obj *listo, void *item, char *name);
+char* list_print_items(list_obj *listo);
+void* list_get_name(list_obj *listo, char *name);
+void* list_get_index(list_obj *listo, int indx);
+void* list_get_item(list_obj *listo, void *item_to_find);
+int list_find(list_obj *listo, char *name_to_find);
+void list_delete_index(list_obj *listo, int indx);
+void list_delete_name(list_obj *listo, char *name);
+void list_delete_item(list_obj *listo, void *item);
+void list_delete_all(list_obj *listo);
+void list_print_list(list_obj *listo);
+void list_free(list_obj *listo);
 
 void test_list();
 #endif
