@@ -207,8 +207,14 @@ void runColorFiltering(MVS &mvs, const char *fileName, char *fileNameGT) {
 	clock_t start_t, end_t;
 	start_t = clock();
 
+
+	size_t foundslash = fileNameStr.find_last_of("/\\");
+	string filenameonly = fileNameStr.substr(foundslash+1);
+	filenameonly.erase (filenameonly.end()-4, filenameonly.end());
+	filenameonly += "_color.mvsc";
+
 	// output current .mvs in distance color map comparing to ground truth
-	mvs.writeColorDistMVS("exp_color.mvsc", fileNameGT);
+	mvs.writeColorDistMVS(filenameonly.c_str(), fileNameGT);
 
 	// PMVS filtering
 	//mvs.cellFiltering();
