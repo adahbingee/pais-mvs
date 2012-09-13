@@ -108,7 +108,7 @@ void runReconstruct(MVS &mvs, const char *fileName) {
 
 	// get seed point if no initial matching
 	if ( mvs.getPatches().empty() ) {
-		FeatureManager::setSeedPatches(mvs.getCameras(), 3.0, &mvs);
+		FeatureManager::setSeedPatches(mvs.getCameras(), 0.5, &mvs);
 		if ( mvs.getPatches().empty() ) {
 			printf("try less minCamNum\n");
 		}
@@ -118,8 +118,10 @@ void runReconstruct(MVS &mvs, const char *fileName) {
 	clock_t start_t, end_t;
 	start_t = clock();
 	mvs.writeMVS("init.mvs"); // from seed traingulation
+	mvs.writeMVSascii("init.txt"); 
 	mvs.refineSeedPatches();
 	mvs.writeMVS("seed.mvs"); // after optimization and runtime filtering
+	mvs.writeMVSascii("seed.txt"); 
 	mvs.expansionPatches();
 	mvs.writeMVS("exp.mvs");
 	mvs.writePLY("exp.ply");
@@ -184,7 +186,7 @@ void runFiltering(MVS &mvs, const char *fileName) {
 }
 
 // added by Chaody, 2012.Sep.04
-void runColorFiltering(MVS &mvs, const char *fileName, char *fileNameGT) {
+void runColorFiltering(MVS &mvs, const char *fileName, char *fileNameGT, float fColorDistMin, float fColorDistMax) {
 	// get file extension
 	string fileNameStr(fileName);
 	size_t found = fileNameStr.find_last_of(".");
@@ -214,7 +216,7 @@ void runColorFiltering(MVS &mvs, const char *fileName, char *fileNameGT) {
 	filenameonly += "_color.mvsc";
 
 	// output current .mvs in distance color map comparing to ground truth
-	mvs.writeColorDistMVS(filenameonly.c_str(), fileNameGT);
+	mvs.writeColorDistMVS(filenameonly.c_str(), fileNameGT, fColorDistMin, fColorDistMax);
 
 	// PMVS filtering
 	//mvs.cellFiltering();
@@ -262,7 +264,7 @@ int main(int argc, char* argv[])
 		} else if ( strcmp(argv[1], "-f") == 0 ) {  // filtering
 			runFiltering(mvs, argv[2]);
 		} else if ( strcmp(argv[1], "-c") == 0 ) {  // filtering with color distance output
-			runColorFiltering(mvs, argv[2], argv[3]);
+			runColorFiltering(mvs, argv[2], argv[3], atof(argv[4]), atof(argv[5]));
 		} else if ( strcmp(argv[1], "-vc") == 0 ) {  // filtering with color distance output
 			runColorViewer(mvs, argv[2]);
 		}

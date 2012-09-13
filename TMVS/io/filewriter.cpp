@@ -215,7 +215,7 @@ void FileWriter::writePatch(fstream &file, const Patch &patch) {
 
 // compare with ground truth model, output in color map
 // added by Chaody, 2012.Sep.04
-void FileWriter::writeColorDistPatch(fstream &file, objLoader *objGT, const Patch &patch) {
+void FileWriter::writeColorDistPatch(fstream &file, objLoader *objGT, const Patch &patch, float fColorDistMin, float fColorDistMax) {
 	const vector<int> &camIdx = patch.getCameraIndices();
 	const int camNum = (int) camIdx.size();
 	double fitness = patch.getFitness();
@@ -240,7 +240,6 @@ void FileWriter::writeColorDistPatch(fstream &file, objLoader *objGT, const Patc
 	int j;
 	unsigned char *rgb;
 	rgb = new unsigned char[3];
-	float fColorDist = 1.5;  // <-- 之後改成可輸入的參數
 
 	// for all faces in GT model
 	#pragma omp parallel for
@@ -257,7 +256,7 @@ void FileWriter::writeColorDistPatch(fstream &file, objLoader *objGT, const Patc
 	}
 		
 	// output vertex in color map
-	JetColorMap(rgb, fMinDist, 0, fColorDist);
+	JetColorMap(rgb, fMinDist, fColorDistMin, fColorDistMax);
 
 	////////////////////////////////////////////////////////
 
@@ -286,7 +285,7 @@ void FileWriter::writeColorDistPatch(fstream &file, objLoader *objGT, const Patc
 
 // compare with ground truth model, output in color map
 // added by Chaody, 2012.Sep.04
-void FileWriter::writeColorDistMVS(const char *fileName, char *fileNameGT, const MVS &mvs) {
+void FileWriter::writeColorDistMVS(const char *fileName, char *fileNameGT, float fColorDistMin, float fColorDistMax, const MVS &mvs) {
 	fstream file;
 	file.open(fileName, fstream::out | fstream::binary);
 	if ( !file.is_open() ) {
@@ -319,7 +318,7 @@ void FileWriter::writeColorDistMVS(const char *fileName, char *fileNameGT, const
 	objGT->load(fileNameGT);
 
 	for (it = patches.begin(); it != patches.end(); ++it) {
-		writeColorDistPatch(file, objGT, (*it).second);
+		writeColorDistPatch(file, objGT, (*it).second, fColorDistMin, fColorDistMax);
 		printf("\rprocessing ...... %d / %d", i++, patchNum);
 	}
 	printf("End of writing.\n");
@@ -357,6 +356,39 @@ void FileWriter::writeMVS(const char *fileName, const MVS &mvs) {
 	map<int, Patch>::const_iterator it;
 	for (it = patches.begin(); it != patches.end(); ++it) {
 		writePatch(file, (*it).second);
+	}
+
+	file.close();
+}
+
+// write MVS in ascii mode, added by Chaody, 2012.Sep.13
+void FileWriter::writeMVSascii(const char *fileName, const MVS &mvs) {
+	const map<int, Patch> &patches = mvs.getPatches();
+	map<int, Patch>::const_iterator it;
+	ofstream file;
+	file.open(fileName, ofstream::out);
+	if ( !file.is_open() ) {
+		printf("Can't open file %s\n", fileName);
+		return;
+	}
+
+	int i=0;
+
+	for (it = patches.begin(); it != patches.end(); ++it) {
+		const Patch &pth = it->second;
+		const Vec3d &p   = pth.getCenter();
+		const vector<Vec2d> &imgPoints = pth.getImagePoints();
+		const double &fitness = pth.getFitness();
+
+		const int camNum               = pth.getCameraNumber();
+
+
+		file << "ID:" << i++ << endl;
+		file << "(x, y, z): " << p[0] << " " << p[1] << " " << p[2] << endl;
+		for (int j=0; j<camNum; j++){
+			file << "(u, v) on Cam" << j << ": " << imgPoints[j][0] << " " << imgPoints[j][0] << endl;
+		}
+		file << "fitness: " << fitness << endl;
 	}
 
 	file.close();
