@@ -69,7 +69,7 @@ void JetColorMap(unsigned char *rgb,float value,float min,float max)
 	  if(value==HUGE_VAL)
 		{rgb[0]=rgb[1]=rgb[2]=255;}
 	  else if(value<0)
-		{rgb[0]=rgb[1]=rgb[2]=0;}
+		{rgb[0]=0;rgb[1]=0;rgb[2]=255;}  //{rgb[0]=rgb[1]=rgb[2]=0;}
 	  else if(value<max4)
 		{rgb[0]=0;rgb[1]=0;rgb[2]=c1+(unsigned char)((255-c1)*value/max4);}
 	  else if(value<2*max4)

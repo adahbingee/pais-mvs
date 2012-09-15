@@ -43,6 +43,8 @@ void FeatureManager::setSeedPatches(const vector<Camera> &cameras, const double 
 
 			epipolarLineFiltering(keypoints[i], keypoints[j], F, maxDist, &matches);
 
+			epipolarLineFilteringWithSupport(keypoints, Fs, maxDist, &matches, i, j, camNum);
+
 			// push into match table
 			for (vector<DMatch>::const_iterator it = matches.begin(); it != matches.end(); it++) {
 				const DMatch &match = *it;
@@ -190,6 +192,84 @@ void FeatureManager::epipolarLineFiltering(const vector<KeyPoint> &queryKeypoint
 			continue;
 		}
 
+		++it;
+	}
+}
+
+// added by Chaody, 2012.Sep.15
+// 只針對特定特徵點，再到其他view去找support
+void FeatureManager::epipolarLineFilteringWithSupport
+	(const vector<vector<KeyPoint> > &keypoints, const vector<vector<Mat_<double> > > &Fs, const double maxDist, vector<DMatch> *matchesPtr, const int iV1, const int iV2, const int camNum) 
+{
+	vector<DMatch> &matches = *matchesPtr;
+	int k;
+
+	// epipolar line filtering with support
+	for (vector<DMatch>::const_iterator it = matches.begin(); it != matches.end();) {
+		const DMatch &match = *it;
+		int iSupCnt = 0;
+
+		for (k=0; k<camNum; k++)
+		{
+			if (k == iV1) continue; // skip matching the first view in match table
+			if (k == iV2) continue; // skip matching the second view in match table
+					
+			printf("iV1:%d iV2:%d k:%d camNum:%d\n", iV1, iV2, k, camNum);
+
+			// feature index
+			int qidx = match.queryIdx;
+			int tidx = match.trainIdx;
+			// feature point
+			const Point2f &qptV1 = keypoints[iV1][qidx].pt;
+			const Point2f &qptV2 = keypoints[iV2][tidx].pt;
+			const int keyNum = (int) keypoints[k].size();
+
+			for (int kIdx = 0; kIdx < keyNum; kIdx++) {
+				double dist_V1=65535.0, dist_V2=65535.0;
+				const Point2f &tpt = keypoints[k][kIdx].pt;
+
+				Mat_<double> qM(3, 1);
+				Mat_<double> tM(3, 1);
+				qM.at<double>(0, 0) = qptV1.x;
+				qM.at<double>(1, 0) = qptV1.y;
+				qM.at<double>(2, 0) = 1.0;
+				tM.at<double>(0, 0) = tpt.x;
+				tM.at<double>(1, 0) = tpt.y;
+				tM.at<double>(2, 0) = 1.0;
+
+				Mat_<double> epiLine = qM.t()*Fs[iV1][k];
+				Mat_<double> distM = epiLine * tM;
+
+				// distance to epipolar line
+				dist_V1 = abs(distM.at<double>(0, 0)) / sqrt(epiLine.at<double>(0, 0)*epiLine.at<double>(0, 0) + epiLine.at<double>(0, 1)*epiLine.at<double>(0, 1));
+				
+				// comfirm another iV2 
+				if (dist_V1 < maxDist) {
+					qM.at<double>(0, 0) = qptV2.x;
+					qM.at<double>(1, 0) = qptV2.y;
+					qM.at<double>(2, 0) = 1.0;
+
+					Mat_<double> epiLine = qM.t()*Fs[iV2][k];
+					Mat_<double> distM = epiLine * tM;
+
+					// distance to epipolar line
+					dist_V2 = abs(distM.at<double>(0, 0)) / sqrt(epiLine.at<double>(0, 0)*epiLine.at<double>(0, 0) + epiLine.at<double>(0, 1)*epiLine.at<double>(0, 1));						
+				}
+
+				// only points pass two view constraint, support count+1
+				if (dist_V2 < maxDist) {
+					iSupCnt++;
+					printf("iV1:%d iV2:%d k:%d dist:%f iSUpCnt:%d\n", iV1, iV2, k, dist_V2, iSupCnt);
+				}
+			}
+		}
+				
+		// filter out errornous match
+		if (iSupCnt < 2) {
+			it = matches.erase(it);
+			continue;
+		}
+		
 		++it;
 	}
 }

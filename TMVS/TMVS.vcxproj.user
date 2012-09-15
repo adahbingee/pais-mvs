@@ -3,12 +3,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LocalDebuggerWorkingDirectory>$(TargetDir)</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>-c exp.mvs BoxBallCut_GT_156v</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-r "D:\Chaody EXP\TMVS\TMVS_data\Plane5View/Plane.nvm2"</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LocalDebuggerWorkingDirectory>$(TargetDir)</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>-vc exp_color.mvsc</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-r "D:\Chaody EXP\TMVS\TMVS_data\Plane5View\Plane.nvm2"</LocalDebuggerCommandArguments>
     <ShowAllFiles>false</ShowAllFiles>
   </PropertyGroup>
 </Project>
