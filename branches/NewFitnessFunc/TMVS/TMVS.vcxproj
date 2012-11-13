@@ -1,0 +1,201 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{30273DA0-BF96-4189-9ECE-AB1329919DC7}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>TMVS</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <IncludePath>D:\NCTU_PhD\OpenCV2.4\build\include;D:\NCTU_PhD\OpenCV2.4\build\include\opencv;D:\NCTU_PhD\OpenCV2.4\build\include\opencv2;D:\NCTU_PhD\PCL 1.6.0\include\pcl-1.6;D:\NCTU_PhD\PCL 1.6.0\3rdParty\VTK\include\vtk-5.8;D:\NCTU_PhD\PCL 1.6.0\3rdParty\Eigen\include;D:\NCTU_PhD\PCL 1.6.0\3rdParty\Boost\include;D:\NCTU_PhD\PCL 1.6.0\3rdParty\FLANN\include;D:\NCTU_PhD\PCL 1.6.0\3rdParty\Qhull\include;D:\NCTU_PhD\OpenNI/Include;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\NCTU_PhD\OpenCV2.4\build\x64\vc10\lib;D:\NCTU_PhD\PCL 1.6.0\lib;D:\NCTU_PhD\PCL 1.6.0\3rdParty\Boost\lib;D:\NCTU_PhD\PCL 1.6.0\3rdParty\VTK\lib\vtk-5.8;D:\NCTU_PhD\PCL 1.6.0\3rdParty\FLANN\lib;D:\NCTU_PhD\PCL 1.6.0\3rdParty\Qhull\lib;D:\NCTU_PhD\OpenNI\Lib\;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <IncludePath>D:\NCTU_PhD\OpenCV2.4\build\include;D:\NCTU_PhD\OpenCV2.4\build\include\opencv;D:\NCTU_PhD\OpenCV2.4\build\include\opencv2;D:\NCTU_PhD\PCL 1.6.0\include\pcl-1.6;D:\NCTU_PhD\PCL 1.6.0\3rdParty\VTK\include\vtk-5.8;D:\NCTU_PhD\PCL 1.6.0\3rdParty\Eigen\include;D:\NCTU_PhD\PCL 1.6.0\3rdParty\Boost\include;D:\NCTU_PhD\PCL 1.6.0\3rdParty\FLANN\include;D:\NCTU_PhD\PCL 1.6.0\3rdParty\Qhull\include;D:\NCTU_PhD\OpenNI/Include;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\NCTU_PhD\OpenCV2.4\build\x64\vc10\lib;D:\NCTU_PhD\PCL 1.6.0\lib;D:\NCTU_PhD\PCL 1.6.0\3rdParty\Boost\lib;D:\NCTU_PhD\PCL 1.6.0\3rdParty\VTK\lib\vtk-5.8;D:\NCTU_PhD\PCL 1.6.0\3rdParty\FLANN\lib;D:\NCTU_PhD\PCL 1.6.0\3rdParty\Qhull\lib;D:\NCTU_PhD\OpenNI\Lib\;$(LibraryPath)</LibraryPath>
+    <SourcePath>$(SourcePath)</SourcePath>
+    <TargetName>$(ProjectName)</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <OpenMPSupport>true</OpenMPSupport>
+      <AdditionalOptions>-static-libgcc -static-libstdc++ %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>opencv_core242d.lib;opencv_highgui242d.lib;opencv_imgproc242d.lib;opencv_features2d242d.lib;opencv_nonfree242d.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib;opengl32.lib;ws2_32.lib;comctl32.lib;wsock32.lib;pcl_common_debug.lib;pcl_octree_debug.lib;pcl_surface_debug.lib;pcl_registration_debug.lib;pcl_keypoints_debug.lib;pcl_tracking_debug.lib;pcl_apps_debug.lib;pcl_kdtree_debug.lib;pcl_search_debug.lib;pcl_filters_debug.lib;pcl_segmentation_debug.lib;pcl_visualization_debug.lib;pcl_features_debug.lib;pcl_io_debug.lib;pcl_sample_consensus_debug.lib;flann_cpp_s-gd.lib;qhullstatic_d.lib;libboost_system-vc100-mt-gd-1_49.lib;libboost_filesystem-vc100-mt-gd-1_49.lib;libboost_thread-vc100-mt-gd-1_49.lib;libboost_date_time-vc100-mt-gd-1_49.lib;libboost_iostreams-vc100-mt-gd-1_49.lib;vtkCommon-gd.lib;vtkRendering-gd.lib;vtkHybrid-gd.lib;vtkGraphics-gd.lib;vtkverdict-gd.lib;vtkImaging-gd.lib;vtkIO-gd.lib;vtkFiltering-gd.lib;vtkDICOMParser-gd.lib;vtkNetCDF_cxx-gd.lib;vtkmetaio-gd.lib;vtksys-gd.lib;vtksqlite-gd.lib;vtkpng-gd.lib;vtktiff-gd.lib;vtkzlib-gd.lib;vtkjpeg-gd.lib;vtkexpat-gd.lib;vtkftgl-gd.lib;vtkfreetype-gd.lib;vtkexoIIc-gd.lib;vtkNetCDF-gd.lib;vfw32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <Profile>true</Profile>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OpenMPSupport>true</OpenMPSupport>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>opencv_core242.lib;opencv_highgui242.lib;opencv_imgproc242.lib;opencv_features2d242.lib;opencv_nonfree242.lib;libboost_system-vc100-mt-1_49.lib;libboost_filesystem-vc100-mt-1_49.lib;libboost_thread-vc100-mt-1_49.lib;libboost_date_time-vc100-mt-1_49.lib;libboost_iostreams-vc100-mt-1_49.lib;pcl_common_release.lib;pcl_octree_release.lib;vtkCommon.lib;vtkRendering.lib;vtkHybrid.lib;pcl_io_release.lib;pcl_sample_consensus_release.lib;flann_cpp_s.lib;pcl_kdtree_release.lib;pcl_search_release.lib;pcl_filters_release.lib;pcl_segmentation_release.lib;pcl_visualization_release.lib;pcl_features_release.lib;qhullstatic.lib;pcl_surface_release.lib;pcl_registration_release.lib;pcl_keypoints_release.lib;pcl_tracking_release.lib;pcl_apps_release.lib;vtkGraphics.lib;vtkverdict.lib;vtkImaging.lib;vtkIO.lib;vtkFiltering.lib;vtkDICOMParser.lib;vtkNetCDF_cxx.lib;vtkmetaio.lib;vtksys.lib;ws2_32.lib;comctl32.lib;wsock32.lib;vtksqlite.lib;vtkpng.lib;vtktiff.lib;vtkzlib.lib;vtkjpeg.lib;vtkexpat.lib;vtkftgl.lib;vtkfreetype.lib;opengl32.lib;vtkexoIIc.lib;vtkNetCDF.lib;vfw32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <Profile>true</Profile>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <None Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="io\fileloader.h" />
+    <ClInclude Include="io\filewriter.h" />
+    <ClInclude Include="io\list.h" />
+    <ClInclude Include="io\logmanager.h" />
+    <ClInclude Include="io\objLoader.h" />
+    <ClInclude Include="io\obj_parser.h" />
+    <ClInclude Include="io\string_extra.h" />
+    <ClInclude Include="mvs\abstractpatch.h" />
+    <ClInclude Include="mvs\camera.h" />
+    <ClInclude Include="mvs\cellmap.h" />
+    <ClInclude Include="mvs\featuremanager.h" />
+    <ClInclude Include="mvs\mvs.h" />
+    <ClInclude Include="mvs\patch.h" />
+    <ClInclude Include="mvs\utility.h" />
+    <ClInclude Include="pso\particle.h" />
+    <ClInclude Include="pso\psosolver.h" />
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="targetver.h" />
+    <ClInclude Include="view\mvsviewer.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="io\fileloader.cpp" />
+    <ClCompile Include="io\filewriter.cpp" />
+    <ClCompile Include="io\list.cpp" />
+    <ClCompile Include="io\logmanager.cpp" />
+    <ClCompile Include="io\objLoader.cpp" />
+    <ClCompile Include="io\obj_parser.cpp" />
+    <ClCompile Include="io\string_extra.cpp" />
+    <ClCompile Include="mvs\abstractpatch.cpp" />
+    <ClCompile Include="mvs\camera.cpp" />
+    <ClCompile Include="mvs\cellmap.cpp" />
+    <ClCompile Include="mvs\featuremanager.cpp" />
+    <ClCompile Include="mvs\mvs.cpp" />
+    <ClCompile Include="mvs\patch.cpp" />
+    <ClCompile Include="pso\particle.cpp" />
+    <ClCompile Include="pso\psosolver.cpp" />
+    <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="TMVS.cpp" />
+    <ClCompile Include="view\mvsviewer.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
