@@ -44,6 +44,7 @@ namespace PAIS {
 		void init();
 		void addCameras();
 		void addPatches();
+		void addColorPatches(); // added by Chaody, 2012.Sep.04
 		void addPatchesAnimate();
 		double getNormalLength() const;
 	public:
@@ -51,7 +52,8 @@ namespace PAIS {
 		int pointSize;
 
 		// constructor
-		MvsViewer(const MVS &mvs, bool initPatch = true, bool show = false, bool animate = false);
+		//MvsViewer(const MVS &mvs, bool initPatch = true, bool show = false, bool animate = false);
+		MvsViewer(const MVS &mvs, bool initPatch = true, bool show = false, bool animate = false, bool color = false); //modified by Chaody, 2012.Sep.4
 		// descructor
 		~MvsViewer(void);
 

@@ -19,6 +19,8 @@ namespace PAIS {
 	private:
 		static vector<NVMatch>* setNVMatch(const int queryCamIdx, const int trainCamIdx, const DMatch &match, vector<vector<NVMatch> > &nvmatches);
 		static void epipolarLineFiltering(const vector<KeyPoint> &queryKeypoints, const vector<KeyPoint> &trainKeypoints, const Mat_<double> &F,  const double maxDist, vector<DMatch> *matchesPtr);
+		static void epipolarLineFilteringWithSupport(const vector<vector<KeyPoint> > &keypoints, const vector<vector<Mat_<double> > > &Fs, 
+			const double maxDist, vector<DMatch> *matchesPtr, const int iV1, const int iV2, const int camNum);
 		static void filteroutNonMatches(vector<vector<vector<DMatch> > > *matchTable);
 		// get fundamental matrix xT'*F*xF = 0
 		static Mat_<double> getFundamental(const Camera &camFrom, const Camera &camTo);

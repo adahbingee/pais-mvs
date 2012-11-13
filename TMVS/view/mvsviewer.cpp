@@ -86,7 +86,34 @@ void pointPickEvent(const pcl::visualization::PointPickingEvent &event, void* vi
 	waitKey(1);
 }
 
-MvsViewer::MvsViewer(const MVS &mvs, bool initPatch, bool show, bool animate) {
+//MvsViewer::MvsViewer(const MVS &mvs, bool initPatch, bool show, bool animate) {
+//	// set instance holder
+//	this->mvs = &mvs;
+//
+//	this->animate = animate;
+//
+//	// initialize viewer
+//	init();
+//
+//	// add MVS cameras
+//	addCameras();
+//
+//	// add patches
+//	if (initPatch) {
+//		if ( !animate ) {
+//			// add MVS patches show final result
+//			addPatches();
+//		} else {
+//			// add MVS patches show growing result
+//			addPatchesAnimate();
+//		}
+//	}
+//
+//	if (show) open();
+//}
+
+// added by Chaody, 2012.Sep.04
+MvsViewer::MvsViewer(const MVS &mvs, bool initPatch, bool show, bool animate, bool color) {
 	// set instance holder
 	this->mvs = &mvs;
 
@@ -101,8 +128,12 @@ MvsViewer::MvsViewer(const MVS &mvs, bool initPatch, bool show, bool animate) {
 	// add patches
 	if (initPatch) {
 		if ( !animate ) {
-			// add MVS patches show final result
-			addPatches();
+			if ( !color )
+				// add MVS patches show final result
+				addPatches();
+			else
+				addColorPatches();
+
 		} else {
 			// add MVS patches show growing result
 			addPatchesAnimate();
@@ -216,6 +247,47 @@ void MvsViewer::addPatch(const Patch &pth) {
 }
 
 void MvsViewer::addPatches() {
+	const map<int, Patch> &patches = mvs->getPatches();
+	map<int, Patch>::const_iterator it;
+
+	for (it = patches.begin(); it != patches.end(); ++it) {
+		// patch center
+		const Vec3d &p = it->second.getCenter();
+		// patch normal
+		const Vec3d &n = it->second.getNormal();
+		// patch color
+		const Vec3b &c = it->second.getColor();
+		
+		PointXYZRGB pt;
+		pt.x = p[0];
+		pt.y = p[1];
+		pt.z = p[2];
+		pt.r = c[2];
+		pt.g = c[1];
+		pt.b = c[0];
+		Normal nt(n[0], n[1], n[2]);
+
+		centers->push_back(pt);
+		normals->push_back(nt);
+	}
+
+	// remove old points
+	pclViewer.removePointCloud(NAME_PATCH);
+	pclViewer.removePointCloud(NAME_NORMAL);
+
+	// add new points
+    pclViewer.addPointCloud(centers, NAME_PATCH);
+	pclViewer.addPointCloudNormals<pcl::PointXYZRGB, pcl::Normal>(centers, normals, normalLevel, normalLength, NAME_NORMAL);
+	
+	// set normal color
+	pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1.0, 1.0, 0.0, NAME_NORMAL);
+    pclViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, 0.0, NAME_NORMAL);
+
+	pclViewer.resetCamera();
+}
+
+// added by Chaody, 2012.Sep.04
+void MvsViewer::addColorPatches() {
 	const map<int, Patch> &patches = mvs->getPatches();
 	map<int, Patch>::const_iterator it;
 

@@ -62,6 +62,18 @@ void runViewer(MVS &mvs, const char *fileName) {
 	viewer->open();
 }
 
+// added by Chaody, 2012.Sep.04
+void runColorViewer(MVS &mvs, const char *fileName) {
+	mvs.loadMVSC(fileName); // added by Chaody, 2012.Sep.04
+
+	// override config
+	FileLoader::loadConfig(CONFIG_FILE_NAME, config);
+	mvs.setConfig(config);
+
+	viewer = new MvsViewer(mvs, true, true, false, true); // add one more parameter: color
+	viewer->open();
+}
+
 void runAnimate(MVS &mvs, const char *fileName) {
 	mvs.loadMVS(fileName);
 
@@ -96,7 +108,7 @@ void runReconstruct(MVS &mvs, const char *fileName) {
 
 	// get seed point if no initial matching
 	if ( mvs.getPatches().empty() ) {
-		FeatureManager::setSeedPatches(mvs.getCameras(), 3.0, &mvs);
+		FeatureManager::setSeedPatches(mvs.getCameras(), 0.5, &mvs);
 		if ( mvs.getPatches().empty() ) {
 			printf("try less minCamNum\n");
 		}
@@ -106,8 +118,10 @@ void runReconstruct(MVS &mvs, const char *fileName) {
 	clock_t start_t, end_t;
 	start_t = clock();
 	mvs.writeMVS("init.mvs"); // from seed traingulation
+	mvs.writeMVSascii("init.txt"); 
 	mvs.refineSeedPatches();
 	mvs.writeMVS("seed.mvs"); // after optimization and runtime filtering
+	mvs.writeMVSascii("seed.txt"); 
 	mvs.expansionPatches();
 	mvs.writeMVS("exp.mvs");
 	mvs.writePLY("exp.ply");
@@ -171,6 +185,66 @@ void runFiltering(MVS &mvs, const char *fileName) {
 	//system("pause");
 }
 
+// added by Chaody, 2012.Sep.04
+void runColorFiltering(MVS &mvs, const char *fileName, char *fileNameGT, float fColorDistMin, float fColorDistMax) {
+	// get file extension
+	string fileNameStr(fileName);
+	size_t found = fileNameStr.find_last_of(".");
+	string fileExt = fileNameStr.substr(found+1);
+
+	// load file
+	if ( fileExt.compare("mvs") == 0 ) {
+		mvs.loadMVS(fileName);
+	} else {
+		printf("filtering only mvs file\n");
+		return;
+	}
+
+	// load config
+	FileLoader::loadConfig(CONFIG_FILE_NAME, config);
+	mvs.setConfig(config);
+
+	printf("patches: %d\n", mvs.getPatches().size());
+
+	clock_t start_t, end_t;
+	start_t = clock();
+
+
+	size_t foundslash = fileNameStr.find_last_of("/\\");
+	string filenameonly = fileNameStr.substr(foundslash+1);
+	filenameonly.erase (filenameonly.end()-4, filenameonly.end());
+	filenameonly += "_color.mvsc";
+
+	// output current .mvs in distance color map comparing to ground truth
+	mvs.writeColorDistMVS(filenameonly.c_str(), fileNameGT, fColorDistMin, fColorDistMax);
+
+	// PMVS filtering
+	//mvs.cellFiltering();
+	////mvs.writeMVS("PMVS_filter1.mvs");
+	////mvs.writePLY("PMVS_filter1.ply");
+	//mvs.visibilityFiltering();
+	////mvs.writeMVS("PMVS_filter2.mvs");
+	////mvs.writePLY("PMVS_filter2.ply");
+	//mvs.neighborCellFiltering(0.25);
+	//mvs.writeMVS("PMVS_filter3.mvs");
+	//mvs.writePLY("PMVS_filter3.ply");
+	//mvs.writeDeletedPatchMVS("PMVS_filter_deleted.mvs");
+	//mvs.writeDeletedPatchPLY("PMVS_filter_deleted.ply");
+	//mvs.clearDeletedPatches();
+	// PCMVS filtering
+	//mvs.neighborPatchFiltering(0.25);
+	//mvs.writeMVS("PCMVS_filter.mvs");
+	//mvs.writePLY("PCMVS_filter.ply");
+	//mvs.writeDeletedPatchMVS("PCMVS_filter_deleted.mvs");
+	//mvs.writeDeletedPatchPLY("PCMVS_filter_deleted.ply");
+	end_t = clock();
+			
+	double totime = (double)(end_t - start_t) / CLOCKS_PER_SEC;
+	printf("time1\t%f\n", totime);
+	LogManager::log("total time: %f", totime);
+	//system("pause");
+}
+
 int main(int argc, char* argv[])
 {
 	// MVS configures
@@ -189,6 +263,10 @@ int main(int argc, char* argv[])
 			runReconstruct(mvs, argv[2]);
 		} else if ( strcmp(argv[1], "-f") == 0 ) {  // filtering
 			runFiltering(mvs, argv[2]);
+		} else if ( strcmp(argv[1], "-c") == 0 ) {  // filtering with color distance output
+			runColorFiltering(mvs, argv[2], argv[3], atof(argv[4]), atof(argv[5]));
+		} else if ( strcmp(argv[1], "-vc") == 0 ) {  // filtering with color distance output
+			runColorViewer(mvs, argv[2]);
 		}
 	} else {
 		char *msg = "-v [filename.mvs]: viewer\n-a [filename.mvs]: animate\n-r {[filename.mvs], [filename.nvm], [filename.nvm2]}: reconstruction\n-f [filename.mvs]";

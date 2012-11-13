@@ -67,16 +67,16 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\opencv\build\include\;C:\opencv\build\include\opencv;C:\opencv\build\include\opencv2;C:\Program Files\PCL 1.6.0\include\pcl-1.6;C:\Program Files\PCL 1.6.0\3rdParty\VTK\include\vtk-5.8;C:\Program Files\PCL 1.6.0\3rdParty\Eigen\include;C:\Program Files\PCL 1.6.0\3rdParty\Boost\include;C:\Program Files\PCL 1.6.0\3rdParty\FLANN\include;C:\Program Files\PCL 1.6.0\3rdParty\Qhull\include;C:/Program Files/OpenNI/Include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\opencv\build\x64\vc10\lib;C:\Program Files\PCL 1.6.0\lib;C:\Program Files\PCL 1.6.0\3rdParty\Boost\lib;C:\Program Files\PCL 1.6.0\3rdParty\VTK\lib\vtk-5.8;C:\Program Files\PCL 1.6.0\3rdParty\FLANN\lib;C:\Program Files\PCL 1.6.0\3rdParty\Qhull\lib;C:/Program Files/OpenNI/Lib/;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\NCTU_PhD\OpenCV2.4\build\include;D:\NCTU_PhD\OpenCV2.4\build\include\opencv;D:\NCTU_PhD\OpenCV2.4\build\include\opencv2;D:\NCTU_PhD\PCL 1.6.0\include\pcl-1.6;D:\NCTU_PhD\PCL 1.6.0\3rdParty\VTK\include\vtk-5.8;D:\NCTU_PhD\PCL 1.6.0\3rdParty\Eigen\include;D:\NCTU_PhD\PCL 1.6.0\3rdParty\Boost\include;D:\NCTU_PhD\PCL 1.6.0\3rdParty\FLANN\include;D:\NCTU_PhD\PCL 1.6.0\3rdParty\Qhull\include;D:\NCTU_PhD\OpenNI/Include;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\NCTU_PhD\OpenCV2.4\build\x64\vc10\lib;D:\NCTU_PhD\PCL 1.6.0\lib;D:\NCTU_PhD\PCL 1.6.0\3rdParty\Boost\lib;D:\NCTU_PhD\PCL 1.6.0\3rdParty\VTK\lib\vtk-5.8;D:\NCTU_PhD\PCL 1.6.0\3rdParty\FLANN\lib;D:\NCTU_PhD\PCL 1.6.0\3rdParty\Qhull\lib;D:\NCTU_PhD\OpenNI\Lib\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\opencv\build\include\;C:\opencv\build\include\opencv;C:\opencv\build\include\opencv2;C:\Program Files\PCL 1.6.0\include\pcl-1.6;C:\Program Files\PCL 1.6.0\3rdParty\VTK\include\vtk-5.8;C:\Program Files\PCL 1.6.0\3rdParty\Eigen\include;C:\Program Files\PCL 1.6.0\3rdParty\Boost\include;C:\Program Files\PCL 1.6.0\3rdParty\FLANN\include;C:\Program Files\PCL 1.6.0\3rdParty\Qhull\include;C:/Program Files/OpenNI/Include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\opencv\build\x64\vc10\lib;C:\Program Files\PCL 1.6.0\lib;C:\Program Files\PCL 1.6.0\3rdParty\Boost\lib;C:\Program Files\PCL 1.6.0\3rdParty\VTK\lib\vtk-5.8;C:\Program Files\PCL 1.6.0\3rdParty\FLANN\lib;C:\Program Files\PCL 1.6.0\3rdParty\Qhull\lib;C:/Program Files/OpenNI/Lib/;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\NCTU_PhD\OpenCV2.4\build\include;D:\NCTU_PhD\OpenCV2.4\build\include\opencv;D:\NCTU_PhD\OpenCV2.4\build\include\opencv2;D:\NCTU_PhD\PCL 1.6.0\include\pcl-1.6;D:\NCTU_PhD\PCL 1.6.0\3rdParty\VTK\include\vtk-5.8;D:\NCTU_PhD\PCL 1.6.0\3rdParty\Eigen\include;D:\NCTU_PhD\PCL 1.6.0\3rdParty\Boost\include;D:\NCTU_PhD\PCL 1.6.0\3rdParty\FLANN\include;D:\NCTU_PhD\PCL 1.6.0\3rdParty\Qhull\include;D:\NCTU_PhD\OpenNI/Include;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\NCTU_PhD\OpenCV2.4\build\x64\vc10\lib;D:\NCTU_PhD\PCL 1.6.0\lib;D:\NCTU_PhD\PCL 1.6.0\3rdParty\Boost\lib;D:\NCTU_PhD\PCL 1.6.0\3rdParty\VTK\lib\vtk-5.8;D:\NCTU_PhD\PCL 1.6.0\3rdParty\FLANN\lib;D:\NCTU_PhD\PCL 1.6.0\3rdParty\Qhull\lib;D:\NCTU_PhD\OpenNI\Lib\;$(LibraryPath)</LibraryPath>
     <SourcePath>$(SourcePath)</SourcePath>
     <TargetName>$(ProjectName)</TargetName>
   </PropertyGroup>
@@ -101,6 +101,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <OpenMPSupport>true</OpenMPSupport>
+      <AdditionalOptions>-static-libgcc -static-libstdc++ %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -139,6 +140,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OpenMPSupport>true</OpenMPSupport>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -155,7 +157,11 @@
   <ItemGroup>
     <ClInclude Include="io\fileloader.h" />
     <ClInclude Include="io\filewriter.h" />
+    <ClInclude Include="io\list.h" />
     <ClInclude Include="io\logmanager.h" />
+    <ClInclude Include="io\objLoader.h" />
+    <ClInclude Include="io\obj_parser.h" />
+    <ClInclude Include="io\string_extra.h" />
     <ClInclude Include="mvs\abstractpatch.h" />
     <ClInclude Include="mvs\camera.h" />
     <ClInclude Include="mvs\cellmap.h" />
@@ -172,7 +178,11 @@
   <ItemGroup>
     <ClCompile Include="io\fileloader.cpp" />
     <ClCompile Include="io\filewriter.cpp" />
+    <ClCompile Include="io\list.cpp" />
     <ClCompile Include="io\logmanager.cpp" />
+    <ClCompile Include="io\objLoader.cpp" />
+    <ClCompile Include="io\obj_parser.cpp" />
+    <ClCompile Include="io\string_extra.cpp" />
     <ClCompile Include="mvs\abstractpatch.cpp" />
     <ClCompile Include="mvs\camera.cpp" />
     <ClCompile Include="mvs\cellmap.cpp" />

@@ -175,6 +175,21 @@ void MVS::writeMVS(const char* fileName) const {
 	FileWriter::writeMVS(fileName, *this);
 }
 
+// added by Chaody, 2012.Sep.13
+void MVS::writeMVSascii(const char* fileName) const {
+	FileWriter::writeMVSascii(fileName, *this);
+}
+
+// added by Chaody, 2012.Sep.04
+void MVS::loadMVSC(const char* fileName) {
+	FileLoader::loadMVSC(fileName, *this);
+}
+
+// added by Chaody, 2012.Sep.04
+void MVS::writeColorDistMVS(const char* fileName, char* fileNameGT, float fColorDistMin, float fColorDistMax) const {
+	FileWriter::writeColorDistMVS(fileName, fileNameGT, fColorDistMin, fColorDistMax, *this);
+}
+
 void MVS::writePLY(const char *fileName) const {
 	FileWriter::writePLY(fileName, *this);
 }

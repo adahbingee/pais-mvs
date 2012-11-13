@@ -45,6 +45,8 @@ namespace PAIS {
 		Patch(const Vec3d &center, const Patch &parent, const int id = -1);
 		// mvs loader constructor
 		Patch(const Vec3d &center, const Vec2d &normalS, const vector<int> &camIdx, const double fitness, const double correlation, const int id = -1);
+		// mvs loader constructor, added by Chaody, 2012.Sep.04
+		Patch(const Vec3d &center, const Vec2d &normalS, const vector<int> &camIdx, const double fitness, const double correlation, const Vec3b &color, const int id = -1);
 		~Patch(void);
 
 		void reCentering();
