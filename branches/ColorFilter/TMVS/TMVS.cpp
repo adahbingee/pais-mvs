@@ -135,6 +135,54 @@ void runReconstruct(MVS &mvs, const char *fileName) {
 	//system("pause");
 }
 
+// Run 2nd reconstruction
+void runSecReconstruct(MVS &mvs, const char *fileName) {
+	// get file extension
+	string fileNameStr(fileName);
+	size_t found = fileNameStr.find_last_of(".");
+	string fileExt = fileNameStr.substr(found+1);
+
+	// load file
+	if ( fileExt.compare("nvm") == 0 ) {
+		mvs.loadNVM(fileName);
+	} else if ( fileExt.compare("nvm2") == 0 ) {
+		mvs.loadNVM2(fileName);
+	} else if ( fileExt.compare("mvs") == 0 ) {
+		mvs.loadMVS(fileName);
+	}
+
+	// load config
+	FileLoader::loadConfig(CONFIG_FILE_NAME, config);
+	mvs.setConfig(config);
+
+	printf("patches: %d\n", mvs.getPatches().size());
+
+	// get seed point if no initial matching
+	if ( mvs.getPatches().empty() ) {
+		printf("Error: patch is empty. \n");
+	}
+
+	// run reconstruction
+	clock_t start_t, end_t;
+	start_t = clock();
+	//mvs.writeMVS("init.mvs"); // from seed traingulation
+	//mvs.writeMVSascii("init.txt"); 
+	//mvs.refineSeedPatches();
+	//mvs.writeMVS("seed.mvs"); // after optimization and runtime filtering
+	//mvs.writeMVSascii("seed.txt"); 
+	mvs.expansionPatches();
+	mvs.writeMVS("exp_2.mvs");
+	mvs.writePLY("exp_2.ply");
+	mvs.writePSR("exp_2.psr");
+	end_t = clock();
+
+	// show runtime
+	double totime = (double)(end_t - start_t) / CLOCKS_PER_SEC;
+	printf("time1\t%f\n", totime);
+	LogManager::log("total time: %f", totime);
+	//system("pause");
+}
+
 void runFiltering(MVS &mvs, const char *fileName) {
 	// get file extension
 	string fileNameStr(fileName);
@@ -261,6 +309,8 @@ int main(int argc, char* argv[])
 			runAnimate(mvs, argv[2]);
 		} else if ( strcmp(argv[1], "-r") == 0 ) {  // reconstruction
 			runReconstruct(mvs, argv[2]);
+		} else if ( strcmp(argv[1], "-s") == 0 ) {  // second reconstruction
+			runSecReconstruct(mvs, argv[2]);
 		} else if ( strcmp(argv[1], "-f") == 0 ) {  // filtering
 			runFiltering(mvs, argv[2]);
 		} else if ( strcmp(argv[1], "-c") == 0 ) {  // filtering with color distance output

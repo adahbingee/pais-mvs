@@ -1145,7 +1145,7 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 				weight *= (*it);
 			}
 			if ( mvs.isAdaptiveDifferenceEnable() ) { // adaptive difference weighting
-				weight *= exp(-avgSad*avgSad/diffWeighting);
+				weight *= exp(avgSad*avgSad/diffWeighting);
 			}
 			if ( mvs.isAdaptiveGradientEnable() ) {   // adaptive gradient maginitude weighting
 				weight *= exp( -1.0 / (edgeImg.at<double>(cvRound(y), cvRound(x))*gradientWeighting) );

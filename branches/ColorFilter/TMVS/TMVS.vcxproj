@@ -72,6 +72,10 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>D:\NCTU_PhD\OpenCV2.4\build\include;D:\NCTU_PhD\OpenCV2.4\build\include\opencv;D:\NCTU_PhD\OpenCV2.4\build\include\opencv2;D:\NCTU_PhD\PCL 1.6.0\include\pcl-1.6;D:\NCTU_PhD\PCL 1.6.0\3rdParty\VTK\include\vtk-5.8;D:\NCTU_PhD\PCL 1.6.0\3rdParty\Eigen\include;D:\NCTU_PhD\PCL 1.6.0\3rdParty\Boost\include;D:\NCTU_PhD\PCL 1.6.0\3rdParty\FLANN\include;D:\NCTU_PhD\PCL 1.6.0\3rdParty\Qhull\include;D:\NCTU_PhD\OpenNI/Include;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\NCTU_PhD\OpenCV2.4\build\x64\vc10\lib;D:\NCTU_PhD\PCL 1.6.0\lib;D:\NCTU_PhD\PCL 1.6.0\3rdParty\Boost\lib;D:\NCTU_PhD\PCL 1.6.0\3rdParty\VTK\lib\vtk-5.8;D:\NCTU_PhD\PCL 1.6.0\3rdParty\FLANN\lib;D:\NCTU_PhD\PCL 1.6.0\3rdParty\Qhull\lib;D:\NCTU_PhD\OpenNI\Lib\;$(LibraryPath)</LibraryPath>
+    <ExecutablePath>$(VCInstallDir)bin\x86_amd64;$(VCInstallDir)bin;$(WindowsSdkDir)bin\NETFX 4.0 Tools;$(WindowsSdkDir)bin;$(VSInstallDir)Common7\Tools\bin;$(VSInstallDir)Common7\tools;$(VSInstallDir)Common7\ide;$(ProgramFiles)\HTML Help Workshop;$(FrameworkSDKDir)\bin;$(FrameworkSDKDir)\lib\win64;$(MSBuildToolsPath32);$(FxCopDir);$(PATH);</ExecutablePath>
+    <ReferencePath>$(VCInstallDir)atlmfc\lib\amd64;$(VCInstallDir)lib\amd64</ReferencePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
