@@ -185,6 +185,8 @@ namespace PAIS {
 		// write current state to MVS file (including cameras, patches, config)
 		void writeMVS(const char *fileName) const;
 		void writeMVSascii(const char *fileName) const; // added by Chaody, 2012.Sep.13
+		// for showing 2D projected position with camera index, added by Chaody, 2012.Nov.27
+		void writeCamProjection(const char* fileName) const; 
 		// write current state to MVS file with distance info. in color map (including cameras, patches, config), by Chaody, 2012.Sep.04
 		void writeColorDistMVS(const char *fileName, char *fileNameGT, float fColorDistMin, float fColorDistMax) const;
 		// write current state to PLY file (including patch vertex and normal)

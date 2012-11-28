@@ -185,6 +185,11 @@ void MVS::loadMVSC(const char* fileName) {
 	FileLoader::loadMVSC(fileName, *this);
 }
 
+// added by Chaody, 2012.Nov.27
+void MVS::writeCamProjection(const char* fileName) const {
+	FileWriter::writeCamProjection(fileName, *this);
+}
+
 // added by Chaody, 2012.Sep.04
 void MVS::writeColorDistMVS(const char* fileName, char* fileNameGT, float fColorDistMin, float fColorDistMax) const {
 	FileWriter::writeColorDistMVS(fileName, fileNameGT, fColorDistMin, fColorDistMax, *this);
