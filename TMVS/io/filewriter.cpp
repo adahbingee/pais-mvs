@@ -283,6 +283,42 @@ void FileWriter::writeColorDistPatch(fstream &file, objLoader *objGT, const Patc
 
 }
 
+// added by Chaody, 2012.Nov.27
+void FileWriter::writeCamProjection(const char *fileName, const MVS &mvs) {
+	fstream file;
+	file.open(fileName, fstream::out);
+	if ( !file.is_open() ) {
+		printf("Can't write file %s\n", fileName);
+	}
+
+	// write patches
+	const map<int, Patch> &patches = mvs.getPatches();
+	const int patchNum = (int) patches.size();
+	map<int, Patch>::const_iterator it;
+	
+	printf("\n"); 
+	int i = 0;
+
+	for (it = patches.begin(); it != patches.end(); ++it) {
+		Patch pth = it->second;
+		const vector<Camera> &cameras = mvs.getCameras();
+		const vector<int> &camIdx = pth.getCameraIndices();
+		const int camNum = (int) camIdx.size();
+		Vec2d pt;
+		for (int i = 0; i < camNum; ++i) {
+			const Camera &cam = cameras[camIdx[i]];
+			const Vec3d &p   = pth.getCenter();
+			cam.project(p, pt);
+			file << camIdx[i] << " " << pt[1] << " " << pt[0] << endl;
+		}
+		printf("\rprocessing ...... %d / %d", i++, patchNum);
+	}
+	printf("End of writing.\n");
+
+	file.close();
+}
+
+
 // compare with ground truth model, output in color map
 // added by Chaody, 2012.Sep.04
 void FileWriter::writeColorDistMVS(const char *fileName, char *fileNameGT, float fColorDistMin, float fColorDistMax, const MVS &mvs) {

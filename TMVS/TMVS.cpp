@@ -233,6 +233,46 @@ void runFiltering(MVS &mvs, const char *fileName) {
 	//system("pause");
 }
 
+// added by Chaody, 2012.Nov.27
+// for showing 2D projected position with camera index 
+void runCamProjection(MVS &mvs, const char *fileName) {
+	// get file extension
+	string fileNameStr(fileName);
+	size_t found = fileNameStr.find_last_of(".");
+	string fileExt = fileNameStr.substr(found+1);
+
+	// load file
+	if ( fileExt.compare("mvs") == 0 ) {
+		mvs.loadMVS(fileName);
+	} else {
+		printf("filtering only mvs file\n");
+		return;
+	}
+
+	// load config
+	FileLoader::loadConfig(CONFIG_FILE_NAME, config);
+	mvs.setConfig(config);
+
+	printf("patches: %d\n", mvs.getPatches().size());
+
+	clock_t start_t, end_t;
+	start_t = clock();
+
+	size_t foundslash = fileNameStr.find_last_of("/\\");
+	string filenameonly = fileNameStr.substr(foundslash+1);
+	filenameonly.erase (filenameonly.end()-4, filenameonly.end());
+	filenameonly += "_CamProj.txt";
+
+	// output current .mvs in distance color map comparing to ground truth
+	mvs.writeCamProjection(filenameonly.c_str());
+
+	end_t = clock();
+			
+	double totime = (double)(end_t - start_t) / CLOCKS_PER_SEC;
+	printf("time1\t%f\n", totime);
+	//system("pause");
+}
+
 // added by Chaody, 2012.Sep.04
 void runColorFiltering(MVS &mvs, const char *fileName, char *fileNameGT, float fColorDistMin, float fColorDistMax) {
 	// get file extension
@@ -313,6 +353,8 @@ int main(int argc, char* argv[])
 			runSecReconstruct(mvs, argv[2]);
 		} else if ( strcmp(argv[1], "-f") == 0 ) {  // filtering
 			runFiltering(mvs, argv[2]);
+		} else if ( strcmp(argv[1], "-p") == 0 ) {  // 用來輸出投影到各view的點座標 with camIdx, 2012.11.27
+			runCamProjection(mvs, argv[2]);
 		} else if ( strcmp(argv[1], "-c") == 0 ) {  // filtering with color distance output
 			runColorFiltering(mvs, argv[2], argv[3], atof(argv[4]), atof(argv[5]));
 		} else if ( strcmp(argv[1], "-vc") == 0 ) {  // filtering with color distance output
