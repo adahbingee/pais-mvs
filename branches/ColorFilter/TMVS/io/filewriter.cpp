@@ -284,7 +284,7 @@ void FileWriter::writeColorDistPatch(fstream &file, objLoader *objGT, const Patc
 }
 
 // added by Chaody, 2012.Nov.27
-void FileWriter::writeCamProjection(const char *fileName, const MVS &mvs) {
+void FileWriter::writeCamProjection(const char *fileName, char *fileNameGT, const MVS &mvs) {
 	fstream file;
 	file.open(fileName, fstream::out);
 	if ( !file.is_open() ) {
@@ -298,21 +298,68 @@ void FileWriter::writeCamProjection(const char *fileName, const MVS &mvs) {
 	
 	printf("\n"); 
 	int i = 0;
+		
+	objLoader *objGT = new objLoader(); // ground truth model
+	objGT->load(fileNameGT);
 
 	for (it = patches.begin(); it != patches.end(); ++it) {
 		Patch pth = it->second;
 		const vector<Camera> &cameras = mvs.getCameras();
 		const vector<int> &camIdx = pth.getCameraIndices();
-		const int camNum = (int) camIdx.size();
 		Vec2d pt;
+			
+		//////////////////////////////////////////
+		// 計算與 ground truth model 的距離
+		obj_vector objPatchCenter;
+		Vec3d vPatchCenter = pth.getCenter();
+		objPatchCenter.e[0] = vPatchCenter[0];
+		objPatchCenter.e[1] = vPatchCenter[1];
+		objPatchCenter.e[2] = vPatchCenter[2];
+
+		float fMinDist = FLT_MAX ;
+		int j;
+
+		// for all faces in GT model
+		#pragma omp parallel for
+		for (j=0; j<objGT->faceCount; j++) {
+			// compute distance
+			obj_face *o = objGT->faceList[j];
+	
+			float fDist = DistToPlane(&objPatchCenter, objGT->vertexList[ o->vertex_index[0]], objGT->vertexList[ o->vertex_index[1]], objGT->vertexList[ o->vertex_index[2]]);
+		
+			// store min. dist
+			if (fDist < fMinDist)
+				fMinDist = fDist;
+		}
+		//////////////////////////////////////////
+
+		// 第一種呈現方式，只依 .mvs 中 patch 的 visible camera 來輸出
+		const int camNum = (int) camIdx.size();
+
 		for (int i = 0; i < camNum; ++i) {
 			const Camera &cam = cameras[camIdx[i]];
 			const Vec3d &p   = pth.getCenter();
 			cam.project(p, pt);
-			file << camIdx[i] << " " << pt[1] << " " << pt[0] << endl;
+			file << camIdx[i] << " " << pt[1] << " " << pt[0] << " " << fMinDist << endl;
 		}
+
+		// 第二種呈現方式，從 .mvs 中的 patch 再去重找會看到得此 patch 的 camera 來輸出
+		//for (int i = 0; i < cameras.size(); ++i) {
+		//	const Camera &cam = cameras[i];
+		//	Vec3d normal=pth.getNormal();
+
+		//	// if patch 與 camera 之間的夾角 < 90 度，就準備輸出
+		//	if (normal.ddot(-cam.getOpticalNormal()) > 0) {
+		//		// 計算投影位置
+		//		const Vec3d &p   = pth.getCenter();
+		//		cam.project(p, pt);
+		//		file << i << " " << pt[1] << " " << pt[0] << " " << fMinDist << endl;
+		//	}
+		//}
+
 		printf("\rprocessing ...... %d / %d", i++, patchNum);
 	}
+
 	printf("End of writing.\n");
 
 	file.close();

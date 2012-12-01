@@ -29,7 +29,7 @@ namespace PAIS {
 	public:
 		static void writeMVS(const char *fileName, const MVS &mvs);
 		static void writeMVSascii(const char *fileName, const MVS &mvs); // added by Chaody, 2012.Sep.13
-		static void writeCamProjection(const char *fileName, const MVS &mvs); // added by Chaody, 2012.Nov.27
+		static void writeCamProjection(const char *fileName, char *fileNameGT, const MVS &mvs); // modified by Chaody, 2012.Dec.01
 		static void writeColorDistMVS(const char *fileName, char *fileNameGT, float fColorDistMin, float fColorDistMax, const MVS &mvs); // added by Chaody, 2012.Sep.04
 		static void writePLY(const char *fileName, const MVS &mvs);
 		static void wirtePSR(const char *fileName, const MVS &mvs);
