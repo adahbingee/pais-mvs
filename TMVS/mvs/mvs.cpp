@@ -185,9 +185,9 @@ void MVS::loadMVSC(const char* fileName) {
 	FileLoader::loadMVSC(fileName, *this);
 }
 
-// added by Chaody, 2012.Nov.27
-void MVS::writeCamProjection(const char* fileName) const {
-	FileWriter::writeCamProjection(fileName, *this);
+// modified by Chaody, 2012.Dec.01
+void MVS::writeCamProjection(const char* fileName, char* fileNameGT) const {
+	FileWriter::writeCamProjection(fileName, fileNameGT, *this);
 }
 
 // added by Chaody, 2012.Sep.04

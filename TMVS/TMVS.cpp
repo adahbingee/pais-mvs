@@ -235,7 +235,7 @@ void runFiltering(MVS &mvs, const char *fileName) {
 
 // added by Chaody, 2012.Nov.27
 // for showing 2D projected position with camera index 
-void runCamProjection(MVS &mvs, const char *fileName) {
+void runCamProjection(MVS &mvs, const char *fileName, char *fileNameGT) {
 	// get file extension
 	string fileNameStr(fileName);
 	size_t found = fileNameStr.find_last_of(".");
@@ -264,7 +264,7 @@ void runCamProjection(MVS &mvs, const char *fileName) {
 	filenameonly += "_CamProj.txt";
 
 	// output current .mvs in distance color map comparing to ground truth
-	mvs.writeCamProjection(filenameonly.c_str());
+	mvs.writeCamProjection(filenameonly.c_str(), fileNameGT);
 
 	end_t = clock();
 			
@@ -354,10 +354,10 @@ int main(int argc, char* argv[])
 		} else if ( strcmp(argv[1], "-f") == 0 ) {  // filtering
 			runFiltering(mvs, argv[2]);
 		} else if ( strcmp(argv[1], "-p") == 0 ) {  // 用來輸出投影到各view的點座標 with camIdx, 2012.11.27
-			runCamProjection(mvs, argv[2]);
+			runCamProjection(mvs, argv[2], argv[3]);
 		} else if ( strcmp(argv[1], "-c") == 0 ) {  // filtering with color distance output
 			runColorFiltering(mvs, argv[2], argv[3], atof(argv[4]), atof(argv[5]));
-		} else if ( strcmp(argv[1], "-vc") == 0 ) {  // filtering with color distance output
+		} else if ( strcmp(argv[1], "-vc") == 0 ) {  // viewer for viewing the color distance output
 			runColorViewer(mvs, argv[2]);
 		}
 	} else {
