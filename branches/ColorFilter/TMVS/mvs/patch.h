@@ -61,6 +61,8 @@ namespace PAIS {
 		void showRefinedResult() const;
 		// show SAD error image
 		void showError() const;
+		// show fitness error image (plus and minus weighted function), 2013.01.19 by Chaody
+		void showFitness() const;
 		// is dropped
 		bool isDropped() const { return drop; }
 		// zc asked

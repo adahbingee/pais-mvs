@@ -541,7 +541,8 @@ void MvsViewer::printPatchInformation(const Patch &pth) const {
 	}
 
 	pth.showRefinedResult();
-	pth.showError();
+	//pth.showError();
+	pth.showFitness();
 }
 
 double MvsViewer::getNormalLength() const {
