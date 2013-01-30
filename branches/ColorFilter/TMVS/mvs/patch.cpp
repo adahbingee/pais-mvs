@@ -193,6 +193,71 @@ void Patch::refine() {
 	setImagePoint();
 }
 
+// refine with full optimization output, added by Chaody, 2013.01.28
+void Patch::refineFullOutput() {
+	const MVS &mvs = MVS::getInstance();
+
+	// skip few cameras
+	if (getCameraNumber() < mvs.minCamNum) {
+		fitness  = DBL_MAX;
+		priority = DBL_MAX;
+		drop = true;
+		return;
+	}
+
+	setReferenceCameraIndex();
+	setDepthAndRay();
+	setDepthRange();
+	setLOD();
+
+	if (drop) return;
+
+	int beforeRefCamIdx = refCamIdx;
+	int afterRefCamIdx  = -1;
+	int beforeCamNum    = getCameraNumber();
+	int afterCamNum     = -1;
+	int count           = 0; // optimization counter
+	int totalCamNum     = beforeCamNum;
+
+	// re-optimization when reference camera index or visible cameras are changed
+	while ( (beforeRefCamIdx != afterRefCamIdx || beforeCamNum != afterCamNum) && count++ <= totalCamNum ) {
+
+		if (getCameraNumber() < mvs.minCamNum) {
+			fitness  = DBL_MAX;
+			priority = DBL_MAX;
+			drop = true;
+			return;
+		}
+
+		beforeRefCamIdx = refCamIdx;
+		beforeCamNum    = getCameraNumber();
+
+		// do pso optimization (update center and normal)
+		psoOptimizationFull();
+
+		// skip fail optimization
+		if (fitness > mvs.maxFitness) {
+			drop = true;
+			return;
+		}
+
+		// update information
+		removeInvisibleCamera();
+		setReferenceCameraIndex();
+		setDepthAndRay();
+		setDepthRange();
+		setLOD();
+
+		if (type == TYPE_EXPAND) break;
+
+		afterRefCamIdx = refCamIdx;
+		afterCamNum    = getCameraNumber();
+	}
+
+	setPriority();
+	setImagePoint();
+}
+
 /* process */
 
 void Patch::psoOptimization() {
@@ -222,6 +287,69 @@ void Patch::psoOptimization() {
 	solver->setParticle(init);
     solver->run(true);
 	end_t = clock();
+
+	// set refined patch information
+	fitness = solver->getGbestFitness();
+    const double *gBest = solver->getGbest();
+    setNormal(Vec2d(gBest[0], gBest[1]));
+    depth  = gBest[2];
+	center = ray * depth + mvs.getCamera(refCamIdx).getCenter();
+
+	if (type != TYPE_SEED)
+		LogManager::log("patch it\t%d\tsec\t%f", solver->getIteration(), (double)(end_t - start_t) / CLOCKS_PER_SEC);
+
+	delete solver;
+}
+
+// for full output, added by Chaody, 2013.01.28
+void Patch::psoOptimizationFull() {
+	int iCnt;
+	const MVS &mvs = MVS::getInstance();
+
+	// PSO parameter range (theta, phi, depth)
+    double rangeL [] = {0.0 , normalS[1] - M_PI/2.0, depthRange[0]};
+    double rangeU [] = {M_PI, normalS[1] + M_PI/2.0, depthRange[1]};
+
+    // initial guess particle
+    //double init   [] = {normalS[0], normalS[1], depth};
+	double init   [] = {M_PI/2.0, M_PI/2.0, (depthRange[0]+depthRange[1])/2};
+	
+	PsoSolver *solver = NULL;
+	//if (type == TYPE_SEED) {
+		solver = new PsoSolver(3, rangeL, rangeU, PAIS::getFitness, this, mvs.maxIteration*2, mvs.particleNum*2 );
+	//} else {
+	//	// reduce normal search range for expansion patch
+	//	rangeL[0] = max(  0.0, normalS[0] - M_PI/mvs.reduceNormalRange);
+	//	rangeU[0] = min( M_PI, normalS[0] + M_PI/mvs.reduceNormalRange);
+	//	rangeL[1] = normalS[1] - M_PI/mvs.reduceNormalRange;
+	//	rangeU[1] = normalS[1] + M_PI/mvs.reduceNormalRange;
+	//	solver = new PsoSolver(3, rangeL, rangeU, PAIS::getFitness, this, mvs.maxIteration, mvs.particleNum);
+	//}
+
+
+	clock_t start_t, end_t;
+	start_t = clock();
+	solver->setParticle(init);
+    solver->run(true);
+	end_t = clock();
+
+	// set FULL refined patch information
+	const double *iteNormal1 = solver->getNormal1Iteration();
+	const double *iteNormal2 = solver->getNormal2Iteration();
+	const double *iteDepth = solver->getDepthIteration();
+	const double *iteFitness = solver->getFitnessIteration();
+
+	for (iCnt=0; iCnt<mvs.maxIteration; iCnt++)
+	{
+		fitness = iteFitness[iCnt];
+		setNormal(Vec2d(iteNormal1[iCnt], iteNormal2[iCnt]));
+		depth  = iteDepth[iCnt];
+		center = ray * depth + mvs.getCamera(refCamIdx).getCenter();
+		LogManager::log("iteration#%02d: fitness:%f\tnormal:(%f, %f, %f)\t depth:%f", iCnt, fitness, normal[0], normal[1], normal[2], iteDepth[iCnt]);
+		
+		if (depth != 0.0)
+			showErrorWithIterationID(iCnt, iteNormal1[iCnt], iteNormal2[iCnt], depth);
+	}
 
 	// set refined patch information
 	fitness = solver->getGbestFitness();
@@ -921,10 +1049,113 @@ void Patch::showError() const {
 	minMaxLoc(error, &minE, &maxE);
 	error = (error - minE) / (maxE - minE);
 	char title[30];
-	sprintf(title, "error%d.png", getId());
+	sprintf(title, "error%06d.png", getId());
 	resize(error, error, Size(200, 200), 0, 0, CV_INTER_NN);
 	imshow(title, error);
 	imwrite(title, error*255);
+	cvMoveWindow(title, 0, 0);
+}
+
+void Patch::showErrorWithIterationID(const int iIteID, const float fNormalTmp1, const float fNormalTmp2, const float fDepthTmp ) const {
+	if (refCamIdx < 0) {
+		printf("showError: reference camera not set\n");
+		return;
+	}
+
+	const MVS &mvs = MVS::getInstance();
+	const vector<Camera> &cameras = mvs.getCameras();
+	const int patchRadius = mvs.getPatchRadius();
+	const int patchSize   = mvs.getPatchSize();
+
+	// camera parameters
+	const Camera &refCam  = mvs.getCamera(refCamIdx);
+	const int camNum = getCameraNumber();
+
+	// Homographies to visible camera
+	vector<Mat_<double> > H(camNum);
+	//getHomographies(center, normal, H);
+
+	///////////////////////////////////////////////////
+	// modified by Chaody
+	Vec3d normalTmp;
+	Vec3d centerTmp;
+	Utility::spherical2Normal(Vec2d(fNormalTmp1, fNormalTmp2), normalTmp);
+	centerTmp = ray * fDepthTmp + mvs.getCamera(refCamIdx).getCenter();
+	getHomographies(centerTmp, normalTmp, H);
+	//LogManager::log("centerTmp: %f %f %f\n", centerTmp[0], centerTmp[1], centerTmp[2]);
+	///////////////////////////////////////////////////
+
+	Vec2d pt;
+	refCam.project(center, pt, LOD);
+
+	// warping (get pixel-wised variance)
+	double mean, avgSad;             // pixel-wised mean, avgSad
+	double w, ix, iy;                // position on target image
+	int px[4];                       // neighbor x
+	int py[4];                       // neighbor y
+	double *c = new double [camNum]; // bilinear color
+	Mat_<double> error(patchSize, patchSize);
+
+	for (double x = pt[0]-patchRadius, ex = 0; x <= pt[0]+patchRadius; x++, ex++) {
+		for (double y = pt[1]-patchRadius, ey = 0; y <= pt[1]+patchRadius; y++, ey++) {
+			// clear
+			mean = 0;
+			avgSad = 0;
+
+			for (int i = 0; i < camNum; i++) {
+				const Mat_<uchar> &img = cameras[camIdx[i]].getPyramidImage(LOD);
+
+				// homography projection
+				w  =   H[i].at<double>(2, 0) * x + H[i].at<double>(2, 1) * y + H[i].at<double>(2, 2);
+				ix = ( H[i].at<double>(0, 0) * x + H[i].at<double>(0, 1) * y + H[i].at<double>(0, 2) ) / w;
+				iy = ( H[i].at<double>(1, 0) * x + H[i].at<double>(1, 1) * y + H[i].at<double>(1, 2) ) / w;
+				
+				// interpolation neighbor points
+				px[0] = (int) ix;
+				py[0] = (int) iy;
+				px[1] = px[0] + 1;
+				py[1] = py[0];
+				px[2] = px[0];
+				py[2] = py[0] + 1;
+				px[3] = px[0] + 1;
+				py[3] = py[0] + 1;
+
+				for (int j = 0; j < 4; ++j) {
+					if ( !cameras[camIdx[i]].inImage(px[j], py[j], LOD) ) {
+						LogManager::log("px[j]: %f, py[j]: %f, LOD:%d\n", px[j], py[j], LOD);
+						return;
+					}
+				}
+
+				c[i] = (double) img.at<uchar>(py[0], px[0])*(px[1]-ix)*(py[2]-iy) + 
+					   (double) img.at<uchar>(py[1], px[1])*(ix-px[0])*(py[3]-iy) + 
+					   (double) img.at<uchar>(py[2], px[2])*(iy-py[0])*(px[3]-ix) + 
+					   (double) img.at<uchar>(py[3], px[3])*(ix-px[2])*(iy-py[1]);
+
+				mean += c[i];
+			} // end of camera
+
+			mean /= camNum;
+
+			for (int i = 0; i < camNum; i++) {
+				avgSad += abs(c[i]-mean);
+			}
+			avgSad /= camNum;
+
+			error.at<double>(ey, ex) = avgSad;
+
+		} // end of warping y
+	} // end of warping x
+
+	double minE ,maxE;
+	minMaxLoc(error, &minE, &maxE);
+	//error = (error - minE) / (maxE - minE);
+	char title[30];
+	sprintf(title, "error%06d_%02d_%.4f.png", getId(), iIteID, fitness);
+	resize(error, error, Size(200, 200), 0, 0, CV_INTER_NN);
+	//imshow(title, error);
+	//imwrite(title, error*255);
+	imwrite(title, error);
 	cvMoveWindow(title, 0, 0);
 }
 
@@ -1037,13 +1268,15 @@ void Patch::showFitness() const {
 	double minE ,maxE;
 	fitness_plus = fitness_plus / sumWeight_plus;
 	patch_fitness_plus = patch_fitness_plus -  fitness_plus;
-	minMaxLoc(patch_fitness_plus, &minE, &maxE);
-	patch_fitness_plus = (patch_fitness_plus - minE) / (maxE - minE);
+	//minMaxLoc(patch_fitness_plus, &minE, &maxE);
+	//patch_fitness_plus = (patch_fitness_plus - minE) / (maxE - minE);
+	patch_fitness_plus = (patch_fitness_plus ) / 8.0; // 改成定量，非reletive
 
 	fitness_minus = fitness_minus / sumWeight_minus;
 	patch_fitness_minus = patch_fitness_minus -  fitness_minus;
-	minMaxLoc(patch_fitness_minus, &minE, &maxE);
-	patch_fitness_minus = (patch_fitness_minus - minE) / (maxE - minE);
+	//minMaxLoc(patch_fitness_minus, &minE, &maxE);
+	//patch_fitness_minus = (patch_fitness_minus - minE) / (maxE - minE);
+	patch_fitness_minus = (patch_fitness_minus ) / 8.0; // 改成定量，非reletive
 	
 	char title[30];
 	sprintf(title, "Plus_fitness%d.png", getId());
@@ -1278,8 +1511,9 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 				weight *= (*it);
 			}
 			if ( mvs.isAdaptiveDifferenceEnable() ) { // adaptive difference weighting
-				//weight *= exp(avgSad*avgSad/diffWeighting);
-				weight *= exp(-avgSad/diffWeighting); // non-square
+				//weight *= exp(avgSad*avgSad/diffWeighting); // square plus
+				//weight *= exp(-avgSad/diffWeighting); // non-square minus
+				weight *= exp(avgSad/diffWeighting); // non-square plus
 			}
 			if ( mvs.isAdaptiveGradientEnable() ) {   // adaptive gradient maginitude weighting
 				weight *= exp( -1.0 / (edgeImg.at<double>(cvRound(y), cvRound(x))*gradientWeighting) );
