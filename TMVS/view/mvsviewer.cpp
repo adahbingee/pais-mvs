@@ -69,6 +69,22 @@ void keyBoardEvent(const pcl::visualization::KeyboardEvent &event, void* viewer_
 			waitKey(1);
 		}
 		break;
+	case 'f':
+	case 'F':
+		if ( event.isShiftPressed() ) {
+			int pthId = -1;
+			printf("input patch id to be optimized (full output): ");
+			scanf("%d", &pthId);
+			Patch *pth = const_cast<Patch*> (viewer.getPickedPatch(pthId));
+			if (pth == NULL) break;
+			pth->refineFullOutput();
+			cvDestroyAllWindows();
+			viewer.printPatchInformation(*pth);
+			viewer.showPickedPoint(*pth);
+			viewer.showVisibleCamera(*pth);
+			waitKey(1);
+		}
+		break;
 	}
 }
 
@@ -541,8 +557,8 @@ void MvsViewer::printPatchInformation(const Patch &pth) const {
 	}
 
 	pth.showRefinedResult();
-	//pth.showError();
-	pth.showFitness();
+	pth.showError();
+	//pth.showFitness();
 }
 
 double MvsViewer::getNormalLength() const {

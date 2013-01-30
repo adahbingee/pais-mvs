@@ -1,4 +1,5 @@
 #include "psosolver.h"
+#include "../io/logmanager.h"
 
 bool PsoSolver::sortLocalParticle (const LocalParticle &i, const LocalParticle &j) {
     return (i.dist < j.dist); 
@@ -28,6 +29,20 @@ PsoSolver::PsoSolver(const int dim,
 	this->rangeL         = new double[dim];
 	this->rangeU         = new double[dim];
 	this->rangeInter     = new double[dim];
+
+	//added by Chaody, for full output, 2013.01.28
+	this->depthIteration		 = new double[maxIteration];
+	this->normal1Iteration		 = new double[maxIteration];
+	this->normal2Iteration		 = new double[maxIteration];
+	this->fitnessIteration		 = new double[maxIteration];
+	
+	for (int i = 0; i < maxIteration; i++) {
+		this->depthIteration[i]     = 0;
+		this->normal1Iteration[i]     = 0;
+		this->normal2Iteration[i]     = 0;
+		this->fitnessIteration[i]     = 0;
+	}
+
 	this->gBest          = NULL;
 	this->gBestFitness   = DBL_MAX;
 	this->gBestIteration = -1;
@@ -54,6 +69,24 @@ PsoSolver::~PsoSolver() {
 	if (rangeInter) {
 		delete [] rangeInter;
 		rangeInter = NULL;
+	}
+
+	//added by Chaody, for full output, 2013.01.28
+	if (depthIteration) {
+		delete [] depthIteration;
+		depthIteration = NULL;
+	}
+	if (normal1Iteration) {
+		delete [] normal1Iteration;
+		normal1Iteration = NULL;
+	}
+	if (normal2Iteration) {
+		delete [] normal2Iteration;
+		normal2Iteration = NULL;
+	}
+	if (fitnessIteration) {
+		delete [] fitnessIteration;
+		fitnessIteration = NULL;
 	}
 }
 
@@ -300,6 +333,13 @@ void PsoSolver::run(const bool enableGLNPSO, const double minIw) {
 		updateFitness();
 		updateGbest();
 
+		//added by Chaody, for full output, 2013.01.28
+		normal1Iteration[iteration] = gBest[0];
+		normal2Iteration[iteration] = gBest[1];
+		depthIteration[iteration] = gBest[2];
+		fitnessIteration[iteration] = gBestFitness;
+		
+			
 		// linear interia weighting adjustment
 		iw = max(iw - 1.0/maxIteration, minIw);
 	} // end of iteration

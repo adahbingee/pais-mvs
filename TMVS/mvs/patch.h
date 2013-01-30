@@ -26,6 +26,8 @@ namespace PAIS {
 		void expandVisibleCamera();
 		// do pso optimization 
 		void psoOptimization();
+		// do pso optimization with full process output, added by Chaody, 2013.01.28
+		void psoOptimizationFull();
 
 	protected:
 		void setEstimatedNormal();
@@ -51,6 +53,7 @@ namespace PAIS {
 
 		void reCentering();
 		void refine();
+		void refineFullOutput(); // refine with full optimization output, added by Chaody, 2013.01.28
 		void removeInvisibleCamera();
 
 		// get homographies
@@ -61,6 +64,8 @@ namespace PAIS {
 		void showRefinedResult() const;
 		// show SAD error image
 		void showError() const;
+		// show SAD error image with full iteration output, 2013.01.28 by Chaody
+		void showErrorWithIterationID(const int, const float, const float, const float) const;
 		// show fitness error image (plus and minus weighted function), 2013.01.19 by Chaody
 		void showFitness() const;
 		// is dropped
