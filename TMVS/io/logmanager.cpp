@@ -23,7 +23,8 @@ void LogManager::log(const char *message, ...) {
 	vsnprintf (buffer, STRING_BUFFER_LENGTH-1, message, argptr);
 	va_end(argptr);
 
-	(*instance) << "[Log]  " << buffer << endl;
+	//(*instance) << "[Log]  " << buffer << endl;
+	(*instance) << buffer << endl;
 }
 
 void LogManager::warning(const char *message, ...) {

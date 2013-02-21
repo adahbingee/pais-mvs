@@ -8,7 +8,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LocalDebuggerWorkingDirectory>$(TargetDir)</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>-v exp_R1_P31_Fit12_minus.mvs</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-v exp_P31_Fit16_minus.mvs</LocalDebuggerCommandArguments>
     <ShowAllFiles>false</ShowAllFiles>
   </PropertyGroup>
 </Project>
