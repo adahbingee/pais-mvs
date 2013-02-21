@@ -1,5 +1,6 @@
 #include "psosolver.h"
 #include "../io/logmanager.h"
+#include <math.h>
 
 bool PsoSolver::sortLocalParticle (const LocalParticle &i, const LocalParticle &j) {
     return (i.dist < j.dist); 
@@ -124,23 +125,164 @@ double PsoSolver::getVelocityIDX()   const {
 	return index;
 }
 
+// grid distribution
 void PsoSolver::initParticles() {
 	// allocate particle container
 	particles.clear();
 	particles.resize(particleNum, Particle(dim));
 
-	// uniform random parameter between range
-	for (int d = 0; d < dim; d++) {
-		for (int i = 0; i < particleNum; i++) {
-			// random position parameter (L~U)
-            particles[i].pos[d] = (rangeInter[d] * random()) + rangeL[d];
-            // random velocity parameter (-|U-L| ~ |U-L|), known as velocity inertia
-            particles[i].vec[d] = (2.0 * rangeInter[d] * random()) - rangeInter[d];
-            // set pBest as initial position
-            particles[i].pBest[d] = particles[i].pos[d];
+	int iCnt = 0;
+	// uniform & grid parameter between range
+
+	int iOneThirdParticleNum = (int)(particleNum/3);
+	
+	//for (int i = 0; i < particleNum; i++) {
+	//	if (i < iOneThirdParticleNum) {   // inner ring
+	//		particles[i].pos[0] = (rangeInter[0] * ((double)i/(double)iOneThirdParticleNum)) + rangeL[0];
+	//		particles[i].pos[1] = rangeInter[1] / 2 + rangeL[1];
+	//		//particles[i].pos[0] = (rangeInter[0]/4.0)+rangeL[0];
+	//		//particles[i].pos[1] = (rangeInter[1] * ((double)i/(double)iOneThirdParticleNum)) + rangeL[1];
+	//		particles[i].pos[2] = (rangeInter[2] * ((double)i/(double)particleNum)) + rangeL[2];
+	//	}
+	//	else { // outer ring
+	//		particles[i].pos[0] = (rangeInter[0] * ((double)(i-iOneThirdParticleNum)/(double)(iOneThirdParticleNum*2))) + rangeL[0];
+	//		particles[i].pos[1] = rangeInter[1] / 4 + rangeL[1];
+	//		//particles[i].pos[0] = (rangeInter[0]/2.0)+rangeL[0];
+	//		//particles[i].pos[1] = (rangeInter[1] * ((double)(i-iOneThirdParticleNum)/(double)(iOneThirdParticleNum*2))) + rangeL[1];
+	//		particles[i].pos[2] = (rangeInter[2] * ((double)i/(double)particleNum)) + rangeL[2];
+	//	}
+	//	for (int d = 0; d < dim; d++) {
+	//		// random velocity parameter (-|U-L| ~ |U-L|), known as velocity inertia
+	//		particles[i].vec[d] = (2.0 * rangeInter[d] * random()) - rangeInter[d];
+	//		// set pBest as initial position
+	//		particles[i].pBest[d] = particles[i].pos[d];
+	//	}
+
+	//	LogManager::log("00\t%03d\t%f\t%f\t%f\t0.0", i+1, particles[i].pos[0], particles[i].pos[1], particles[i].pos[2]);
+	//}
+
+	Vec3d refCamNormal, particleVec;
+	Vec2d refCamNormalS, particleVecS;
+	refCamNormalS[0] = rangeInter[0]/2 + rangeL[0];	
+	refCamNormalS[1] = rangeInter[1]/2 + rangeL[1];
+	Utility::spherical2Normal(refCamNormalS, refCamNormal);
+	Utility::normal2Spherical(refCamNormal, refCamNormalS);
+	
+	// setup rotation matrix Ry and Rz
+	Mat_<double> Ry(3,3), Rz(3,3); 
+	double dRy = M_PI/2 - refCamNormalS[1];
+	Ry.at<double>(0, 0) = cos(dRy);
+    Ry.at<double>(0, 1) = 0;
+    Ry.at<double>(0, 2) = sin(dRy);
+    Ry.at<double>(1, 0) = 0;
+    Ry.at<double>(1, 1) = 1;
+    Ry.at<double>(1, 2) = 0;
+    Ry.at<double>(2, 0) = -sin(dRy);
+    Ry.at<double>(2, 1) = 0;
+    Ry.at<double>(2, 2) = cos(dRy);
+
+	double dRz = refCamNormalS[0];
+	Rz.at<double>(0, 0) = cos(dRz);
+    Rz.at<double>(0, 1) = -sin(dRz);
+    Rz.at<double>(0, 2) = 0;
+    Rz.at<double>(1, 0) = sin(dRz);
+    Rz.at<double>(1, 1) = cos(dRz);
+    Rz.at<double>(1, 2) = 0;
+    Rz.at<double>(2, 0) = 0;
+    Rz.at<double>(2, 1) = 0;
+    Rz.at<double>(2, 2) = 1;
+
+	for (int i = 0; i < particleNum; i++) {
+		particles[i].pos[0] = (rangeInter[0]) * ((double)i/(double)particleNum);
+		particles[i].pos[1] = rangeInter[1];
+		particles[i].pos[2] = (rangeInter[2] * ((double)i/(double)particleNum)) + rangeL[2];
+
+		// transformation (rotation in Cartesian coordinate)
+		// 先轉至 Cartesian coordinate
+		particleVecS[0] = particles[i].pos[0];         particleVecS[1] = particles[i].pos[1]; 
+		Utility::spherical2Normal(particleVecS, particleVec);
+
+		// rotation
+		Mat_<double> tmpVec(3,1); 
+		tmpVec.at<double>(0, 0) = particleVec[0]; 
+		tmpVec.at<double>(1, 0) = particleVec[1]; 
+		tmpVec.at<double>(2, 0) = particleVec[2]; 
+
+		//printf("tmpVec: %f %f %f\n", tmpVec.at<double>(0, 0), tmpVec.at<double>(0, 1), tmpVec.at<double>(0, 2));
+		//printf("Ry:\n%f %f %f\n", Ry.at<double>(0, 0), Ry.at<double>(0, 1), Ry.at<double>(0, 2));
+		//printf("%f %f %f\n", Ry.at<double>(1, 0), Ry.at<double>(1, 1), Ry.at<double>(1, 2));
+		//printf("%f %f %f\n", Ry.at<double>(2, 0), Ry.at<double>(2, 1), Ry.at<double>(2, 2));
+		//printf("Rz:\n%f %f %f\n", Rz.at<double>(0, 0), Rz.at<double>(0, 1), Rz.at<double>(0, 2));
+		//printf("%f %f %f\n", Rz.at<double>(1, 0), Rz.at<double>(1, 1), Rz.at<double>(1, 2));
+		//printf("%f %f %f\n", Rz.at<double>(2, 0), Rz.at<double>(2, 1), Rz.at<double>(2, 2));
+
+		//tmpVec = tmpVec * Ry * Rz;
+		//tmpVec = tmpVec * Ry;
+		tmpVec = Rz * Ry * tmpVec;
+		//printf("tmpVec: %f %f %f\n", tmpVec.at<double>(0, 0), tmpVec.at<double>(0, 1), tmpVec.at<double>(0, 2));
+
+		particleVec[0] = tmpVec.at<double>(0, 0);
+		particleVec[1] = tmpVec.at<double>(1, 0);
+		particleVec[2] = tmpVec.at<double>(2, 0);
+
+
+		// 再轉回 spherical coordinate
+		Utility::normal2Spherical(particleVec, particleVecS);
+		particles[i].pos[0] = particleVecS[0];         particles[i].pos[1] = particleVecS[1]; 
+
+
+		for (int d = 0; d < dim; d++) {
+			// random velocity parameter (-|U-L| ~ |U-L|), known as velocity inertia
+			particles[i].vec[d] = (2.0 * rangeInter[d] * random()) - rangeInter[d];
+			// set pBest as initial position
+			particles[i].pBest[d] = particles[i].pos[d];
 		}
+
+		LogManager::log("00\t%03d\t%f\t%f\t%f\t0.0", i+1, particles[i].pos[0], particles[i].pos[1], particles[i].pos[2]);
 	}
 }
+
+// not grid distribution
+//void PsoSolver::initParticles() {
+//	// allocate particle container
+//	particles.clear();
+//	particles.resize(particleNum, Particle(dim));
+//
+//	//LogManager::log("ite\tp\tn1\tn2\td");
+//	// uniform random parameter between range
+//	for (int i = 0; i < particleNum; i++) {
+//		for (int d = 0; d < dim; d++) {
+//			// random position parameter (L~U)
+//            //particles[i].pos[d] = (rangeInter[d] * random()) + rangeL[d];
+//			// fixed position parameter (L~U)
+//            particles[i].pos[d] = (rangeInter[d] * ((double)i/(double)particleNum)) + rangeL[d];
+//            // random velocity parameter (-|U-L| ~ |U-L|), known as velocity inertia
+//            particles[i].vec[d] = (2.0 * rangeInter[d] * random()) - rangeInter[d];
+//            // set pBest as initial position
+//            particles[i].pBest[d] = particles[i].pos[d];
+//		}
+//		LogManager::log("00\t%02d\t%f\t%f\t%f", i+1, particles[i].pos[0], particles[i].pos[1], particles[i].pos[2]);
+//	}
+//}
+
+// original version
+//void PsoSolver::initParticles() {
+//	// allocate particle container
+//	particles.clear();
+//	particles.resize(particleNum, Particle(dim));
+//
+//	// uniform random parameter between range
+//	for (int d = 0; d < dim; d++) {
+//		for (int i = 0; i < particleNum; i++) {
+//			// random position parameter (L~U)
+//            particles[i].pos[d] = (rangeInter[d] * random()) + rangeL[d];
+//            // random velocity parameter (-|U-L| ~ |U-L|), known as velocity inertia
+//            particles[i].vec[d] = (2.0 * rangeInter[d] * random()) - rangeInter[d];
+//            // set pBest as initial position
+//            particles[i].pBest[d] = particles[i].pos[d];
+//		}
+//	}
+//}
 
 void PsoSolver::initFitness() {
 	#pragma omp parallel for
@@ -168,6 +310,8 @@ void PsoSolver::updateFitness() {
 }
 
 void PsoSolver::updateGbest() {
+	int iTmpCnt; //Chaody
+
 	for (int j = 0; j < particleNum; j++) {
         // current particle
         const Particle &p = particles[j];
@@ -176,9 +320,33 @@ void PsoSolver::updateGbest() {
             gBestFitness   = p.pBestFitness;
 			gBest          = p.pBest;
 			gBestIteration = iteration;
+			iTmpCnt = j; //Chaody
 			// printf("update: %f\n", gBestFitness);
         }
     }
+	
+	LogManager::log("%02d\t888\t%f\t%f\t%f\t%f", 
+		iteration+1, particles[iTmpCnt].pos[0], particles[iTmpCnt].pos[1], particles[iTmpCnt].pos[2], gBestFitness);
+}
+
+// for better PSO log output, by Chaody
+void PsoSolver::updateGbest_init() {
+	int iTmpCnt; //Chaody
+
+	for (int j = 0; j < particleNum; j++) {
+        // current particle
+        const Particle &p = particles[j];
+
+		if (p.pBestFitness <= gBestFitness) {
+            gBestFitness   = p.pBestFitness;
+			gBest          = p.pBest;
+			gBestIteration = iteration;
+			iTmpCnt = j; //Chaody
+        }
+    }
+	
+	LogManager::log("%02d\t888\t%f\t%f\t%f\t%f", 
+		iteration, particles[iTmpCnt].pos[0], particles[iTmpCnt].pos[1], particles[iTmpCnt].pos[2], gBestFitness);
 }
 
 const double* PsoSolver::getLocalBest(const int idx) const {
@@ -312,7 +480,6 @@ bool PsoSolver::setParticle(const double *pos, const double *vec, const int idx)
 			particles[idx].vec[d] = (2.0 * rangeInter[d] * random()) - rangeInter[d];
 		}
 	}
-
 	return true;
 }
 
@@ -321,7 +488,8 @@ void PsoSolver::run(const bool enableGLNPSO, const double minIw) {
 	initFitness();
 	gBest        = particles[0].pBest;
 	gBestFitness = particles[0].pBestFitness;
-	updateGbest();
+	//updateGbest();
+	updateGbest_init(); //Chaody, for better log output
 
 	for (iteration = 0; iteration < maxIteration; iteration++) {
 
@@ -330,6 +498,7 @@ void PsoSolver::run(const bool enableGLNPSO, const double minIw) {
 		}
 
 		moveParticles();
+		logParticles(); // 輸出 particle information
 		updateFitness();
 		updateGbest();
 
@@ -343,4 +512,17 @@ void PsoSolver::run(const bool enableGLNPSO, const double minIw) {
 		// linear interia weighting adjustment
 		iw = max(iw - 1.0/maxIteration, minIw);
 	} // end of iteration
+}
+
+
+void PsoSolver::logParticles() {
+	for (int i = 0; i < particleNum; i++) {
+		if (particles[i].fitness > 999)
+			LogManager::log("%02d\t%03d\t%f\t%f\t%f\t999", 
+				iteration+1, i+1, particles[i].pos[0], particles[i].pos[1], particles[i].pos[2]);
+		else
+			LogManager::log("%02d\t%03d\t%f\t%f\t%f\t%f", 
+				iteration+1, i+1, particles[i].pos[0], particles[i].pos[1], particles[i].pos[2], particles[i].fitness);
+
+	}
 }
