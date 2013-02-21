@@ -66,6 +66,8 @@ namespace PAIS {
 		void showError() const;
 		// show SAD error image with full iteration output, 2013.01.28 by Chaody
 		void showErrorWithIterationID(const int, const float, const float, const float) const;
+		// show Average SAD error image with full iteration output, 2013.01.31 by Chaody
+		void showAvgErrorWithIterationID(const int, const float, const float, const float) const;
 		// show fitness error image (plus and minus weighted function), 2013.01.19 by Chaody
 		void showFitness() const;
 		// is dropped
