@@ -175,6 +175,26 @@ void MVS::writeMVS(const char* fileName) const {
 	FileWriter::writeMVS(fileName, *this);
 }
 
+// added by Chaody, 2012.Sep.13
+void MVS::writeMVSascii(const char* fileName) const {
+	FileWriter::writeMVSascii(fileName, *this);
+}
+
+// added by Chaody, 2012.Sep.04
+void MVS::loadMVSC(const char* fileName) {
+	FileLoader::loadMVSC(fileName, *this);
+}
+
+// modified by Chaody, 2012.Dec.01
+void MVS::writeCamProjection(const char* fileName, char* fileNameGT) const {
+	FileWriter::writeCamProjection(fileName, fileNameGT, *this);
+}
+
+// added by Chaody, 2012.Sep.04
+void MVS::writeColorDistMVS(const char* fileName, char* fileNameGT, float fColorDistMin, float fColorDistMax) const {
+	FileWriter::writeColorDistMVS(fileName, fileNameGT, fColorDistMin, fColorDistMax, *this);
+}
+
 void MVS::writePLY(const char *fileName) const {
 	FileWriter::writePLY(fileName, *this);
 }
@@ -255,6 +275,7 @@ void MVS::expansionPatches() {
 		if ( !runtimeFiltering(pth) ) {
 			printf("Top priority patch deleted\n");
 			deletePatch(pth);
+			pthId = getPatchIdFromQueue(); // bug fixed by ªÃ¤@'s comment
 			continue;
 		}
 

@@ -50,6 +50,12 @@ namespace PAIS {
         double *rangeU;
         double *rangeInter; // rangeU - rangeL
 		
+		//added by Chaody, for full output, 2013.01.28
+		double *depthIteration;
+		double *normal1Iteration;
+		double *normal2Iteration;
+		double *fitnessIteration;
+
 		// global best
         const double *gBest;
         double gBestFitness;
@@ -129,6 +135,12 @@ namespace PAIS {
 		double        getGbestFitness()   const { return gBestFitness; }
         int           getGbestIteration() const { return gBestIteration; }
 		int           getIteration()      const { return iteration; }
+		
+		//added by Chaody, for full output, 2013.01.28
+		const double* getDepthIteration()	  const { return depthIteration; } 
+		const double* getNormal1Iteration()	  const { return normal1Iteration; } 
+		const double* getNormal2Iteration()	  const { return normal2Iteration; } 
+		const double* getFitnessIteration()	  const { return fitnessIteration; } 
 	};
 };
 

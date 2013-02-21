@@ -26,6 +26,8 @@ namespace PAIS {
 		void expandVisibleCamera();
 		// do pso optimization 
 		void psoOptimization();
+		// do pso optimization with full process output, added by Chaody, 2013.01.28
+		void psoOptimizationFull();
 
 	protected:
 		void setEstimatedNormal();
@@ -45,10 +47,13 @@ namespace PAIS {
 		Patch(const Vec3d &center, const Patch &parent, const int id = -1);
 		// mvs loader constructor
 		Patch(const Vec3d &center, const Vec2d &normalS, const vector<int> &camIdx, const double fitness, const double correlation, const int id = -1);
+		// mvs loader constructor, added by Chaody, 2012.Sep.04
+		Patch(const Vec3d &center, const Vec2d &normalS, const vector<int> &camIdx, const double fitness, const double correlation, const Vec3b &color, const int id = -1);
 		~Patch(void);
 
 		void reCentering();
 		void refine();
+		void refineFullOutput(); // refine with full optimization output, added by Chaody, 2013.01.28
 		void removeInvisibleCamera();
 
 		// get homographies
@@ -59,6 +64,12 @@ namespace PAIS {
 		void showRefinedResult() const;
 		// show SAD error image
 		void showError() const;
+		// show SAD error image with full iteration output, 2013.01.28 by Chaody
+		void showErrorWithIterationID(const int, const float, const float, const float) const;
+		// show Average SAD error image with full iteration output, 2013.01.31 by Chaody
+		void showAvgErrorWithIterationID(const int, const float, const float, const float) const;
+		// show fitness error image (plus and minus weighted function), 2013.01.19 by Chaody
+		void showFitness() const;
 		// is dropped
 		bool isDropped() const { return drop; }
 		// zc asked
