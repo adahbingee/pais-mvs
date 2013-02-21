@@ -9,7 +9,9 @@ Particle::Particle(int dim) {
     pos        = new double [dim];
     vec        = new double [dim];
     fitness      = 1.7976931348623158e+308;
-    pBestFitness = 1.7976931348623158e+308;
+	pBestFitness = 1.7976931348623158e+308;
+	//fitness      = 99999;
+    //pBestFitness = 99999;
 
     for (int i = 0; i < dim; i++) {
         pBest[i] = 0;

@@ -312,19 +312,27 @@ void Patch::psoOptimizationFull() {
 	// PSO parameter range (theta, phi, depth)
     //double rangeL [] = {0.0 , normalS[1] - M_PI/2.0, depthRange[0]};
 	//double rangeU [] = {M_PI, normalS[1] + M_PI/2.0, depthRange[1]};
-	double rangeL [] = {0.0 , normalS[1] - M_PI, depthRange[0]};
-	double rangeU [] = {M_PI, normalS[1] + M_PI, depthRange[1]};
-	//double rangeL [] = {0.0 , 0.0, depthRange[0]};
-    //double rangeU [] = {M_PI, M_PI, depthRange[1]};
 
+	Vec3d refCamNormal;
+	Vec2d refCamNormalS;
+	refCamNormal = mvs.getCamera(refCamIdx).getOpticalNormal();
+	Utility::normal2Spherical(-refCamNormal, refCamNormalS);
+	LogManager::log("00\t999\t%f\t%f\t0.0\t0.0", refCamNormalS[0], refCamNormalS[1]);
+
+	double rangeL [] = {refCamNormalS[0] - M_PI, refCamNormalS[1] - M_PI/3, depthRange[0]};
+	double rangeU [] = {refCamNormalS[0] + M_PI, refCamNormalS[1] + M_PI/3, depthRange[1]};
+	//double rangeL [] = {0.0, refCamNormalS[1] - M_PI/3.0, depthRange[0]};
+	//double rangeU [] = {2*M_PI, refCamNormalS[1] + M_PI/3.0, depthRange[1]};
+	//double rangeL [] = {refCamNormalS[0], refCamNormalS[1], depthRange[0]};
+	//double rangeU [] = {refCamNormalS[0]+M_PI, refCamNormalS[1]+M_PI/2.0, depthRange[1]};
+	
     // initial guess particle
-    //double init   [] = {normalS[0], normalS[1], depth};
-	double init   [] = {M_PI/2.0, M_PI/2.0, (depthRange[0]+depthRange[1])/2};
-	//double init   [] = {0.0, normalS[1], depthRange[0]}; //using bad initial value for testing, by Chaody, 2013.02.01
+	double init   [] = {refCamNormalS[0], refCamNormalS[1], (depthRange[0]+depthRange[1])/2}; //using refCam normal as initial value for testing, by Chaody, 2013.02.15
 	
 	PsoSolver *solver = NULL;
 	//if (type == TYPE_SEED) {
-		solver = new PsoSolver(3, rangeL, rangeU, PAIS::getFitness, this, mvs.maxIteration*2, mvs.particleNum*2 );
+		solver = new PsoSolver(3, rangeL, rangeU, PAIS::getFitness, this, mvs.maxIteration, mvs.particleNum );
+		//solver = new PsoSolver(3, rangeL, rangeU, PAIS::getFitness, this, mvs.maxIteration*2, mvs.particleNum*2 );
 	//} else {
 	//	// reduce normal search range for expansion patch
 	//	rangeL[0] = max(  0.0, normalS[0] - M_PI/mvs.reduceNormalRange);
@@ -353,10 +361,10 @@ void Patch::psoOptimizationFull() {
 		setNormal(Vec2d(iteNormal1[iCnt], iteNormal2[iCnt]));
 		depth  = iteDepth[iCnt];
 		center = ray * depth + mvs.getCamera(refCamIdx).getCenter();
-		//LogManager::log("iteration#%02d:\nfitness:%f\nSphe. normal: (%f, %f)\nnormal:(%f, %f, %f)\ndepth:%f\n", iCnt+1, fitness, iteNormal1[iCnt], iteNormal2[iCnt], normal[0], normal[1], normal[2], iteDepth[iCnt]);
-		if (iCnt == 0)
-			LogManager::log("ite\tFitness\t\tsphNml_X\tsphNml_Y\tNormal_x\tNormal_y\tNormal_z\tDepth");
-		LogManager::log("%02d\t%f\t%f\t%f\t%f\t%f\t%f\t%f", iCnt+1, fitness, iteNormal1[iCnt], iteNormal2[iCnt], normal[0], normal[1], normal[2], iteDepth[iCnt]);
+		
+		//if (iCnt == 0)
+			//LogManager::log("ite\tFitness\t\tsphNml_X\tsphNml_Y\tNormal_x\tNormal_y\tNormal_z\tDepth");
+		//LogManager::log("%02d\t%f\t%f\t%f\t%f\t%f\t%f\t%f", iCnt+1, fitness, iteNormal1[iCnt], iteNormal2[iCnt], normal[0], normal[1], normal[2], iteDepth[iCnt]);
 		
 		if (depth != 0.0)
 			showAvgErrorWithIterationID(iCnt, iteNormal1[iCnt], iteNormal2[iCnt], depth);
@@ -1166,7 +1174,8 @@ void Patch::showErrorWithIterationID(const int iIteID, const float fNormalTmp1, 
 	resize(error, error, Size(200, 200), 0, 0, CV_INTER_NN);
 	//imshow(title, error);
 	//imwrite(title, error*255);
-	imwrite(title, error);
+	
+	//imwrite(title, error);
 	cvMoveWindow(title, 0, 0);
 }
 
@@ -1270,7 +1279,7 @@ void Patch::showAvgErrorWithIterationID(const int iIteID, const float fNormalTmp
 	char title[30];
 	sprintf(title, "error%06d_%02d_%.4f.png", getId(), iIteID+1, fitness);
 	resize(error, error, Size(200, 200), 0, 0, CV_INTER_NN);
-	imwrite(title, error);
+	//imwrite(title, error);
 	cvMoveWindow(title, 0, 0);
 
 	if  (iIteID == 0) {

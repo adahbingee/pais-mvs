@@ -4,14 +4,17 @@
 #include <vector>
 #include <algorithm>
 #include <time.h>
+#include <opencv2\opencv.hpp>
 
 // include openMP
 #include <omp.h>
 
 #include "particle.h"
+#include "../mvs/abstractpatch.h"
 
 using namespace std;
 using namespace PAIS;
+using namespace cv;
 
 namespace PAIS {
 	// container for local best
@@ -102,6 +105,12 @@ namespace PAIS {
 
 		// update gbest
 		void updateGbest();
+
+		// update gbest (for better PSO log output, Chaody
+		void updateGbest_init();
+
+		// ¿é¥X particle information
+		void logParticles(); 
 
 		const double* getLocalBest(const int idx) const;
 
