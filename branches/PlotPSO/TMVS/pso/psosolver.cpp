@@ -216,8 +216,6 @@ void PsoSolver::initParticles() {
 		//printf("%f %f %f\n", Rz.at<double>(1, 0), Rz.at<double>(1, 1), Rz.at<double>(1, 2));
 		//printf("%f %f %f\n", Rz.at<double>(2, 0), Rz.at<double>(2, 1), Rz.at<double>(2, 2));
 
-		//tmpVec = tmpVec * Ry * Rz;
-		//tmpVec = tmpVec * Ry;
 		tmpVec = Rz * Ry * tmpVec;
 		//printf("tmpVec: %f %f %f\n", tmpVec.at<double>(0, 0), tmpVec.at<double>(0, 1), tmpVec.at<double>(0, 2));
 
