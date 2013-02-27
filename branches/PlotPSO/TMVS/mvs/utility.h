@@ -27,8 +27,8 @@ namespace PAIS {
   //          out[2] = cos(in[0]);
   //      }
         inline static void normal2Spherical(const Vec3d &in, Vec2d &out) {
-            out[0] = atan2(in[1], in[0]);
-            out[1] = atan2(in[2], sqrt(in[1]*in[1]+in[0]*in[0]));
+            out[0] = atan2(in[1], in[0]) / sqrt(in[1]*in[1]+in[0]*in[0]+in[2]*in[2]);
+            out[1] = atan2(in[2], sqrt(in[1]*in[1]+in[0]*in[0])) / sqrt(in[1]*in[1]+in[0]*in[0]+in[2]*in[2]);
         }
 		// spherical coordinate to normal
         inline static void spherical2Normal(const Vec2d &in, Vec3d &out) {
