@@ -69,6 +69,15 @@ namespace PAIS {
 		int maxIteration;
 		// expansion strategy (best, worst, breath, depth)
 		int expansionStrategy;
+
+		/////////////////////////////
+		//// Chaody EXP configuration
+		// weighting function type (plus: 0, minus: 1)
+		int weightingFunctionType;
+		// initial particles distribution (random: 0, even: 1)
+		int initDistribution;
+		// PHI value (degree) in even distribution 
+		double degPhi;
 	};
 
 	class MVS : private MvsConfig {
@@ -228,6 +237,10 @@ namespace PAIS {
 		bool isAdaptiveDistanceEnable()   const { return adaptiveDistanceEnable;   }
 		bool isAdaptiveDifferenceEnable() const { return adaptiveDifferenceEnable; }
 		bool isAdaptiveGradientEnable()   const { return adaptiveGradientEnable;   }
+
+		// Chaody EXP configuration
+		bool isPlusWeightingFunction()    const { return weightingFunctionType; }
+
 
 		// print config information
 		void printConfig() const;

@@ -66,6 +66,11 @@ void MVS::setConfig(const MvsConfig &config) {
 	this->expansionStrategy        = config.expansionStrategy;
 	this->patchSize                = (patchRadius<<1)+1;
 
+	// Chaody EXP configuration
+	this->weightingFunctionType	   = config.weightingFunctionType;
+	this->initDistribution		   = config.initDistribution;
+	this->degPhi				   = config.degPhi;
+
 	printConfig();
 
 	initPatchDistanceWeighting();
@@ -959,6 +964,10 @@ void MVS::printConfig() const {
 	printf("depth range scalar:\t%f\n", depthRangeScalar);
 	printf("particle number:\t%d\n", particleNum);
 	printf("maximum iteration number:\t%d\n", maxIteration);
+	printf("weighting function type (minus:0, plus:1):\t%d\n", weightingFunctionType);
+	printf("initial particles distribution (random:0, even:1):\t%d\n", initDistribution);
+	printf("PHI value (degree):\t %f\n", degPhi);
+
 	switch (expansionStrategy) {
 	default:
 	case EXPANSION_BEST_FIRST:

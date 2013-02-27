@@ -64,6 +64,9 @@ namespace PAIS {
         double gBestFitness;
         int    gBestIteration;
 
+		// Define degree of phi, added by Chaody
+		double dDegPhi;
+
 		// velocity weight
         double iw; // inertia weight  (Basic-PSO)
         double pw; // pBest weight    (Basic-PSO)
@@ -121,6 +124,7 @@ namespace PAIS {
 				  double (*getFitness)(const Particle &p, void *obj) = NULL, 
 				  void *obj = NULL,
 				  int maxIteration = 1000, int particleNum = 30,
+				  double dDegPhi = 30,  // added by Chaody, for defining degree of phi
 				  double convergenceThreshold = 0.01, 
 				  double iw = 0.8, double pw = 1.2, double gw = 1.5, double lw = 1.0, double nw = 1.0,
 				  int localK = 5);

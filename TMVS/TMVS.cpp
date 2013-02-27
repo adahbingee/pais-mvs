@@ -49,6 +49,10 @@ void setInitConfig() {
 	config.particleNum              = 5;
 	config.maxIteration             = 10;
 	config.expansionStrategy        = MVS::EXPANSION_BEST_FIRST;
+	// Chaody EXP configuration
+	config.weightingFunctionType	= 0;
+	config.initDistribution			= 1;
+	config.degPhi					= 30;
 }
 
 void runViewer(MVS &mvs, const char *fileName) {

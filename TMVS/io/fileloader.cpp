@@ -166,7 +166,10 @@ Patch FileLoader::loadNvmPatch(ifstream &file, const MVS &mvs) {
 
 MvsConfig FileLoader::loadMvsConfig(ifstream &file) {
 	MvsConfig config;
-	file.read((char*) &config, sizeof(MvsConfig));
+	//file.read((char*) &config, sizeof(MvsConfig));
+	//printf("MVS_V3 size of MvsConfig: %d\n", sizeof(MvsConfig));
+	file.read((char*) &config, 160);  // Magic number 160: the size of MVS_V3 MvsConfig is 160. 
+
 	return config;
 }
 
@@ -473,13 +476,30 @@ void FileLoader::loadMVS(const char *fileName, MVS &mvs) {
 			continue;
 		}
 
-		// set config and start load camera
+		// "SKIP" config and start load camera
 		if (strcmp(strip, "MVS_V3") == 0) {
-			MvsConfig config = loadMvsConfig(file);
+			//MvsConfig config = loadMvsConfig(file);
+			//mvs.setConfig(config);
+			
+			// skip MvsConfig size
+			loadMvsConfig(file);
+			MvsConfig config;
+			FileLoader::loadConfig("config.txt", config);
+
+			loadCamera = true;
+			continue;
+		}
+
+		// import config and start load camera, 2013.02.27
+		if (strcmp(strip, "MVS_V4") == 0) {
+			MvsConfig config;
+			FileLoader::loadConfig("config.txt", config);
 			mvs.setConfig(config);
 			loadCamera = true;
 			continue;
 		}
+
+
 
 		if (loadCamera) {
 			strip = strtok(NULL, DELIMITER);
@@ -676,6 +696,19 @@ void FileLoader::loadConfig(const char *fileName, MvsConfig &config) {
 		} else if ( strcmp(strip, "neighborRadiusScalar") == 0 ) {
 			strip = strtok(NULL, " \t");
 			config.neighborRadiusScalar = atof(strip);
+		// Chaody EXP configuration
+		} else if ( strcmp(strip, "weightingFunctionType") == 0 ) {
+			strip = strtok(NULL, " \t");
+			config.weightingFunctionType  = atoi(strip);
+			printf("weightingFtunctionType: %d\n", config.weightingFunctionType);
+		} else if ( strcmp(strip, "initDistribution") == 0 ) {
+			strip = strtok(NULL, " \t");
+			config.initDistribution  = atoi(strip);
+			printf("initDistribution: %d\n", config.initDistribution);
+		} else if ( strcmp(strip, "degPhi") == 0 ) {
+			strip = strtok(NULL, " \t");
+			config.degPhi = atof(strip);
+			printf("degPhi: %f\n", config.degPhi);
 		}
 	}
 

@@ -11,6 +11,7 @@ PsoSolver::PsoSolver(const int dim,
 				  double (*getFitness)(const Particle &p, void *obj), 
 				  void *obj,
 				  int maxIteration, int particleNum,
+				  double dDegPhi, // added by Chaody, for defining degree of phi
 				  double convergenceThreshold, 
 				  double iw, double pw, double gw, double lw, double nw,
 				  int localK) {
@@ -30,6 +31,9 @@ PsoSolver::PsoSolver(const int dim,
 	this->rangeL         = new double[dim];
 	this->rangeU         = new double[dim];
 	this->rangeInter     = new double[dim];
+
+	// added by Chaody, for defining degree of phi
+	this->dDegPhi = dDegPhi;
 
 	//added by Chaody, for full output, 2013.01.28
 	this->depthIteration		 = new double[maxIteration];
@@ -169,32 +173,25 @@ void PsoSolver::initParticles() {
 	Utility::normal2Spherical(refCamNormal, refCamNormalS);
 	
 	// setup rotation matrix Ry and Rz
-	Mat_<double> Ry(3,3), Rz(3,3); 
-	double dRy = M_PI/2 - refCamNormalS[1];
-	Ry.at<double>(0, 0) = cos(dRy);
-    Ry.at<double>(0, 1) = 0;
-    Ry.at<double>(0, 2) = sin(dRy);
-    Ry.at<double>(1, 0) = 0;
-    Ry.at<double>(1, 1) = 1;
-    Ry.at<double>(1, 2) = 0;
-    Ry.at<double>(2, 0) = -sin(dRy);
-    Ry.at<double>(2, 1) = 0;
-    Ry.at<double>(2, 2) = cos(dRy);
+	Mat_<double> Ry(3,3), Rz(3,3), Rxz(3,3); 
+	Rxz.at<double>(0, 0) = 0; Rxz.at<double>(0, 1) = 0; Rxz.at<double>(0, 2) = 1;
+    Rxz.at<double>(1, 0) = 0; Rxz.at<double>(1, 1) = 1; Rxz.at<double>(1, 2) = 0;
+    Rxz.at<double>(2, 0) = 1; Rxz.at<double>(2, 1) = 0; Rxz.at<double>(2, 2) = 0;
+
+	double dRy = -(refCamNormalS[1]);
+	Ry.at<double>(0, 0) = cos(dRy); Ry.at<double>(0, 1) = 0; Ry.at<double>(0, 2) = sin(dRy);
+    Ry.at<double>(1, 0) = 0;        Ry.at<double>(1, 1) = 1; Ry.at<double>(1, 2) = 0;
+    Ry.at<double>(2, 0) = -sin(dRy);Ry.at<double>(2, 1) = 0; Ry.at<double>(2, 2) = cos(dRy);
 
 	double dRz = refCamNormalS[0];
-	Rz.at<double>(0, 0) = cos(dRz);
-    Rz.at<double>(0, 1) = -sin(dRz);
-    Rz.at<double>(0, 2) = 0;
-    Rz.at<double>(1, 0) = sin(dRz);
-    Rz.at<double>(1, 1) = cos(dRz);
-    Rz.at<double>(1, 2) = 0;
-    Rz.at<double>(2, 0) = 0;
-    Rz.at<double>(2, 1) = 0;
-    Rz.at<double>(2, 2) = 1;
+	Rz.at<double>(0, 0) = cos(dRz); Rz.at<double>(0, 1) = -sin(dRz); Rz.at<double>(0, 2) = 0;
+    Rz.at<double>(1, 0) = sin(dRz); Rz.at<double>(1, 1) = cos(dRz);  Rz.at<double>(1, 2) = 0;
+    Rz.at<double>(2, 0) = 0;        Rz.at<double>(2, 1) = 0;         Rz.at<double>(2, 2) = 1;
 
 	for (int i = 0; i < particleNum; i++) {
 		particles[i].pos[0] = (rangeInter[0]) * ((double)i/(double)particleNum);
-		particles[i].pos[1] = rangeInter[1];
+		//particles[i].pos[1] = rangeInter[1]/2;
+		particles[i].pos[1] = dDegPhi * (M_PI/180);
 		particles[i].pos[2] = (rangeInter[2] * ((double)i/(double)particleNum)) + rangeL[2];
 
 		// transformation (rotation in Cartesian coordinate)
@@ -216,7 +213,7 @@ void PsoSolver::initParticles() {
 		//printf("%f %f %f\n", Rz.at<double>(1, 0), Rz.at<double>(1, 1), Rz.at<double>(1, 2));
 		//printf("%f %f %f\n", Rz.at<double>(2, 0), Rz.at<double>(2, 1), Rz.at<double>(2, 2));
 
-		tmpVec = Rz * Ry * tmpVec;
+		tmpVec = Rz * Ry * Rxz * tmpVec;
 		//printf("tmpVec: %f %f %f\n", tmpVec.at<double>(0, 0), tmpVec.at<double>(0, 1), tmpVec.at<double>(0, 2));
 
 		particleVec[0] = tmpVec.at<double>(0, 0);
@@ -236,7 +233,7 @@ void PsoSolver::initParticles() {
 			particles[i].pBest[d] = particles[i].pos[d];
 		}
 
-		LogManager::log("00\t%03d\t%f\t%f\t%f\t0.0", i+1, particles[i].pos[0], particles[i].pos[1], particles[i].pos[2]);
+		LogManager::log("00\t%03d\t%f\t%f\t%f\t0.0\t0.0", i+1, particles[i].pos[0], particles[i].pos[1], particles[i].pos[2]);
 	}
 }
 
@@ -323,8 +320,8 @@ void PsoSolver::updateGbest() {
         }
     }
 	
-	LogManager::log("%02d\t888\t%f\t%f\t%f\t%f", 
-		iteration+1, particles[iTmpCnt].pos[0], particles[iTmpCnt].pos[1], particles[iTmpCnt].pos[2], gBestFitness);
+	LogManager::log("%02d\t888\t%f\t%f\t%f\t%f\t%f", 
+		iteration+1, particles[iTmpCnt].pos[0], particles[iTmpCnt].pos[1], particles[iTmpCnt].pos[2], gBestFitness, getDispersionIDX());
 }
 
 // for better PSO log output, by Chaody
@@ -343,8 +340,8 @@ void PsoSolver::updateGbest_init() {
         }
     }
 	
-	LogManager::log("%02d\t888\t%f\t%f\t%f\t%f", 
-		iteration, particles[iTmpCnt].pos[0], particles[iTmpCnt].pos[1], particles[iTmpCnt].pos[2], gBestFitness);
+	LogManager::log("%02d\t888\t%f\t%f\t%f\t%f\t%f", 
+		iteration, particles[iTmpCnt].pos[0], particles[iTmpCnt].pos[1], particles[iTmpCnt].pos[2], gBestFitness, getDispersionIDX());
 }
 
 const double* PsoSolver::getLocalBest(const int idx) const {
@@ -491,7 +488,8 @@ void PsoSolver::run(const bool enableGLNPSO, const double minIw) {
 
 	for (iteration = 0; iteration < maxIteration; iteration++) {
 
-		if (getDispersionIDX() < convergenceThreshold && getVelocityIDX() < convergenceThreshold) {
+		//if (getDispersionIDX() < convergenceThreshold && getVelocityIDX() < convergenceThreshold) {
+		if (getDispersionIDX() < convergenceThreshold) {
 			break;
 		}
 
@@ -516,11 +514,11 @@ void PsoSolver::run(const bool enableGLNPSO, const double minIw) {
 void PsoSolver::logParticles() {
 	for (int i = 0; i < particleNum; i++) {
 		if (particles[i].fitness > 999)
-			LogManager::log("%02d\t%03d\t%f\t%f\t%f\t999", 
+			LogManager::log("%02d\t%03d\t%f\t%f\t%f\t999\t0.0", 
 				iteration+1, i+1, particles[i].pos[0], particles[i].pos[1], particles[i].pos[2]);
 		else
-			LogManager::log("%02d\t%03d\t%f\t%f\t%f\t%f", 
-				iteration+1, i+1, particles[i].pos[0], particles[i].pos[1], particles[i].pos[2], particles[i].fitness);
+			LogManager::log("%02d\t%03d\t%f\t%f\t%f\t%f\t%f", 
+				iteration+1, i+1, particles[i].pos[0], particles[i].pos[1], particles[i].pos[2], particles[i].fitness, getDispersionIDX());
 
 	}
 }

@@ -319,8 +319,8 @@ void Patch::psoOptimizationFull() {
 	Utility::normal2Spherical(-refCamNormal, refCamNormalS);
 	LogManager::log("00\t999\t%f\t%f\t0.0\t0.0", refCamNormalS[0], refCamNormalS[1]);
 
-	double rangeL [] = {refCamNormalS[0] - M_PI, refCamNormalS[1] - M_PI/3, depthRange[0]};
-	double rangeU [] = {refCamNormalS[0] + M_PI, refCamNormalS[1] + M_PI/3, depthRange[1]};
+	double rangeL [] = {refCamNormalS[0] - M_PI, refCamNormalS[1] - M_PI/2, depthRange[0]};
+	double rangeU [] = {refCamNormalS[0] + M_PI, refCamNormalS[1] + M_PI/2, depthRange[1]};
 	//double rangeL [] = {0.0, refCamNormalS[1] - M_PI/3.0, depthRange[0]};
 	//double rangeU [] = {2*M_PI, refCamNormalS[1] + M_PI/3.0, depthRange[1]};
 	//double rangeL [] = {refCamNormalS[0], refCamNormalS[1], depthRange[0]};
@@ -331,7 +331,8 @@ void Patch::psoOptimizationFull() {
 	
 	PsoSolver *solver = NULL;
 	//if (type == TYPE_SEED) {
-		solver = new PsoSolver(3, rangeL, rangeU, PAIS::getFitness, this, mvs.maxIteration, mvs.particleNum );
+	solver = new PsoSolver(3, rangeL, rangeU, PAIS::getFitness, this, mvs.maxIteration, mvs.particleNum, mvs.degPhi );	
+		//solver = new PsoSolver(3, rangeL, rangeU, PAIS::getFitness, this, mvs.maxIteration, mvs.particleNum );
 		//solver = new PsoSolver(3, rangeL, rangeU, PAIS::getFitness, this, mvs.maxIteration*2, mvs.particleNum*2 );
 	//} else {
 	//	// reduce normal search range for expansion patch
@@ -1642,8 +1643,10 @@ double PAIS::getFitness(const Particle &p, void *obj) {
 			}
 			if ( mvs.isAdaptiveDifferenceEnable() ) { // adaptive difference weighting
 				//weight *= exp(avgSad*avgSad/diffWeighting); // square plus
-				//weight *= exp(-avgSad/diffWeighting); // non-square minus
-				weight *= exp(avgSad/diffWeighting); // non-square plus
+				if (mvs.isPlusWeightingFunction() ) 
+					weight *= exp(avgSad/diffWeighting); // non-square plus
+				else
+					weight *= exp(-avgSad/diffWeighting); // non-square minus
 			}
 			if ( mvs.isAdaptiveGradientEnable() ) {   // adaptive gradient maginitude weighting
 				weight *= exp( -1.0 / (edgeImg.at<double>(cvRound(y), cvRound(x))*gradientWeighting) );

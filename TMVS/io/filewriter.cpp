@@ -419,10 +419,11 @@ void FileWriter::writeMVS(const char *fileName, const MVS &mvs) {
 	}
 
 	// write MVS header
-	file << "MVS_V3" << endl;
+	//file << "MVS_V3" << endl;
+	file << "MVS_V4" << endl;
 
-	// write MVS config
-	writeMvsConfig(file, mvs);
+	// write MVS config, MvsConfig will be not written in MVS_V4
+	//writeMvsConfig(file, mvs);
 
 	// write cameras
 	const vector<Camera> &cameras = mvs.getCameras();
@@ -554,10 +555,11 @@ void FileWriter::writeDeletedPatchMVS(const char *fileName, const MVS &mvs) {
 	}
 
 	// write MVS header
-	file << "MVS_V3" << endl;
+	//file << "MVS_V3" << endl;
+	file << "MVS_V4" << endl;
 
-	// write MVS config
-	writeMvsConfig(file, mvs);
+	// write MVS config, MvsConfig will be not written in MVS_V4
+	//writeMvsConfig(file, mvs); 
 
 	// write cameras
 	const int camNum = (int) mvs.getCameras().size();
