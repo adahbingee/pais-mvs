@@ -12,6 +12,7 @@ PsoSolver::PsoSolver(const int dim,
 				  void *obj,
 				  int maxIteration, int particleNum,
 				  double dDegPhi, // added by Chaody, for defining degree of phi
+				  bool bRandomInit, // added by Chaody, for random or even init. particles distribution
 				  double convergenceThreshold, 
 				  double iw, double pw, double gw, double lw, double nw,
 				  int localK) {
@@ -59,7 +60,11 @@ PsoSolver::PsoSolver(const int dim,
 	}
 
 	setRandomSeed();
-	initParticles();
+
+	if (bRandomInit)
+		initParticlesRand();
+	else
+		initParticlesEven();
 }
 
 PsoSolver::~PsoSolver() {
@@ -129,8 +134,29 @@ double PsoSolver::getVelocityIDX()   const {
 	return index;
 }
 
-// grid distribution
-void PsoSolver::initParticles() {
+// set initial particle position and velocity in random distribution
+void PsoSolver::initParticlesRand() {
+	// allocate particle container
+	particles.clear();
+	particles.resize(particleNum, Particle(dim));
+
+	// uniform random parameter between range
+	for (int i = 0; i < particleNum; i++) {
+		for (int d = 0; d < dim; d++) {
+			// random position parameter (L~U)
+            particles[i].pos[d] = (rangeInter[d] * random()) + rangeL[d];
+            // random velocity parameter (-|U-L| ~ |U-L|), known as velocity inertia
+            particles[i].vec[d] = (2.0 * rangeInter[d] * random()) - rangeInter[d];
+            // set pBest as initial position
+            particles[i].pBest[d] = particles[i].pos[d];
+		}
+		LogManager::log("00\t%03d\t%f\t%f\t%f\t0.0\t0.0", i+1, particles[i].pos[0], particles[i].pos[1], particles[i].pos[2]);
+	}
+}
+
+
+// set initial particle position and velocity in even distribution
+void PsoSolver::initParticlesEven() {
 	// allocate particle container
 	particles.clear();
 	particles.resize(particleNum, Particle(dim));
@@ -140,6 +166,9 @@ void PsoSolver::initParticles() {
 
 	int iOneThirdParticleNum = (int)(particleNum/3);
 	
+	////////////////////////////////////////////////////////////
+	// Using double ring or not, can be extented in the future
+	////////////////////////////////////////////////////////////
 	//for (int i = 0; i < particleNum; i++) {
 	//	if (i < iOneThirdParticleNum) {   // inner ring
 	//		particles[i].pos[0] = (rangeInter[0] * ((double)i/(double)iOneThirdParticleNum)) + rangeL[0];
@@ -164,6 +193,7 @@ void PsoSolver::initParticles() {
 
 	//	LogManager::log("00\t%03d\t%f\t%f\t%f\t0.0", i+1, particles[i].pos[0], particles[i].pos[1], particles[i].pos[2]);
 	//}
+	////////////////////////////////////////////////////////////
 
 	Vec3d refCamNormal, particleVec;
 	Vec2d refCamNormalS, particleVecS;
@@ -189,9 +219,8 @@ void PsoSolver::initParticles() {
     Rz.at<double>(2, 0) = 0;        Rz.at<double>(2, 1) = 0;         Rz.at<double>(2, 2) = 1;
 
 	for (int i = 0; i < particleNum; i++) {
-		particles[i].pos[0] = (rangeInter[0]) * ((double)i/(double)particleNum);
-		//particles[i].pos[1] = rangeInter[1]/2;
-		particles[i].pos[1] = dDegPhi * (M_PI/180);
+		particles[i].pos[0] = (2*M_PI) * ((double)i/(double)particleNum);
+		particles[i].pos[1] = (90-dDegPhi) * (M_PI/180);
 		particles[i].pos[2] = (rangeInter[2] * ((double)i/(double)particleNum)) + rangeL[2];
 
 		// transformation (rotation in Cartesian coordinate)
@@ -205,26 +234,15 @@ void PsoSolver::initParticles() {
 		tmpVec.at<double>(1, 0) = particleVec[1]; 
 		tmpVec.at<double>(2, 0) = particleVec[2]; 
 
-		//printf("tmpVec: %f %f %f\n", tmpVec.at<double>(0, 0), tmpVec.at<double>(0, 1), tmpVec.at<double>(0, 2));
-		//printf("Ry:\n%f %f %f\n", Ry.at<double>(0, 0), Ry.at<double>(0, 1), Ry.at<double>(0, 2));
-		//printf("%f %f %f\n", Ry.at<double>(1, 0), Ry.at<double>(1, 1), Ry.at<double>(1, 2));
-		//printf("%f %f %f\n", Ry.at<double>(2, 0), Ry.at<double>(2, 1), Ry.at<double>(2, 2));
-		//printf("Rz:\n%f %f %f\n", Rz.at<double>(0, 0), Rz.at<double>(0, 1), Rz.at<double>(0, 2));
-		//printf("%f %f %f\n", Rz.at<double>(1, 0), Rz.at<double>(1, 1), Rz.at<double>(1, 2));
-		//printf("%f %f %f\n", Rz.at<double>(2, 0), Rz.at<double>(2, 1), Rz.at<double>(2, 2));
-
 		tmpVec = Rz * Ry * Rxz * tmpVec;
-		//printf("tmpVec: %f %f %f\n", tmpVec.at<double>(0, 0), tmpVec.at<double>(0, 1), tmpVec.at<double>(0, 2));
 
 		particleVec[0] = tmpVec.at<double>(0, 0);
 		particleVec[1] = tmpVec.at<double>(1, 0);
 		particleVec[2] = tmpVec.at<double>(2, 0);
 
-
 		// ¦AÂà¦^ spherical coordinate
 		Utility::normal2Spherical(particleVec, particleVecS);
 		particles[i].pos[0] = particleVecS[0];         particles[i].pos[1] = particleVecS[1]; 
-
 
 		for (int d = 0; d < dim; d++) {
 			// random velocity parameter (-|U-L| ~ |U-L|), known as velocity inertia
@@ -238,7 +256,7 @@ void PsoSolver::initParticles() {
 }
 
 // not grid distribution
-//void PsoSolver::initParticles() {
+//void PsoSolver::initParticlesFix() {
 //	// allocate particle container
 //	particles.clear();
 //	particles.resize(particleNum, Particle(dim));
@@ -260,24 +278,7 @@ void PsoSolver::initParticles() {
 //	}
 //}
 
-// original version
-//void PsoSolver::initParticles() {
-//	// allocate particle container
-//	particles.clear();
-//	particles.resize(particleNum, Particle(dim));
-//
-//	// uniform random parameter between range
-//	for (int d = 0; d < dim; d++) {
-//		for (int i = 0; i < particleNum; i++) {
-//			// random position parameter (L~U)
-//            particles[i].pos[d] = (rangeInter[d] * random()) + rangeL[d];
-//            // random velocity parameter (-|U-L| ~ |U-L|), known as velocity inertia
-//            particles[i].vec[d] = (2.0 * rangeInter[d] * random()) - rangeInter[d];
-//            // set pBest as initial position
-//            particles[i].pBest[d] = particles[i].pos[d];
-//		}
-//	}
-//}
+
 
 void PsoSolver::initFitness() {
 	#pragma omp parallel for
@@ -340,8 +341,8 @@ void PsoSolver::updateGbest_init() {
         }
     }
 	
-	LogManager::log("%02d\t888\t%f\t%f\t%f\t%f\t%f", 
-		iteration, particles[iTmpCnt].pos[0], particles[iTmpCnt].pos[1], particles[iTmpCnt].pos[2], gBestFitness, getDispersionIDX());
+	LogManager::log("00\t888\t%f\t%f\t%f\t%f\t%f", 
+		particles[iTmpCnt].pos[0], particles[iTmpCnt].pos[1], particles[iTmpCnt].pos[2], gBestFitness, getDispersionIDX());
 }
 
 const double* PsoSolver::getLocalBest(const int idx) const {

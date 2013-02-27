@@ -240,7 +240,7 @@ namespace PAIS {
 
 		// Chaody EXP configuration
 		bool isPlusWeightingFunction()    const { return weightingFunctionType; }
-
+		bool isEvenInitDistribution()    const { return initDistribution; }
 
 		// print config information
 		void printConfig() const;

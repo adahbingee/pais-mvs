@@ -94,8 +94,10 @@ namespace PAIS {
 		double getDispersionIDX() const;
 		double getVelocityIDX()   const;
 
-		// set initial particle position and velocity
-		void initParticles();
+		// set initial particle position and velocity in random distribution
+		void initParticlesRand();
+		// set initial particle position and velocity in even distribution
+		void initParticlesEven();
 
 		// set initial particle fitness
 		void initFitness();
@@ -125,6 +127,7 @@ namespace PAIS {
 				  void *obj = NULL,
 				  int maxIteration = 1000, int particleNum = 30,
 				  double dDegPhi = 30,  // added by Chaody, for defining degree of phi
+				  bool bRandomInit = false, // added by Chaody, for random or even init. particles distribution
 				  double convergenceThreshold = 0.01, 
 				  double iw = 0.8, double pw = 1.2, double gw = 1.5, double lw = 1.0, double nw = 1.0,
 				  int localK = 5);
