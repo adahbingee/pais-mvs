@@ -136,6 +136,13 @@ namespace PAIS {
 
 		bool setParticle(const double *pos, const double *vec = NULL, const int idx = 0);
 		void run(const bool enableGLNPSO = false, const double minIw = 0.4);
+		
+		// output error surface, added by Chaody
+		void runErrorSurface(const bool enableGLNPSO = false, const double minIw = 0.4);
+		void runErrorSurface_xy(const bool enableGLNPSO = false, const double minIw = 0.4);
+		// assign particles position for outputing error surface
+		void AssignParticlesPos(double theta, double phi, double depth);
+		void AssignParticlesPos_xy(double X, double Y, double Z, double depth);
 
 		int           getDimension()      const { return dim; }
 		int           getParticleNum()    const { return particleNum; }

@@ -350,7 +350,9 @@ void Patch::psoOptimizationFull() {
 	clock_t start_t, end_t;
 	start_t = clock();
 	solver->setParticle(init);
-    solver->run(true);
+    //solver->run(true);
+	//solver->runErrorSurface(true);
+	solver->runErrorSurface_xy(true);
 	end_t = clock();
 
 	// set FULL refined patch information

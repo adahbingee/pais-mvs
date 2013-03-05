@@ -206,7 +206,7 @@ void PsoSolver::initParticlesEven() {
 	Mat_<double> Ry(3,3), Rz(3,3), Rxz(3,3); 
 	Rxz.at<double>(0, 0) = 0; Rxz.at<double>(0, 1) = 0; Rxz.at<double>(0, 2) = 1;
     Rxz.at<double>(1, 0) = 0; Rxz.at<double>(1, 1) = 1; Rxz.at<double>(1, 2) = 0;
-    Rxz.at<double>(2, 0) = 1; Rxz.at<double>(2, 1) = 0; Rxz.at<double>(2, 2) = 0;
+    Rxz.at<double>(2, 0) = -1; Rxz.at<double>(2, 1) = 0; Rxz.at<double>(2, 2) = 0;
 
 	double dRy = -(refCamNormalS[1]);
 	Ry.at<double>(0, 0) = cos(dRy); Ry.at<double>(0, 1) = 0; Ry.at<double>(0, 2) = sin(dRy);
@@ -251,7 +251,7 @@ void PsoSolver::initParticlesEven() {
 			particles[i].pBest[d] = particles[i].pos[d];
 		}
 
-		LogManager::log("00\t%03d\t%f\t%f\t%f\t0.0\t0.0", i+1, particles[i].pos[0], particles[i].pos[1], particles[i].pos[2]);
+		//LogManager::log("00\t%03d\t%f\t%f\t%f\t0.0\t0.0", i+1, particles[i].pos[0], particles[i].pos[1], particles[i].pos[2]);
 	}
 }
 
@@ -522,4 +522,240 @@ void PsoSolver::logParticles() {
 				iteration+1, i+1, particles[i].pos[0], particles[i].pos[1], particles[i].pos[2], particles[i].fitness, getDispersionIDX());
 
 	}
+}
+
+// output error surface
+void PsoSolver::runErrorSurface(const bool enableGLNPSO, const double minIw) {
+	this->enableGLNPSO = enableGLNPSO;
+	printf("init fitness\n");
+	particleNum = 1;
+	initFitness();
+	
+	gBest        = particles[0].pBest;
+	gBestFitness = particles[0].pBestFitness;
+
+	int i=0;
+	printf("enter iteration\n");
+	printf("0%");
+	double dDegTheta_min = 0;
+	double dDegTheta_max = 360;
+	double dDegTheta_step = 3;
+
+	double dDegPhi_min = -90;
+	double dDegPhi_max = 90;
+	double dDegPhi_step = 3;
+	
+	double dDepth_min = 1511.87-1;
+	double dDepth_max = 1511.87+1;
+	double dDepth_step = 0.5;
+	int iCnt = 0, iDepthCnt=0;
+
+	double dDegTheta_range = dDegTheta_max-dDegTheta_min;
+	double dDegPhi_range = dDegPhi_max-dDegPhi_min;
+	double dDegDepth_range = dDepth_max-dDepth_min;
+
+	for (double dDepth = dDepth_min; dDepth < dDepth_max; dDepth+=dDepth_step){
+		iDepthCnt++;
+		for (double dDegTheta = dDegTheta_min; dDegTheta < dDegTheta_max; dDegTheta+=dDegTheta_step) {
+			for (double dDegPhi = dDegPhi_min; dDegPhi < dDegPhi_max; dDegPhi+=dDegPhi_step) {
+				//printf("enter AssignParticlesPos\n");
+				AssignParticlesPos(dDegTheta, dDegPhi, dDepth); // WTF 1511.87205 -> just testing
+				//printf("enter updateFitness\n");
+				updateFitness();
+				if (particles[0].fitness > 999)
+					LogManager::log("%02d\t777\t%f\t%f\t%f\t999\t999", iDepthCnt,
+						particles[i].pos[0], particles[i].pos[1], particles[i].pos[2]);
+				else
+					LogManager::log("%02d\t777\t%f\t%f\t%f\t%f\t999", iDepthCnt,
+						particles[i].pos[0], particles[i].pos[1], particles[i].pos[2], particles[i].fitness);
+
+				iCnt++;
+				printf("\r%02d%%", 
+					(int)( (100*iCnt) / ((dDegDepth_range/dDepth_step)*(dDegPhi_range/dDegPhi_step)*(dDegTheta_range/dDegTheta_step))));
+			}
+		}
+		//printf("\r%d", 100*iDepthCnt++/(dDegDepth_range/dDepth_step));
+	}
+}
+
+void PsoSolver::runErrorSurface_xy(const bool enableGLNPSO, const double minIw) {
+	this->enableGLNPSO = enableGLNPSO;
+	printf("init fitness\n");
+	particleNum = 1;
+	initFitness();
+	
+	gBest        = particles[0].pBest;
+	gBestFitness = particles[0].pBestFitness;
+
+	int i=0;
+	printf("enter iteration\n");
+	printf("0%");
+	double dX_min = -0.5;
+	double dX_max = 0.4;
+	double dX_step = 0.01;
+
+	double dY_min = -0.7;
+	double dY_max = -0.2;
+	double dY_step = 0.01;
+	
+	double dDepth_min = 1511.87-5;
+	double dDepth_max = 1511.87+5;
+	double dDepth_step = 1;
+	int iCnt = 0, iDepthCnt=0;
+
+	double dX_range = dX_max-dX_min;
+	double dY_range = dY_max-dY_min;
+	double dDegDepth_range = dDepth_max-dDepth_min;
+	double dX, dY, dZ = 0;
+	Vec3d tmpVector;
+	Vec2d tmpVectorS;
+
+	for (double dDepth = dDepth_min; dDepth < dDepth_max; dDepth+=dDepth_step){
+		iDepthCnt++;
+		for (dX = dX_min; dX < dX_max; dX+=dX_step) {
+			for (dY = dY_min; dY < dY_max; dY+=dY_step) {
+				//printf("enter AssignParticlesPos\n");
+				if (sqrt(dX*dX+dY*dY) < 1) {
+					dZ = abs(sqrt (1-dX*dX-dY*dY));
+					tmpVector[0] = dX; tmpVector[1] = dY; tmpVector[2] = dZ;
+					Utility::normal2Spherical(tmpVector, tmpVectorS);
+					//AssignParticlesPos(180*tmpVectorS[0]/M_PI, 180*tmpVectorS[1]/M_PI, dDepth);
+					AssignParticlesPos_xy(dX, dY, dZ, dDepth);
+					updateFitness();
+					if (particles[0].fitness > 999)
+						LogManager::log("%02d\t777\t%f\t%f\t%f\t999\t999", iDepthCnt,
+							particles[i].pos[0], particles[i].pos[1], particles[i].pos[2]);
+					else
+						LogManager::log("%02d\t777\t%f\t%f\t%f\t%f\t999", iDepthCnt,
+							particles[i].pos[0], particles[i].pos[1], particles[i].pos[2], particles[i].fitness);
+				}
+				else {
+					LogManager::log("%02d\t777\t0.0\t0.0\t0.0\t999\t999", iDepthCnt);
+				}
+
+				iCnt++;
+				printf("\r%02d%%", 
+					(int)( (100*iCnt) / ((dDegDepth_range/dDepth_step)*(dY_range/dY_step)*(dX_range/dX_step))));
+			}
+		}
+	}
+}
+
+
+// assign particles position for outputing error surface
+void PsoSolver::AssignParticlesPos(double degTheta, double degPhi, double depth) {
+	// allocate particle container
+	particles.clear();
+	particles.resize(particleNum, Particle(dim));  // use only one particle
+
+	int iCnt = 0;
+	// uniform & grid parameter between range
+
+	Vec3d refCamNormal, particleVec;
+	Vec2d refCamNormalS, particleVecS;
+	refCamNormalS[0] = rangeInter[0]/2 + rangeL[0];	
+	refCamNormalS[1] = rangeInter[1]/2 + rangeL[1];
+	Utility::spherical2Normal(refCamNormalS, refCamNormal);
+	Utility::normal2Spherical(refCamNormal, refCamNormalS);
+	
+	// setup rotation matrix Ry and Rz
+	Mat_<double> Ry(3,3), Rz(3,3), Rxz(3,3); 
+	Rxz.at<double>(0, 0) = 0; Rxz.at<double>(0, 1) = 0; Rxz.at<double>(0, 2) = 1;
+    Rxz.at<double>(1, 0) = 0; Rxz.at<double>(1, 1) = 1; Rxz.at<double>(1, 2) = 0;
+    Rxz.at<double>(2, 0) = -1; Rxz.at<double>(2, 1) = 0; Rxz.at<double>(2, 2) = 0;
+
+	double dRy = -(refCamNormalS[1]);
+	Ry.at<double>(0, 0) = cos(dRy); Ry.at<double>(0, 1) = 0; Ry.at<double>(0, 2) = sin(dRy);
+    Ry.at<double>(1, 0) = 0;        Ry.at<double>(1, 1) = 1; Ry.at<double>(1, 2) = 0;
+    Ry.at<double>(2, 0) = -sin(dRy);Ry.at<double>(2, 1) = 0; Ry.at<double>(2, 2) = cos(dRy);
+
+	double dRz = refCamNormalS[0];
+	Rz.at<double>(0, 0) = cos(dRz); Rz.at<double>(0, 1) = -sin(dRz); Rz.at<double>(0, 2) = 0;
+    Rz.at<double>(1, 0) = sin(dRz); Rz.at<double>(1, 1) = cos(dRz);  Rz.at<double>(1, 2) = 0;
+    Rz.at<double>(2, 0) = 0;        Rz.at<double>(2, 1) = 0;         Rz.at<double>(2, 2) = 1;
+
+	particles[0].pos[0] = degTheta * (M_PI/180);
+	particles[0].pos[1] = (90-degPhi) * (M_PI/180);
+	particles[0].pos[2] = depth;
+	//printf("pos[0]:%f\n", degTheta, particles[0].pos[0] );
+	//printf("pos[1]:%f\n", particles[0].pos[1] );
+	//printf("pos[2]:%f\n", particles[0].pos[2] );
+
+	int i=0;
+
+		// transformation (rotation in Cartesian coordinate)
+		// 先轉至 Cartesian coordinate
+		particleVecS[0] = particles[i].pos[0];         particleVecS[1] = particles[i].pos[1]; 
+		Utility::spherical2Normal(particleVecS, particleVec);
+
+		// rotation
+		Mat_<double> tmpVec(3,1); 
+		tmpVec.at<double>(0, 0) = particleVec[0]; 
+		tmpVec.at<double>(1, 0) = particleVec[1]; 
+		tmpVec.at<double>(2, 0) = particleVec[2]; 
+
+		tmpVec = Rz * Ry * Rxz * tmpVec;
+
+		particleVec[0] = tmpVec.at<double>(0, 0);
+		particleVec[1] = tmpVec.at<double>(1, 0);
+		particleVec[2] = tmpVec.at<double>(2, 0);
+
+		// 再轉回 spherical coordinate
+		Utility::normal2Spherical(particleVec, particleVecS);
+		particles[i].pos[0] = particleVecS[0];         particles[i].pos[1] = particleVecS[1]; 
+
+}
+
+// assign particles position for outputing error surface, for xy plane
+void PsoSolver::AssignParticlesPos_xy(double dX, double dY, double dZ, double depth) {
+	// allocate particle container
+	particles.clear();
+	particles.resize(particleNum, Particle(dim));  // use only one particle
+
+	int iCnt = 0;
+	// uniform & grid parameter between range
+
+	Vec3d refCamNormal, particleVec;
+	Vec2d refCamNormalS, particleVecS;
+	refCamNormalS[0] = rangeInter[0]/2 + rangeL[0];	
+	refCamNormalS[1] = rangeInter[1]/2 + rangeL[1];
+
+	Utility::spherical2Normal(refCamNormalS, refCamNormal);
+	Utility::normal2Spherical(refCamNormal, refCamNormalS);
+	
+	// setup rotation matrix Ry and Rz
+	Mat_<double> Ry(3,3), Rz(3,3), Rxz(3,3); 
+	Rxz.at<double>(0, 0) = 0; Rxz.at<double>(0, 1) = 0; Rxz.at<double>(0, 2) = 1;
+    Rxz.at<double>(1, 0) = 0; Rxz.at<double>(1, 1) = 1; Rxz.at<double>(1, 2) = 0;
+    Rxz.at<double>(2, 0) = -1; Rxz.at<double>(2, 1) = 0; Rxz.at<double>(2, 2) = 0;
+
+	double dRy = -(refCamNormalS[1]);
+	Ry.at<double>(0, 0) = cos(dRy); Ry.at<double>(0, 1) = 0; Ry.at<double>(0, 2) = sin(dRy);
+    Ry.at<double>(1, 0) = 0;        Ry.at<double>(1, 1) = 1; Ry.at<double>(1, 2) = 0;
+    Ry.at<double>(2, 0) = -sin(dRy);Ry.at<double>(2, 1) = 0; Ry.at<double>(2, 2) = cos(dRy);
+
+	double dRz = refCamNormalS[0];
+	Rz.at<double>(0, 0) = cos(dRz); Rz.at<double>(0, 1) = -sin(dRz); Rz.at<double>(0, 2) = 0;
+    Rz.at<double>(1, 0) = sin(dRz); Rz.at<double>(1, 1) = cos(dRz);  Rz.at<double>(1, 2) = 0;
+    Rz.at<double>(2, 0) = 0;        Rz.at<double>(2, 1) = 0;         Rz.at<double>(2, 2) = 1;
+
+	int i=0;
+
+	// rotation
+		Mat_<double> tmpVec(3,1); 
+		tmpVec.at<double>(0, 0) = dX;
+		tmpVec.at<double>(1, 0) = dY;
+		tmpVec.at<double>(2, 0) = dZ; 
+
+		tmpVec = Rz * Ry * Rxz * tmpVec;
+
+		particleVec[0] = tmpVec.at<double>(0, 0);
+		particleVec[1] = tmpVec.at<double>(1, 0);
+		particleVec[2] = tmpVec.at<double>(2, 0);
+
+		// 再轉回 spherical coordinate
+		Utility::normal2Spherical(particleVec, particleVecS);
+		particles[i].pos[0] = particleVecS[0];         particles[i].pos[1] = particleVecS[1]; 
+		particles[0].pos[2] = depth;
+
 }
