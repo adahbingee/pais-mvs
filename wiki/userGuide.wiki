@@ -1,4 +1,5 @@
 #labels Featured
+#sidebar TableOfContents
 #The TMVS program user guide
 
 = Introduction =
