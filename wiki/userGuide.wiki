@@ -19,6 +19,9 @@ Our input file format includes "nvm", "nvm2" and "mvs"
 ====nvm file format====
 NVM file is come from [http://ccwu.me/vsfm/ VisualSFM] data structure.
 Here is the example of the data structure. The detail can be found in [https://code.google.com/p/pais-mvs/source/browse/trunk/TMVS/io/fileloader.cpp FileLoader].
+
+You can skip the calibration step and just use the Structure from Motion result output from VisualSFM  
+
 {{{
 NVM_V3 
 
