@@ -65,6 +65,8 @@ Our output file format includes "mvs", "ply" and "psr"
 ====psr file format====
 
 ==Config parameters==
+config.txt should be placed in the same directory of main program.
+
 {{{
 ### patch optimization configuration ###
 # patch radius (patch size = 2*radius+1)
