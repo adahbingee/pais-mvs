@@ -64,3 +64,101 @@ Our output file format includes "mvs", "ply" and "psr"
 ====psr file format====
 
 ==Config parameters==
+{{{
+### patch optimization configuration ###
+# patch radius (patch size = 2*radius+1)
+# !!!!check distWeighting if patchRadius have been changed!!!!
+# default 15
+patchRadius			15
+
+# reduce normal search range for expansion patch (reduce to +- pi/reduceNormalRange)
+# 1 stands for search 360 degree, 2 for 180 degree
+# smaller for larger cell size
+# default 2 (reduce to 180 degree)
+reduceNormalRange	2
+
+# enable or disable adaptive distance weighting (0: disable, 1: enable)
+# default 1
+adaptiveDistanceEnable		1
+# distance weighting to patch center
+# default(patch radius/3) 5
+distWeighting		5
+
+# enable or disable adaptive difference weighting (0: disable, 1: enable)
+# default 1
+adaptiveDifferenceEnable	1
+# difference weighting
+# default(128*128) 16384
+diffWeighting		16384
+
+# enable or disable adaptive gradient weighting (0: disable, 1: enable)
+# default 0
+adaptiveGradientEnable		0
+# gradient maginitude weighting
+# default 10.0
+gradientWeighting	10.0
+
+# visible camera angle correlation
+# smaller for sparse camera deploy
+# default 0.87 radian for 30 degree
+visibleCorrelation	0.7
+
+# depth search range scalar
+# smaller for smoother object, larger for complex/sharp object
+# smaller for small cell size, larger for big cell size
+# larger depthRangeScalar cloud avoid local trap!
+# beta in paper
+# default(cellsize/2) 2
+depthRangeScalar	8
+
+### PSO optimization configuration ###
+# particle number
+# default 30
+particleNum			15
+# maximum iteration number
+# default 60
+maxIteration		30
+
+### expansion configuration ###
+# image cell size, control the density of patches
+# default 4
+cellSize			2
+# maximum patch number in single cell
+# default 3
+maxCellPatchNum		3
+# patch expansion strategy (Best: 0, Worst: 1, Breath: 2, Depth: 3)
+# default 0
+expansionStrategy	0
+
+### level of detail configuration ###
+# texture variation
+# default 36
+textureVariation	36
+# minimum level of detail
+# default 0
+minLOD				0
+# maximum level of detail
+# default 15
+maxLOD				15
+# level of detail ratio
+# default 0.8
+lodRatio			0.8
+
+### filtering configuration ###
+# minimum visible camera number
+# default 3
+minCamNum			3
+# minimum texture correlation
+# default 0.9
+minCorrelation		0.9
+# minimum patch homography ellipse axes ratio
+# default 0.15
+minRegionRatio		0.15
+# maximum fitness (critical effect the completeness)
+# default 10.0
+maxFitness			10.0
+# neighbor patch search radius scalar (from TVCG09 PCMVS)
+# the neighbor radius = pow(volume, 1.0/3.0) * neighborRadiusScalar
+# default 0.0025*(cellsize*2)
+neighborRadiusScalar		0.01
+}}}
