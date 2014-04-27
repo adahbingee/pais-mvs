@@ -61,8 +61,13 @@ MVS file is saved in a binary way for internal use, for example: MVS viewer, pat
 Our output file format includes "mvs", "ply" and "psr"
 
 ====mvs file format====
+MVS file is saved in a binary way for internal use, for example: MVS viewer, patch filtering.
+
 ====ply file format====
+ply is the point cloud model. Can be open using MeshLab.
+
 ====psr file format====
+psr file is ready for the Poisson surface reconstruction.
 
 ==Config parameters==
 config.txt should be placed in the same directory of main program.
