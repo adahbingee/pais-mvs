@@ -50,7 +50,7 @@ Each list entry:
 
 
 ====nvm2 file format====
-In the NVM file format, the camera principle point is assumed at the image center.
+In the NVM file format, the camera principle point is assumed at the image center, and can't to be edit.
 
 NVM2 file specify the principle point(px, py) after focal length. Others the same.
  
