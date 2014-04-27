@@ -17,7 +17,10 @@
 Our input file format includes "nvm", "nvm2" and "mvs"
 
 ====nvm file format====
-NVM file is come from VisualSFM[http://ccwu.me/vsfm/] data  structure. 
+NVM file is come from [http://ccwu.me/vsfm/ VisualSFM] data structure.
+Here is the example of data structure.
+
+
 ====nvm2 file format====
 ====mvs file format====
 
