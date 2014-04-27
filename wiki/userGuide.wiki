@@ -18,7 +18,7 @@ Our input file format includes "nvm", "nvm2" and "mvs"
 
 ====nvm file format====
 NVM file is come from [http://ccwu.me/vsfm/ VisualSFM] data structure.
-Here is the example of the data structure. The detail can be found in [https://code.google.com/p/pais-mvs/source/browse/trunk/TMVS/io/fileloader.cpp code].
+Here is the example of the data structure. The detail can be found in [https://code.google.com/p/pais-mvs/source/browse/trunk/TMVS/io/fileloader.cpp FileLoader].
 {{{
 NVM_V3 
 
