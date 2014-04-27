@@ -893,9 +893,6 @@ bool MVS::runtimeFiltering(const Patch &pth) const {
 	}
 	if (fullCellCounter >= camNum) return false;
 
-	// zc asked
-	if ( !pth.centerDifferenceFiltering() ) return false;
-
 	return true;
 }
 

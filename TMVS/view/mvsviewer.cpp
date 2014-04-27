@@ -453,8 +453,6 @@ void MvsViewer::printPatchInformation(const Patch &pth) const {
 	printf("distance to origin: %f\n", -normal.ddot(center));
 	printf("avg correlation: %f\n", pth.getCorrelation());
 	printf("Level of detail: %d\n", pth.getLOD());
-	// zc asked
-	printf("Center difference: %d\n",pth.centerDifferenceFiltering());
 	printf("fitness: %f\n", pth.getFitness());
 	printf("priority: %f\n", pth.getPriority());
 	printf("visible camera number: %d\n", pth.getCameraNumber());
