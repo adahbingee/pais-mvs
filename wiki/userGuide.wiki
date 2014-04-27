@@ -1,4 +1,5 @@
 #labels Featured
+<wiki:toc max_depth="1" />
 #sidebar TableOfContents
 #The TMVS program user guide
 
