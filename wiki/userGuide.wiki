@@ -67,7 +67,7 @@ MVS file is saved in a binary way for internal use, for example: MVS viewer, pat
 ply is the point cloud model. Can be open using MeshLab.
 
 ====psr file format====
-psr file is ready for the Poisson surface reconstruction.
+psr file is ready for the [http://www.cs.jhu.edu/~misha/Code/PoissonRecon/Version5.71/ Poisson surface reconstruction].
 
 ==Config parameters==
 config.txt should be placed in the same directory of main program.
