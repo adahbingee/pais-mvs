@@ -40,9 +40,9 @@ Each list entry:
 
 2. focal length
 
-3. 4 elements vector \[k wx wy wz\] indicate the quaternion rotation
- 
-4. 3 elements vector \[x y z\] indicate camera center in world coordinate
+3. 4 elements vector (k wx wy wz) indicate the quaternion rotation.
+
+4. 3 elements vector (x y z) indicate camera center in world coordinate.
 
 5. radial distortion parameter
 
