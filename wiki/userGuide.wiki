@@ -39,7 +39,7 @@ Third line "5" indicate there are 5 cameras in the following list.
 
 Each list entry:
 
-1. image file name, can be PNG, JPG, BMP, or any OpenCV supported image format.
+1. image file name, can be PNG, JPG, BMP, or any OpenCV supported image format. Note that the file path can be relative or absolute path. 
 
 2. focal length
 
