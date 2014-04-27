@@ -36,9 +36,17 @@ Third line "5" indicate there are 5 cameras in the following list.
 
 Each list entry:
 
-1.image file name, can be PNG, JPG, BMP, or any OpenCV supported image format.
+1. image file name, can be PNG, JPG, BMP, or any OpenCV supported image format.
 
-2.focal length
+2. focal length
+
+3. 4 elements vector [k wx wy wz] indicate the quaternion rotation
+ 
+4. 3 elements vector [x y z] indicate camera center in world coordinate
+
+5. radial distortion parameter
+
+6. 0 for end of line
 
 
 ====nvm2 file format====
