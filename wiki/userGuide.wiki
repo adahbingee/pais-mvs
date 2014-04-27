@@ -18,7 +18,7 @@ Our input file format includes "nvm", "nvm2" and "mvs"
 
 ====nvm file format====
 NVM file is come from [http://ccwu.me/vsfm/ VisualSFM] data structure.
-Here is the example of the data structure.
+Here is the example of the data structure. The detail can be found in [https://code.google.com/p/pais-mvs/source/browse/trunk/TMVS/io/fileloader.cpp code].
 {{{
 NVM_V3 
 
@@ -36,9 +36,9 @@ Third line "5" indicate there are 5 cameras in the following list.
 
 Each list entry:
 
-filename
+1.image file name, can be PNG, JPG, BMP, or any OpenCV supported image format.
 
-focal length  
+2.focal length
 
 
 ====nvm2 file format====
