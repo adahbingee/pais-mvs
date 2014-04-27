@@ -30,6 +30,17 @@ pawn0012.jpg	611.360473633 0.786507583571 0.183363764635 0.573952646995 0.135504
 pawn0014.jpg	617.585876465 0.611485687162 0.135944898976 0.757586998462 0.183482834469 -0.572254659063 0.0434025057556 0.255716172724 -0.198563271584 0 
 }}}
 
+The first row shows the NVM file version.
+
+Third line "5" indicate there are 5 cameras in the following list.
+
+Each list entry:
+
+filename
+
+focal length  
+
+
 ====nvm2 file format====
 ====mvs file format====
 
