@@ -64,3 +64,5 @@ Our output file format includes "mvs", "ply" and "psr"
 ====mvs file format====
 ====ply file format====
 ====psr file format====
+
+==Config parameters==
