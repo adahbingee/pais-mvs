@@ -43,7 +43,7 @@ Each list entry:
  # focal length
  # 4 elements vector (k wx wy wz) indicate the quaternion rotation. Transformation form quaternion to 3x3 rotation matrix can be found in code. [https://code.google.com/p/pais-mvs/source/browse/trunk/TMVS/mvs/camera.cpp#6 Camera].
  # 3 elements vector (x y z) indicate camera center in world coordinate.
- # radial distortion parameter
+ # radial distortion parameter. The usage of parameter can be found in [https://code.google.com/p/pais-mvs/source/browse/trunk/TMVS/mvs/camera.cpp#138 camera projection].
  # 0 for end of line
 
 
