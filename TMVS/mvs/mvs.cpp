@@ -255,6 +255,7 @@ void MVS::expansionPatches() {
 		if ( !runtimeFiltering(pth) ) {
 			printf("Top priority patch deleted\n");
 			deletePatch(pth);
+			pthId = getPatchIdFromQueue(); // bug fixed
 			continue;
 		}
 
