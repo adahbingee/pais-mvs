@@ -14,7 +14,7 @@ void FileLoader::getDir(const char *fileName, char *path) {
 
 PAIS::Camera FileLoader::loadNvmCamera(ifstream &file, const char* path) {
 	// camera information
-	string fileName = path;
+	string fileName;
 	Vec2d focal;
 	Vec4d quaternion;
 	Vec3d center;
@@ -61,7 +61,7 @@ PAIS::Camera FileLoader::loadNvmCamera(ifstream &file, const char* path) {
 
 PAIS::Camera FileLoader::loadNvm2Camera(ifstream &file, const char* path) {
 	// camera information
-	string fileName = path;
+	string fileName;
 	Vec2d focal;
 	Vec2d principlePoint;
 	Vec4d quaternion;
