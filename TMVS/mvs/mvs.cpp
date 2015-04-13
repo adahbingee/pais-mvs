@@ -255,6 +255,7 @@ void MVS::expansionPatches() {
 		if ( !runtimeFiltering(pth) ) {
 			printf("Top priority patch deleted\n");
 			deletePatch(pth);
+			pthId = getPatchIdFromQueue(); // bug fixed
 			continue;
 		}
 
@@ -892,9 +893,6 @@ bool MVS::runtimeFiltering(const Patch &pth) const {
 		}
 	}
 	if (fullCellCounter >= camNum) return false;
-
-	// zc asked
-	if ( !pth.centerDifferenceFiltering() ) return false;
 
 	return true;
 }
