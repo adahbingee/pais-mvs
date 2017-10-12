@@ -9,6 +9,7 @@ OpenCV 2.4.2
 
 Point Cloud Library 1.6.0
 
+[Pre-build binary](https://github.com/adahbingee/pais-mvs/releases)
 
 # Index
 * Introduction
