@@ -9,6 +9,8 @@ OpenCV 2.4.2
 
 Point Cloud Library 1.6.0
 
+[Stochastic Optimization Based 3D Dense Reconstruction from Multiple Views with High Accuracy and Completeness". Wen-Chao Chen, Zen Chen, And Ping-Yi Sung. Journal of Information Science And Engineering 31, 131-146 (2015) ](http://www.phototalks.idv.tw/academic/?page_id=1494)
+
 [Pre-build binary](https://github.com/adahbingee/pais-mvs/releases)
 
 # Index
