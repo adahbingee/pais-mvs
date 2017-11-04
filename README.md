@@ -9,7 +9,7 @@ OpenCV 2.4.2
 
 Point Cloud Library 1.6.0
 
-# publications
+# Publications
 * "A novel 3D dense reconstruction with high accuracy and completeness". Zen Chen, Wen-Chao Chen, And Ping-Yi Sung. IEEE International Conference on Multimedia and Expo Workshops ICMEW 2013
 
 * "Stochastic Optimization Based 3D Dense Reconstruction from Multiple Views with High Accuracy and Completeness". Wen-Chao Chen, Zen Chen, And Ping-Yi Sung. Journal of Information Science And Engineering 31, 131-146, 2015
@@ -209,7 +209,7 @@ Note that the config.txt must be initialized.
 TMVS.exe -r input.nvm
 ```
 
-There 5 output files from reconstruction command.
+There are 5 output files from reconstruction command.
 
 `init.mvs` the input seed points from VisualSFM.
 
