@@ -5,6 +5,10 @@ PAIS Multi-view Stereo
 
 ![image](https://github.com/adahbingee/pais-mvs/blob/master/doc.JPG)
 
+![image](https://github.com/adahbingee/pais-mvs/blob/master/adaptive.PNG)
+
+![image](https://github.com/adahbingee/pais-mvs/blob/master/comp.PNG)
+
 
 library:
 
