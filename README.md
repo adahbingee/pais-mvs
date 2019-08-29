@@ -3,6 +3,29 @@ Multi-view stereo image-based 3D reconstruction
 
 PAIS Multi-view Stereo
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+
+- [Publications](#publications)
+- [Introduction](#introduction)
+- [Input file format](#input-file-format)
+  - [nvm file format](#nvm-file-format)
+  - [nvm2 file format](#nvm2-file-format)
+  - [mvs file format](#mvs-file-format)
+- [Output file format](#output-file-format)
+  - [mvs file format](#mvs-file-format-1)
+  - [ply file format](#ply-file-format)
+  - [psr file format](#psr-file-format)
+- [Config parameters](#config-parameters)
+- [Command](#command)
+  - [Reconstruction `TMVS.exe -r`](#reconstruction-tmvsexe--r)
+  - [Patch post-processing filtering `TMVS.exe -f`](#patch-post-processing-filtering-tmvsexe--f)
+  - [MVS Viewer `TMVS.exe -v`](#mvs-viewer-tmvsexe--v)
+  - [MVS Viewer `TMVS.exe -a`](#mvs-viewer-tmvsexe--a)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 ![image](https://github.com/adahbingee/pais-mvs/blob/master/doc.JPG)
 
 ![image](https://github.com/adahbingee/pais-mvs/blob/master/adaptive.PNG)
@@ -26,19 +49,6 @@ Point Cloud Library 1.6.0
 [Link](http://www.phototalks.idv.tw/academic/?page_id=1494)
 
 [Pre-build binary](https://github.com/adahbingee/pais-mvs/releases)
-
-# Index
-* Introduction
-* Input file format
- * nvm file format
- * nvm2 file format
- * mvs file format
-* Output file format
- * mvs file format
- * ply file format
- * psr file format
-* Config parameters
-* Command
 
 # Introduction
 1. Input / Output file format
@@ -196,7 +206,7 @@ maxFitness			10.0
 neighborRadiusScalar		0.01
 ```
 
-# command
+# Command
 There are 4 commands for our program.
 `TMVS.exe -r`
 `TMVS.exe -f`
